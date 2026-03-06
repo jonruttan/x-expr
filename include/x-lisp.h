@@ -4,7 +4,7 @@
 /*
  * # Computational Expressions in C
  *
- * ## x-obj.h -- Header - Objects
+ * ## x-lisp.h -- Header - Lisp Aliases
  *
  * @description Computational Expressions in C
  * @author [Jon Ruttan](jonruttan@gmail.com)
@@ -19,9 +19,7 @@
 /*
  * # Includes
  */
-#include "x-lib.h"
-
-/* TODO: Deprecate as requirement. */
+#include "x-obj.h"
 
 #define x_cons(B,X,Y)		x_mkspair((B), (X), (Y))
 

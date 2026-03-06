@@ -228,8 +228,6 @@ extern x_satom_t x_type_length_pair_obj;
 #define x_1110(X)					x_1(x_110(X))
 #define x_1111(X)					x_1(x_111(X))
 
-#include "x-lisp.h"
-
 int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj);
 
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t size);
