@@ -20,9 +20,6 @@
 
 .POSIX:
 
-# The install prefix
-PREFIX?=/usr/local
-
 # Override default compiler and flags
 CC?=gcc
 CFLAGS+=-Wall -Wextra -Wno-unused-parameter
@@ -90,14 +87,6 @@ EXECUTABLE=x
 # Options to be added to $(DEFS)
 DEFS?=$(OSDEF) -DX_MACHINE="$(X_MACHINE)"
 
-# Where to install the stuff
-BINDIR?=$(PREFIX)/bin
-LIBDIR?=$(PREFIX)/share/$(EXECUTABLE)
-MANDIR?=$(PREFIX)/man/man1
-
-# Set up environment to be used during the build process
-BUILD_ENV=env X_LIBRARY_PATH=.:lib:ext:contrib
-
 default: all strip
 
 all: $(SOURCES) $(EXECUTABLE)
@@ -117,13 +106,6 @@ $(EXECUTABLE)-debug: $(EXECUTABLE)
 .c.o:
 	$(CC) -c $(CFLAGS) $(DEFS) -o $@ $<
 
-defs:
-	ctags -f - src/**/*.c | awk 'BEGIN {FS = "\t"} /\/.*\$\/;"/ { printf("%s;\n", substr($$3,3,length($$3)-6)) }' | sort -u > defs
-
-docs: README.md $(SOURCES)
-	grock --glob='*.{h,c,md}' --index=README.md --style=thin --out=docs
-	LD_LIBRARY_PATH=/usr/lib/llvm-12/lib/ cldoc generate -I./include -- --report --language=c --output doc src/*.c
-
 lint:
 	$(CC) -fsyntax-only $(CFLAGS) -g -Wall -pedantic $(SOURCES)
 .PHONY: lint
@@ -141,11 +123,11 @@ TESTS=$(PATH_TESTS)/src/*.spec.c
 endif
 
 test:
-	CFLAGS="$(CFLAGS) -g -Og -I. -DTESTS" sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
+	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
 .PHONY: test
 
 test-quick:
-	CFLAGS="$(CFLAGS) -g -Og -I. -DTESTS" RUNNER=command sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
+	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" RUNNER=command sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
 .PHONY: test
 
 tests: test
@@ -153,29 +135,11 @@ tests: test
 
 watch:
 	while true; do \
-		fswatch -o --event Created --event Updated --event MovedTo $(HEADERS) $(SOURCES) tests/c | \
-		make debug && make test && make docs; \
+		fswatch -o --event Created --event Updated --event MovedTo $(HEADERS) $(SOURCES) tests | \
+		make debug && make test; \
 	done
 .PHONY: watch
 
-# old version of install(1) may need -c
-#C=-c
-install:	$(EXECUTABLE) lib/$(EXECUTABLE)-lib.l $(EXECUTABLE).sh
-	install -d -m 0755 $(BINDIR)
-	install -d -m 0755 $(LIBDIR)
-	install $C -m 0755 $(EXECUTABLE) $(BINDIR)
-	install $C -m 0755 $(EXECUTABLE).sh $(BINDIR)
-	strip $(BINDIR)/$(EXECUTABLE)
-	install $C -m 0644 lib/* $(LIBDIR)
-.PHONY: install
-
-uninstall:
-	rm -f $(LIBDIR)/* && rmdir $(LIBDIR)
-	rm -f $(BINDIR)/$(EXECUTABLE)
-	rm -f $(BINDIR)/$(EXECUTABLE).sh
-.PHONY: uninstall
-
 clean:
 	rm -f $(EXECUTABLE) $(EXECUTABLE)-debug *.out $(SRCDIR)/*.o $(SRCDIR)/**/*.o *.core core
-	rm -Rf docs/
 .PHONY: clean

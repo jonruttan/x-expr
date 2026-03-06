@@ -73,7 +73,7 @@ Filenames:
 ### Testing a Single Spec
 
 ```sh
-TESTS=specs/c/1.0.x-lib.spec.c make test
+TESTS=tests/src/1.0.x-lib.spec.c make test
 ```
 
 ### Test Helper File System

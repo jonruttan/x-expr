@@ -2,6 +2,7 @@
  * # Unit Tests: *x-obj*
  */
 
+#define TEST_RUNNER_OVERHEAD
 #include "test-runner.h"
 
 /* Include Garbage Collection structures. */
@@ -20,12 +21,12 @@
 /*
  * ## Test Overhead
  */
-static void setup(void)
+static void _setup(void)
 {
 	helper_set_alloc(MEM_GUARANTEED);
 }
 
-static void teardown(void)
+static void _teardown(void)
 {
 }
 
@@ -118,7 +119,7 @@ static char *test_obj_sys_free(void)
 
 	p_own = x_sys_malloc(16);
 	_it_should("allocate some memory", helper_alloc_count() == 1);
-	p_obj = x_obj_make(NULL, (x_obj_t *)x_type_atom_obj, X_OBJ_FLAG_OWN, 0, p_own);
+	p_obj = x_obj_make(NULL, (x_obj_t *)x_type_atom_obj, X_OBJ_FLAG_OWN, 1, p_own);
 	_it_should("allocate an object", helper_alloc_count() == 2);
 	x_obj_free(p_obj);
 	_it_should("free the object and OWNed data", helper_free_count() == 2);
