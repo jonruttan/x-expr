@@ -17,6 +17,7 @@
  * # Includes
  */
 #include <stdio.h>			/* For *vsprintf */
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "x-sys.h"
@@ -88,6 +89,31 @@ ssize_t x_sys_write(int fd, const void *p_buf, size_t size)
 void x_sys_exit(int status)
 {
 	exit(status);
+}
+
+/*
+ * Open a file.
+ *
+ * @function x_sys_open
+ * @param {const char *} path The file path to open.
+ * @param {int} flags The open flags (e.g. O_RDONLY).
+ * @returns {int} A file descriptor, or -1 on error.
+ */
+int x_sys_open(const char *path, int flags)
+{
+	return open(path, flags);
+}
+
+/*
+ * Close a file descriptor.
+ *
+ * @function x_sys_close
+ * @param {int} fd The file descriptor to close.
+ * @returns {int} 0 on success, -1 on error.
+ */
+int x_sys_close(int fd)
+{
+	return close(fd);
 }
 
 #endif /* TESTS */

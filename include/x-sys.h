@@ -47,6 +47,9 @@ ssize_t x_sys_write(int fd, const void *p_buf, size_t size);
 
 void x_sys_exit(int status);
 
+int x_sys_open(const char *path, int flags);
+int x_sys_close(int fd);
+
 x_char_t x_sys_read_char(int fd);
 
 #endif /* X_SYS_H */
