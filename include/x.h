@@ -142,6 +142,9 @@ typedef long long x_int_t;
 
 #endif /* __STDC__ */
 
+/* Ensure x_int_t and pointers are the same size for union parity. */
+typedef char x_assert_int_ptr_size[sizeof(x_int_t) == sizeof(void *) ? 1 : -1];
+
 /*
  * ## Characters
  */

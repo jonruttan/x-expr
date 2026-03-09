@@ -41,6 +41,8 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_3=0x4,
 	X_OBJ_FLAG_4=0x8,
 
+	X_OBJ_FLAG_BASE=X_OBJ_FLAG_2,
+
 	X_OBJ_FLAG_ATTR_MASK=0xF,
 
 	X_OBJ_FLAG_PRIM=0x10,
@@ -141,6 +143,7 @@ typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
 
 extern x_satom_t x_type_atom_obj;
 extern x_satom_t x_type_pair_obj;
+extern x_satom_t x_type_base_obj;
 extern x_satom_t x_type_units_atom_obj;
 extern x_satom_t x_type_units_pair_obj;
 extern x_satom_t x_type_length_atom_obj;
@@ -151,7 +154,7 @@ extern x_satom_t x_type_length_pair_obj;
 
 #define x_mkfsatom(B,F,X)			x_obj_make((B), x_type_atom_obj, (F), X_OBJ_LENGTH_ATOM, (X))
 #define x_mkfsatomown(B,F,X)		x_obj_make((B), x_type_atom_obj, (F) | X_OBJ_FLAG_OWN, X_OBJ_LENGTH_ATOM, (X))
-#define x_mkfspair(B,F,X,Y)		x_obj_make((B), x_type_pair_obj, (F), X_OBJ_LENGTH_PAIR, (X), (Y))
+#define x_mkfspair(B,F,X,Y)			x_obj_make((B), x_type_pair_obj, (F), X_OBJ_LENGTH_PAIR, (X), (Y))
 
 #define x_mksatom(B,X)				x_mkfsatom((B), X_OBJ_FLAG_NONE, (X))
 #define x_mksatomown(B,X)			x_mkfsatomown((B), X_OBJ_FLAG_NONE, (X))
