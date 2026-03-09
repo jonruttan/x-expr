@@ -52,4 +52,8 @@ int x_sys_close(int fd);
 
 x_char_t x_sys_read_char(int fd);
 
+#ifdef X_CLOCK
+x_int_t x_sys_clock(void);
+#endif /* X_CLOCK */
+
 #endif /* X_SYS_H */

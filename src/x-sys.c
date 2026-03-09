@@ -118,6 +118,15 @@ int x_sys_close(int fd)
 
 #endif /* TESTS */
 
+#ifdef X_CLOCK
+#include <time.h>
+
+x_int_t x_sys_clock(void)
+{
+	return (x_int_t)(clock() * 1000000 / CLOCKS_PER_SEC);
+}
+#endif /* X_CLOCK */
+
 x_char_t x_sys_read_char(int fd)
 {
 	x_char_t c;
