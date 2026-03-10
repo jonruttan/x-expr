@@ -238,6 +238,7 @@ x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, siz
 x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t size, ...);
 void x_obj_free(x_obj_t *p_obj);
 
+x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args);
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj);
 
 x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj);
