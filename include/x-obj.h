@@ -41,8 +41,6 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_3=0x4,
 	X_OBJ_FLAG_4=0x8,
 
-	X_OBJ_FLAG_BASE=X_OBJ_FLAG_2,
-
 	X_OBJ_FLAG_ATTR_MASK=0xF,
 
 	X_OBJ_FLAG_PRIM=0x10,

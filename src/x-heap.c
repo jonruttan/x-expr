@@ -25,26 +25,49 @@
  */
 x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
-	union x_datum_union *tmp;
-	short units;
+	/* Iterate rest-slots to avoid stack overflow on long chains. */
+	while (p_obj != NULL && (x_obj_flags(p_obj) & flags) != flags) {
+		x_obj_flags(p_obj) |= flags;
 
-	if (
-		/* Avoid recursion. */
-		(x_obj_flags(p_obj) & flags) != flags
-
-		/* Set the flags, and exit if the OBJ flag is set. */
-		&& ~(x_obj_flags(p_obj) |= flags) & X_OBJ_FLAG_OBJ
-
-		/* Get the number of units for this object, exit when 0. */
-		&& (units = x_obj_units(p_base, p_obj))
-	) {
-		tmp = x_obj_data_ptr(p_obj) + units - 1;
-
-		while (tmp >= x_obj_data_ptr(p_obj)) {
-			x_heap_mark(p_base, x_obj(*tmp--), flags);
+		if (x_obj_type_isspair(p_obj)) {
+			/* Simple pair — recurse into first, iterate on rest. */
+			x_heap_mark(p_base, x_firstobj(p_obj), flags);
+			p_obj = x_restobj(p_obj);
+			continue;
 		}
-	}
 
+#ifdef X_TYPE
+		/* Registered type: check p_units in type structure.
+		 * Type layout: (name data (make free clone units length) ...)
+		 * A registered type's root node is a simple pair. */
+		{
+			x_obj_t *p_type = x_obj_type(p_obj);
+
+			if (p_type != NULL && x_obj_type_isspair(p_type)) {
+				x_obj_t *p_units = x_firstobj(x_restobj(
+					x_restobj(x_restobj(x_firstobj(
+					x_restobj(x_restobj(p_type)))))));
+
+				if (p_units != NULL) {
+					x_int_t n = x_atomint(p_units);
+					x_int_t i;
+
+					for (i = 0; i < n - 1; i++) {
+						x_heap_mark(p_base,
+							x_obj(x_obj_data_i(
+							p_obj, i)), flags);
+					}
+					/* Tail-iterate on last slot. */
+					p_obj = x_obj(x_obj_data_i(
+						p_obj, n - 1));
+					continue;
+				}
+			}
+		}
+#endif /* X_TYPE */
+
+		break;
+	}
 
 	return p_obj;
 }
