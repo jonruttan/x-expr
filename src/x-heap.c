@@ -23,7 +23,8 @@
 /*
  * # Heap Management Functions
  */
-x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
+x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
+	x_heap_mark_fn_t p_mark_fn)
 {
 	/* Iterate rest-slots to avoid stack overflow on long chains. */
 	while (p_obj != NULL && (x_obj_flags(p_obj) & flags) != flags) {
@@ -31,40 +32,17 @@ x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 
 		if (x_obj_type_isspair(p_obj)) {
 			/* Simple pair — recurse into first, iterate on rest. */
-			x_heap_mark(p_base, x_firstobj(p_obj), flags);
+			x_heap_mark(p_base, x_firstobj(p_obj), flags,
+				p_mark_fn);
 			p_obj = x_restobj(p_obj);
 			continue;
 		}
 
-#ifdef X_TYPE
-		/* Registered type: check p_units in type structure.
-		 * Type layout: (name data (make free clone units length) ...)
-		 * A registered type's root node is a simple pair. */
-		{
-			x_obj_t *p_type = x_obj_type(p_obj);
-
-			if (p_type != NULL && x_obj_type_isspair(p_type)) {
-				x_obj_t *p_units = x_firstobj(x_restobj(
-					x_restobj(x_restobj(x_firstobj(
-					x_restobj(x_restobj(p_type)))))));
-
-				if (p_units != NULL) {
-					x_int_t n = x_atomint(p_units);
-					x_int_t i;
-
-					for (i = 0; i < n - 1; i++) {
-						x_heap_mark(p_base,
-							x_obj(x_obj_data_i(
-							p_obj, i)), flags);
-					}
-					/* Tail-iterate on last slot. */
-					p_obj = x_obj(x_obj_data_i(
-						p_obj, n - 1));
-					continue;
-				}
-			}
+		if (p_mark_fn != NULL) {
+			p_obj = p_mark_fn(p_base, p_obj, flags);
+			if (p_obj != NULL)
+				continue;
 		}
-#endif /* X_TYPE */
 
 		break;
 	}
@@ -75,7 +53,8 @@ x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 /*
  * NOTE: If the top object is deleted the heap structure will fragment.
  */
-x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
+	x_heap_free_fn_t p_free_fn)
 {
 	x_obj_t *gc = p_obj, *tmp,
 		*prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
@@ -86,6 +65,10 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 			prev = gc;
 			gc = x_obj_heap(gc);
 		} else {
+			if (p_free_fn != NULL) {
+				p_free_fn(p_base, gc);
+			}
+
 			tmp = x_obj_heap(prev) = x_obj_heap(gc);
 			x_obj_free(gc);
 			gc = tmp;

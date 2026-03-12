@@ -26,10 +26,22 @@
 #else /* X_HEAP */
 
 /*
+ * # Function Pointer Types
+ */
+/* Mark hook: called for non-pair objects. Return non-NULL p_obj
+ * to continue tail-iteration, NULL to break. */
+typedef x_obj_t *(*x_heap_mark_fn_t)(x_obj_t *, x_obj_t *, x_obj_flag_t);
+
+/* Free hook: called before x_obj_free for type-specific cleanup. */
+typedef void (*x_heap_free_fn_t)(x_obj_t *, x_obj_t *);
+
+/*
  * # Heap Management Functions
  */
-x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
-x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
+x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
+	x_heap_mark_fn_t p_mark_fn);
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
+	x_heap_free_fn_t p_free_fn);
 #endif /* X_HEAP */
 
 #endif /* X_HEAP_H */
