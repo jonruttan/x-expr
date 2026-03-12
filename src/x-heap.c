@@ -1,7 +1,7 @@
 /*
  * # Computational Expressions in C
  *
- * ## x-gc.c -- Implementation - Garbage Collection
+ * ## x-heap.c -- Implementation - Heap Management
  *
  * @description Computational Expressions in C
  * @author [Jon Ruttan](jonruttan@gmail.com)
@@ -16,14 +16,14 @@
 /*
  * # Includes
  */
-#include "x-gc.h"
+#include "x-heap.h"
 
-#ifdef X_GC
+#ifdef X_HEAP
 
 /*
- * # Garbage Collection Functions
+ * # Heap Management Functions
  */
-x_obj_t *x_gc_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
+x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
 	union x_datum_union *tmp;
 	short units;
@@ -41,7 +41,7 @@ x_obj_t *x_gc_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 		tmp = x_obj_data_ptr(p_obj) + units - 1;
 
 		while (tmp >= x_obj_data_ptr(p_obj)) {
-			x_gc_mark(p_base, x_obj(*tmp--), flags);
+			x_heap_mark(p_base, x_obj(*tmp--), flags);
 		}
 	}
 
@@ -50,20 +50,20 @@ x_obj_t *x_gc_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 }
 
 /*
- * NOTE: If the top object is deleted the GC structure will fragment.
+ * NOTE: If the top object is deleted the heap structure will fragment.
  */
-x_obj_t *x_gc_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
 	x_obj_t *gc = p_obj, *tmp,
-		*prev = x_obj_gc(p_base) == p_obj ? p_base : p_obj;
+		*prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
 
 	while (gc) {
 		if (flags && x_obj_flags(gc) & flags) {
 			x_obj_flags(gc) &= ~flags;
 			prev = gc;
-			gc = x_obj_gc(gc);
+			gc = x_obj_heap(gc);
 		} else {
-			tmp = x_obj_gc(prev) = x_obj_gc(gc);
+			tmp = x_obj_heap(prev) = x_obj_heap(gc);
 			x_obj_free(gc);
 			gc = tmp;
 		}
@@ -72,4 +72,4 @@ x_obj_t *x_gc_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 	return p_base;
 }
 
-#endif /* X_GC */
+#endif /* X_HEAP */

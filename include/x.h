@@ -43,13 +43,13 @@
 #define X_DEBUG_BUFFER_SIZE	65536
 
 /*
- * Whether to include Garbage Collection structures.
+ * Whether to include Heap structures.
  *
- * @constant X_GC
+ * @constant X_HEAP
  */
-#ifndef X_GC
-/*#define X_GC*/
-#endif /* X_GC */
+#ifndef X_HEAP
+/*#define X_HEAP*/
+#endif /* X_HEAP */
 
 /*
  * The C compiler's target machine, for example, `i686-pc-linux-gnu`.

@@ -23,7 +23,7 @@
 # Override default compiler and flags
 CC?=gcc
 CFLAGS+=-Wall -Wextra -Wno-unused-parameter
-CFLAGS+=-DX_GC
+CFLAGS+=-DX_HEAP
 
 # Smaller, faster, flakier?
 # CFLAGS+=-Wl,--gc-sections -fdata-sections -fno-stack-protector -Wa,--noexecstack -fno-builtin -fno-unwind-tables -fno-asynchronous-unwind-tables -Os

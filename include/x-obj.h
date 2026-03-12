@@ -55,13 +55,13 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_OWN=0x20,
 	X_OBJ_FLAG_RO=0x40,
 
-#ifndef X_GC
+#ifndef X_HEAP
 	X_OBJ_FLAG_MASK=0x7F
-#else /* X_GC */
-	X_OBJ_FLAG_GC=0x80,
+#else /* X_HEAP */
+	X_OBJ_FLAG_HEAP=0x80,
 
 	X_OBJ_FLAG_MASK=0xFF
-#endif /* X_GC */
+#endif /* X_HEAP */
 } x_obj_flag_t;
 
 typedef union x_datum_union x_obj_t;
@@ -79,11 +79,11 @@ union x_datum_union
 };
 
 
-#ifdef X_GC
-#define X_OBJ_UNITS_GC				1
-#else /* X_GC */
-#define X_OBJ_UNITS_GC				0
-#endif /* X_GC */
+#ifdef X_HEAP
+#define X_OBJ_UNITS_HEAP			1
+#else /* X_HEAP */
+#define X_OBJ_UNITS_HEAP			0
+#endif /* X_HEAP */
 
 #ifndef X_OBJ_UNITS_TYPE
 #define X_OBJ_UNITS_TYPE			1
@@ -94,12 +94,12 @@ union x_datum_union
 #endif /* X_OBJ_UNITS_FLAGS */
 
 enum {
-#ifdef X_GC
-	X_OBJ_META_GC = 0,
-#endif /* X_GC */
-	X_OBJ_META_TYPE = X_OBJ_UNITS_GC,
-	X_OBJ_META_FLAGS = (X_OBJ_UNITS_GC + X_OBJ_UNITS_TYPE),
-	X_OBJ_META_LEN = (X_OBJ_UNITS_GC + X_OBJ_UNITS_TYPE + X_OBJ_UNITS_FLAGS)
+#ifdef X_HEAP
+	X_OBJ_META_HEAP = 0,
+#endif /* X_HEAP */
+	X_OBJ_META_TYPE = X_OBJ_UNITS_HEAP,
+	X_OBJ_META_FLAGS = (X_OBJ_UNITS_HEAP + X_OBJ_UNITS_TYPE),
+	X_OBJ_META_LEN = (X_OBJ_UNITS_HEAP + X_OBJ_UNITS_TYPE + X_OBJ_UNITS_FLAGS)
 };
 
 #ifndef X_OBJ_UNITS_META
@@ -119,9 +119,9 @@ typedef x_obj_t x_satom_t[X_OBJ_META_LEN + X_OBJ_UNITS_ATOM];
 
 typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
 
-#ifdef X_GC
-#define x_obj_gc(X)					((X)[X_OBJ_META_GC].p)
-#endif /* X_GC */
+#ifdef X_HEAP
+#define x_obj_heap(X)				((X)[X_OBJ_META_HEAP].p)
+#endif /* X_HEAP */
 
 #define x_obj_type(X)				((X)[X_OBJ_META_TYPE].p)
 
@@ -131,11 +131,11 @@ typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
 #define x_obj_data_i(X,I)			(x_obj_data_ptr((X))[(I)])
 #define x_obj_data(X)				x_obj_data_i((X),0)
 
-#ifdef X_GC
+#ifdef X_HEAP
 #define x_obj_set(T,F,...)			{ { .v = NULL }, { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
-#else /* X_GC */
+#else /* X_HEAP */
 #define x_obj_set(T,F,...)			{ { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
-#endif /* X_GC */
+#endif /* X_HEAP */
 
 
 #define x_obj_type_isnil(B,X)		x_obj_isnil((B), x_obj_type(X))
@@ -241,7 +241,14 @@ void x_obj_free(x_obj_t *p_obj);
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args);
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj);
 
+x_obj_t *x_atom_prim_units(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args);
 x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj);
+
+x_obj_t *x_atom_prim_length(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj);
 
 #ifdef X_TYPE
