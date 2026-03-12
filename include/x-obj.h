@@ -258,7 +258,7 @@ x_obj_t *x_obj_read(x_obj_t *p_base, x_obj_t *p_obj);
 x_obj_t *x_obj_write(x_obj_t *p_base, x_obj_t *p_obj);
 #endif /* X_TYPE */
 
-void x_obj_error(x_obj_t *p_base, x_char_t *message, x_char_t *symbol);
+void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj);
 
 #ifdef DEBUG
 void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt, va_list ap);

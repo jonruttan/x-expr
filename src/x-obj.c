@@ -17,9 +17,7 @@
  * # Includes
  */
 #include "x-obj.h"
-#ifdef X_PROFILE
 #include "x-base.h"
-#endif
 
 
 x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_NAME}),
@@ -32,10 +30,9 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 /*
  * # Object Functions
  */
-#ifndef X_OBJ_OVERRIDE
 int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 {
-	return p_obj == NULL || p_obj == p_base;
+	return p_obj == NULL;
 }
 
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
@@ -45,7 +42,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (X_OBJ_META_LEN + units));
 
 	if (p_obj == NULL) {
-		return p_base;
+		return NULL;
 	}
 
 	x_obj_type(p_obj) = p_type;
@@ -56,7 +53,9 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 		x_obj_heap(p_obj) = x_obj_heap(p_base);
 		x_obj_heap(p_base) = p_obj;
 #ifdef X_PROFILE
-		if (x_base_isset(p_base))
+		if (x_base_isset(p_base)
+			&& x_restobj(x_restobj(x_restobj(x_firstobj(p_base)))) != NULL
+			&& x_base_field_profile(p_base) != NULL)
 			x_atomint(x_base_field_profile_allocs(p_base))++;
 #endif /* X_PROFILE */
 	} else {
@@ -66,7 +65,6 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 
 	return p_obj;
 }
-#endif /* X_OBJ_OVERRIDE */
 
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, va_list ap)
 {
@@ -99,13 +97,12 @@ void x_obj_free(x_obj_t *p_obj)
 	x_sys_free(p_obj);
 }
 
-#ifndef X_OBJ_OVERRIDE
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_obj;
 
 	if (x_obj_isnil(p_base, p_args) || x_obj_isnil(p_base, (p_obj = x_firstobj(p_args)))) {
-		return p_base;
+		return NULL;
 	}
 
 	if (x_obj_type_issatom(p_obj)
@@ -114,9 +111,14 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 		return x_obj_type(p_obj);
 	}
 
-	return p_base;
+#ifdef X_TYPE
+	if (x_base_isset(p_base) && x_base_field_hook_type_name(p_base) != NULL) {
+		return x_atomfn(x_base_field_hook_type_name(p_base))(p_base, p_args);
+	}
+#endif /* X_TYPE */
+
+	return NULL;
 }
-#endif /* X_OBJ_OVERRIDE */
 
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -142,13 +144,12 @@ x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 	return x_type_units_pair_obj;
 }
 
-#ifndef X_OBJ_OVERRIDE
 x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_obj;
 
 	if (x_obj_isnil(p_base, p_args) || x_obj_isnil(p_base, (p_obj = x_firstobj(p_args)))) {
-		return p_base;
+		return NULL;
 	}
 
 	if (x_obj_type_isspair(p_obj)) {
@@ -159,9 +160,14 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 		return x_atom_prim_units(p_base, p_args);
 	}
 
-	return p_base;
+#ifdef X_TYPE
+	if (x_base_isset(p_base) && x_base_field_hook_units(p_base) != NULL) {
+		return x_atomfn(x_base_field_hook_units(p_base))(p_base, p_args);
+	}
+#endif /* X_TYPE */
+
+	return NULL;
 }
-#endif /* X_OBJ_OVERRIDE */
 
 x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -187,13 +193,12 @@ x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 	return x_type_length_pair_obj;
 }
 
-#ifndef X_OBJ_OVERRIDE
 x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_obj;
 
 	if (x_obj_isnil(p_base, p_args) || x_obj_isnil(p_base, (p_obj = x_firstobj(p_args)))) {
-		return p_base;
+		return NULL;
 	}
 
 	if (x_obj_type_isspair(p_obj)) {
@@ -204,9 +209,14 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 		return x_atom_prim_length(p_base, p_args);
 	}
 
-	return p_base;
+#ifdef X_TYPE
+	if (x_base_isset(p_base) && x_base_field_hook_length(p_base) != NULL) {
+		return x_atomfn(x_base_field_hook_length(p_base))(p_base, p_args);
+	}
+#endif /* X_TYPE */
+
+	return NULL;
 }
-#endif /* X_OBJ_OVERRIDE */
 
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -224,25 +234,33 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 
 /*
  * Output an error message to *stderr*, then **exit**.
- *
- * @function x_obj_error
- * @param {x_char_t *} message A C string error message to output.
- * @param {x_char_t *} symbol A C string with additional symbolic information or _NULL_.
  */
-#ifndef X_OBJ_OVERRIDE
-void x_obj_error(x_obj_t *p_base, x_char_t *message, x_char_t *symbol)
+void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 {
+	x_char_t *symbol = NULL;
+
+#ifdef X_TYPE
+	if (x_base_isset(p_base) && x_base_field_hook_error(p_base) != NULL) {
+		x_base_error(p_base, message, p_obj);
+		return;
+	}
+#endif /* X_TYPE */
+
+	if (p_obj != NULL && x_obj_type_issatom(p_obj)) {
+		symbol = x_atomstr(p_obj);
+	}
+
 	x_error(STDERR_FILENO, message, symbol);
 }
-#endif /* X_OBJ_OVERRIDE */
 
 
 #ifdef DEBUG
 
-#ifndef X_OBJ_OVERRIDE
 void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt, va_list ap)
 {
-	_x_debug_va(file, line, STDERR_FILENO, fmt, ap);
+	int fd = x_base_isset(p_base) ? x_atomint(x_base_field_fileerr(p_base)) : STDERR_FILENO;
+
+	_x_debug_va(file, line, fd, fmt, ap);
 }
 
 void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ...)
@@ -254,20 +272,6 @@ void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ..
 	va_end(ap);
 }
 
-/*
- * Output an Object's properties to *stderr*.
- *
- * **Note:** Only functions when *`DEBUG`* is defined.
- *
- * @function x_obj_dump
- * @param   {x_obj_t *} p_base A pointer to the p_base object.
- * @param   {x_obj_t *} p_obj A pointer to the object to dump.
- * @param   {x_char_t *} msg A message to prepend to the message.
- *
- * @example
- *   x_obj_t *p_obj = x_obj_alloc(X_RESOURCE, X_OBJ_FLAG_OWN|X_OBJ_FLAG_HEAP, 0);
- *   x_obj_debug(NULL, p_obj, ":");
- */
 void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj, char *msg)
 {
 	x_char_t *type = x_obj_type_name(p_base, p_obj);
@@ -323,7 +327,6 @@ void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj
 		, s
 	);
 }
-#endif /* X_OBJ_OVERRIDE */
 
 #else /* DEBUG */
 
