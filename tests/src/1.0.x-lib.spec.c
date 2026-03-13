@@ -489,8 +489,6 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 0 in base 1", 0 == i);
-	/* NOTE: The result differs between GNU and BSD. */
-	_xit_should("update end pointer", s + 2 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 0 in base 2", 0 == i);
@@ -529,7 +527,6 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 1 in base 1", 0 == i);
-	_xit_should("update end pointer", s + 2 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 1 in base 2", 1 == i);
@@ -568,11 +565,9 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 2 in base 1", 0 == i);
-	_xit_should("update end pointer", s + 2 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 2 in base 2", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 8);
 	_it_should("convert 2 in base 8", 2 == i);
@@ -607,11 +602,9 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 7 in base 1", 0 == i);
-	_xit_should("update end pointer", s + 2 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 7 in base 2", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 8);
 	_it_should("convert 7 in base 8", 7 == i);
@@ -646,15 +639,12 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 8 in base 1", 0 == i);
-	_xit_should("update end pointer", s + 2 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 8 in base 2", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 8);
 	_it_should("convert 8 in base 8", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 16);
 	_it_should("convert 8 in base 16", 8 == i);
@@ -675,19 +665,15 @@ static char *test_lib_strtoint(void)
 	s = (x_char_t *)" f ";
 	i = x_lib_strtoint(s, &ps, 0);
 	_it_should("convert f in base 0", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert f in base 1", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert f in base 2", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 8);
 	_it_should("convert f in base 8", 0 == i);
-	_xit_should("update end pointer", s == ps);
 
 	i = x_lib_strtoint(s, &ps, 16);
 	_it_should("convert f in base 16", 15 == i);
@@ -712,7 +698,6 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 10 in base 1", 0 == i);
-	_xit_should("update end pointer", s + 3 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 10 in base 2", 2 == i);
@@ -745,7 +730,6 @@ static char *test_lib_strtoint(void)
 
 	i = x_lib_strtoint(s, &ps, 1);
 	_it_should("convert 1f in base 1", 0 == i);
-	_xit_should("update end pointer", s + 2 == ps);
 
 	i = x_lib_strtoint(s, &ps, 2);
 	_it_should("convert 1f in base 2", 1 == i);
