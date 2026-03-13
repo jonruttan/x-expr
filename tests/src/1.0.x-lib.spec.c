@@ -767,7 +767,18 @@ static char *test_lib_strtoint(void)
 	return NULL;
 }
 
+static char *test_lib_abs(void)
+{
+	_it_should("return positive for positive", 5 == x_lib_abs(5));
+	_it_should("return positive for negative", 5 == x_lib_abs(-5));
+	_it_should("return zero for zero", 0 == x_lib_abs(0));
+	_it_should("return 1 for -1", 1 == x_lib_abs(-1));
+
+	return NULL;
+}
+
 static char *run_tests() {
+	_run_test(test_lib_abs);
 	_run_test(test_lib_inttostr);
 	_run_test(test_lib_memcpy);
 	_run_test(test_lib_memdup);

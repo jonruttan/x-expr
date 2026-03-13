@@ -53,54 +53,47 @@ static char *test_gc_mark(void)
 
 	x_sys_free(p_obj[0]);
 
-return NULL;
 	/* Pairs */
-/*
 
 	p_obj[0] = x_mksatom(NULL, 0);
-	_it_should("set the pair' first object's flags to 0", x_obj_flags(p_obj[0]) == 0);
+	_it_should("set the pair's first object's flags to 0", x_obj_flags(p_obj[0]) == 0);
 	p_obj[1] = x_mksatom(NULL, 1);
-	_it_should("set the pair' rest object's flags to 0", x_obj_flags(p_obj[1]) == 0);
+	_it_should("set the pair's rest object's flags to 0", x_obj_flags(p_obj[1]) == 0);
 
-	p_obj[2] = x_obj_make(NULL, &x_type_pair_obj, 0, 2, p_obj[0], p_obj[1]);
+	p_obj[2] = x_mkspair(NULL, p_obj[0], p_obj[1]);
 	_it_should("set the pair object's flags to 0", x_obj_flags(p_obj[2]) == 0);
 
-	p_ret = x_heap_mark(NULL, p_obj[2], 1);
-	_it_should("return the pair object", p_obj[2] == p_ret);
-	_it_should("mark the pair object with the flag provided", 1 == x_obj_flags(p_obj[2]));
-	_it_should("mark the pair's first object with the flag provided", 1 == x_obj_flags(p_obj[0]));
-	_it_should("mark the pair's rest object with the flag provided", 1 == x_obj_flags(p_obj[1]));
+	p_ret = x_heap_mark(NULL, p_obj[2], X_OBJ_FLAG_2, NULL);
+	_it_should("mark the pair's first object", X_OBJ_FLAG_2 == x_obj_flags(p_obj[0]));
+	_it_should("mark the pair's rest object", X_OBJ_FLAG_2 == x_obj_flags(p_obj[1]));
+	_it_should("mark the pair object itself", X_OBJ_FLAG_2 == x_obj_flags(p_obj[2]));
 
 	x_sys_free(p_obj[2]);
 	x_sys_free(p_obj[1]);
 	x_sys_free(p_obj[0]);
-*/
 
 	/* Pairs (Recursive) */
-/*
+
 	p_obj[0] = x_mkspair(NULL, NULL, NULL);
-	_it_should("set the pair' first object's flags to 0", x_obj_flags(p_obj[0]) == 0);
+	_it_should("set the recursive pair's flags to 0", x_obj_flags(p_obj[0]) == 0);
 	p_obj[1] = x_mkspair(NULL, p_obj[0], NULL);
-	_it_should("set the pair' rest object's flags to 0", x_obj_flags(p_obj[1]) == 0);
+	_it_should("set the second pair's flags to 0", x_obj_flags(p_obj[1]) == 0);
 
-	p_obj[2] = x_obj_make(NULL, &x_type_pair_obj, 0, 2, p_obj[0], p_obj[1]);
-	_it_should("set the pair object's flags to 0", x_obj_flags(p_obj[2]) == 0);
+	p_obj[2] = x_mkspair(NULL, p_obj[0], p_obj[1]);
+	_it_should("set the root pair's flags to 0", x_obj_flags(p_obj[2]) == 0);
 
-	x_firstobj(p_obj[0]) = p_obj[2];
-	x_restobj(p_obj[0]) = p_obj[2];
-	x_restobj(p_obj[1]) = p_obj[2];
+	x_firstobj(p_obj[0]) = (x_obj_t *)p_obj[2];
+	x_restobj(p_obj[0]) = (x_obj_t *)p_obj[2];
+	x_restobj(p_obj[1]) = (x_obj_t *)p_obj[2];
 
-
-	p_ret = x_heap_mark(NULL, p_obj[2], 1);
-	_it_should("return the pair object", p_obj[2] == p_ret);
-	_it_should("mark the pair object with the flag provided", 1 == x_obj_flags(p_obj[2]));
-	_it_should("mark the pair's first object with the flag provided", 1 == x_obj_flags(p_obj[0]));
-	_it_should("mark the pair's rest object with the flag provided", 1 == x_obj_flags(p_obj[1]));
+	p_ret = x_heap_mark(NULL, p_obj[2], X_OBJ_FLAG_2, NULL);
+	_it_should("mark the root pair", X_OBJ_FLAG_2 == x_obj_flags(p_obj[2]));
+	_it_should("mark the recursive pair", X_OBJ_FLAG_2 == x_obj_flags(p_obj[0]));
+	_it_should("mark the second pair", X_OBJ_FLAG_2 == x_obj_flags(p_obj[1]));
 
 	x_sys_free(p_obj[2]);
 	x_sys_free(p_obj[1]);
 	x_sys_free(p_obj[0]);
-*/
 
 	/* Symbols */
 /*	p_base = x_obj_alloc(NULL, X_TYPE_SYMBOL, 0, 1);
@@ -491,7 +484,7 @@ static char *test_gc_sweep(void)
 
 static char *run_tests() {
 	_run_test(test_gc_mark);
-	_xrun_test(test_gc_sweep);
+	_run_test(test_gc_sweep);
 
 	return NULL;
 }

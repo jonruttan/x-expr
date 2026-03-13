@@ -2,6 +2,7 @@
  * # Unit Tests: *x-sys*
  */
 
+#define X_CLOCK
 #define TEST_RUNNER_OVERHEAD
 #include "test-runner.h"
 
@@ -88,12 +89,39 @@ static char *test_sys_write(void)
 	return NULL;
 }
 
+static char *test_sys_read_char(void)
+{
+	char *test_string = "AB";
+
+	helper_file_buffer_ptr[TEST_HELPER_FILE_STDIN] = test_string;
+	helper_file_reset();
+
+	_it_should("read the first character", 'A' == x_sys_read_char(TEST_HELPER_FILE_STDIN));
+	_it_should("read the second character", 'B' == x_sys_read_char(TEST_HELPER_FILE_STDIN));
+	_it_should("X_SYS_EOF is defined", X_SYS_EOF != 0);
+
+	return NULL;
+}
+
+static char *test_sys_clock(void)
+{
+	x_int_t t;
+
+	t = x_sys_clock();
+	_it_should("return a non-negative value", t >= 0);
+
+	return NULL;
+}
+
 static char *run_tests() {
 	_run_test(test_sys_malloc);
 	_run_test(test_sys_free);
 
 	_run_test(test_sys_read);
 	_run_test(test_sys_write);
+
+	_run_test(test_sys_read_char);
+	_run_test(test_sys_clock);
 
 	return NULL;
 }

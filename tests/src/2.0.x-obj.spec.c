@@ -1667,6 +1667,85 @@ static char *test_restfn(void)
 }
 
 
+static char *test_atom_prim_units(void)
+{
+	x_obj_t *p_atom, *p_args, *p_ret;
+
+	helper_alloc_reset();
+
+	p_atom = x_mksatom(NULL, 42);
+	p_args = x_mkspair(NULL, p_atom, NULL);
+	p_ret = x_atom_prim_units(NULL, p_args);
+	_it_should("return the atom units object", p_ret == x_type_units_atom_obj);
+	x_obj_free(p_args);
+	x_obj_free(p_atom);
+
+	return NULL;
+}
+
+static char *test_pair_prim_units(void)
+{
+	x_obj_t *p_pair, *p_args, *p_ret;
+
+	helper_alloc_reset();
+
+	p_pair = x_mkspair(NULL, 1, 2);
+	p_args = x_mkspair(NULL, p_pair, NULL);
+	p_ret = x_pair_prim_units(NULL, p_args);
+	_it_should("return the pair units object", p_ret == x_type_units_pair_obj);
+	x_obj_free(p_args);
+	x_obj_free(p_pair);
+
+	return NULL;
+}
+
+static char *test_atom_prim_length(void)
+{
+	x_obj_t *p_atom, *p_args, *p_ret;
+
+	helper_alloc_reset();
+
+	p_atom = x_mksatom(NULL, 42);
+	p_args = x_mkspair(NULL, p_atom, NULL);
+	p_ret = x_atom_prim_length(NULL, p_args);
+	_it_should("return the atom length object", p_ret == x_type_length_atom_obj);
+	x_obj_free(p_args);
+	x_obj_free(p_atom);
+
+	return NULL;
+}
+
+static char *test_pair_prim_length(void)
+{
+	x_obj_t *p_pair, *p_args, *p_ret;
+
+	helper_alloc_reset();
+
+	p_pair = x_mkspair(NULL, 1, 2);
+	p_args = x_mkspair(NULL, p_pair, NULL);
+	p_ret = x_pair_prim_length(NULL, p_args);
+	_it_should("return the pair length object", p_ret == x_type_length_pair_obj);
+	x_obj_free(p_args);
+	x_obj_free(p_pair);
+
+	return NULL;
+}
+
+static char *test_obj_flag_constants(void)
+{
+	_it_should("X_OBJ_FLAG_4 is 0x8", X_OBJ_FLAG_4 == 0x8);
+	_it_should("X_OBJ_FLAG_ATTR_MASK is 0xF", X_OBJ_FLAG_ATTR_MASK == 0xF);
+	_it_should("X_OBJ_FLAG_FN follows PRIM", X_OBJ_FLAG_FN == X_OBJ_FLAG_PRIM + 1);
+	_it_should("X_OBJ_FLAG_INT follows FN", X_OBJ_FLAG_INT == X_OBJ_FLAG_FN + 1);
+	_it_should("X_OBJ_FLAG_CHAR follows INT", X_OBJ_FLAG_CHAR == X_OBJ_FLAG_INT + 1);
+	_it_should("X_OBJ_FLAG_STR follows CHAR", X_OBJ_FLAG_STR == X_OBJ_FLAG_CHAR + 1);
+	_it_should("X_OBJ_FLAG_PTR follows STR", X_OBJ_FLAG_PTR == X_OBJ_FLAG_STR + 1);
+	_it_should("X_OBJ_FLAG_MASK covers all flags", X_OBJ_FLAG_MASK == 0xFF);
+	_it_should("X_SYS_EXIT_SUCCESS is defined", X_SYS_EXIT_SUCCESS == 0);
+
+	return NULL;
+}
+
 static char *run_tests()
 {
 	_run_test(test_obj_sys_alloc);
@@ -1740,6 +1819,13 @@ static char *run_tests()
 	_run_test(test_restchar);
 	_run_test(test_reststr);
 	_run_test(test_restfn);
+
+	_run_test(test_atom_prim_units);
+	_run_test(test_pair_prim_units);
+	_run_test(test_atom_prim_length);
+	_run_test(test_pair_prim_length);
+
+	_run_test(test_obj_flag_constants);
 
 	return NULL;
 }
