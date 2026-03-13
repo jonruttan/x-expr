@@ -133,6 +133,16 @@ test-quick:
 tests: test
 .PHONY: tests
 
+coverage:
+	CFLAGS="$(CFLAGS) -fno-common -O0 -g --coverage -I. -DTESTS" \
+		ANALYZER_FLAGS="--print-summary --txt" \
+		sh $(PATH_TESTS)/test-runner/test-runner-coverage.sh $(TESTS)
+.PHONY: coverage
+
+coverage-macros:
+	sh $(PATH_TESTS)/test-runner/macro-coverage.sh include $(PATH_TESTS)/src
+.PHONY: coverage-macros
+
 watch:
 	while true; do \
 		fswatch -o --event Created --event Updated --event MovedTo $(HEADERS) $(SOURCES) tests | \
