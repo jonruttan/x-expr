@@ -482,9 +482,91 @@ static char *test_gc_sweep(void)
 	return NULL;
 }
 
+/*
+ * ## Mark callback helpers
+ */
+static x_obj_t *_mark_fn_continue(x_obj_t *p_base, x_obj_t *p_obj,
+	x_obj_flag_t flags)
+{
+	return p_obj;
+}
+
+static x_obj_t *_mark_fn_stop(x_obj_t *p_base, x_obj_t *p_obj,
+	x_obj_flag_t flags)
+{
+	return NULL;
+}
+
+/*
+ * ## Free callback helper
+ */
+static int _free_fn_count;
+
+static void _free_fn(x_obj_t *p_base, x_obj_t *p_obj)
+{
+	_free_fn_count++;
+}
+
+static char *test_gc_mark_fn(void)
+{
+	x_obj_t *p_obj, *p_ret;
+
+	helper_alloc_reset();
+
+	/* mark_fn returning non-NULL continues (but atom is already marked
+	 * so the while condition stops on the next iteration) */
+	p_obj = x_mkfsatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_ret = x_heap_mark(NULL, p_obj, X_OBJ_FLAG_1, _mark_fn_continue);
+	_it_should("mark the object via mark_fn continue path",
+		X_OBJ_FLAG_1 == (x_obj_flags(p_obj) & X_OBJ_FLAG_1));
+	_it_should("return the object after already-marked check",
+		p_ret == p_obj);
+
+	x_sys_free(p_obj);
+
+	/* mark_fn returning NULL stops iteration */
+	p_obj = x_mkfsatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_ret = x_heap_mark(NULL, p_obj, X_OBJ_FLAG_2, _mark_fn_stop);
+	_it_should("mark the object via mark_fn stop path",
+		X_OBJ_FLAG_2 == (x_obj_flags(p_obj) & X_OBJ_FLAG_2));
+	_it_should("return NULL when mark_fn stops", p_ret == NULL);
+
+	x_sys_free(p_obj);
+
+	return NULL;
+}
+
+static char *test_gc_sweep_free_fn(void)
+{
+	x_obj_t *p_base, *p_ret;
+	int n;
+
+	helper_alloc_reset();
+	_free_fn_count = 0;
+
+	p_base = x_obj_alloc(NULL, NULL, X_OBJ_FLAG_NONE, 0);
+	x_obj_alloc(p_base, NULL, X_OBJ_FLAG_NONE, 0);
+
+	n = helper_free_count();
+	p_ret = x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_RO,
+		_free_fn);
+	_it_should("call the free callback", 1 == _free_fn_count);
+	_it_should("free the object", 1 == helper_free_count() - n);
+	_it_should("return the base object", p_base == p_ret);
+
+	/* Clean up */
+	x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE, NULL);
+	_it_should("have freed all allocated memory",
+		helper_free_count() == helper_alloc_count());
+
+	return NULL;
+}
+
 static char *run_tests() {
 	_run_test(test_gc_mark);
 	_run_test(test_gc_sweep);
+	_run_test(test_gc_mark_fn);
+	_run_test(test_gc_sweep_free_fn);
 
 	return NULL;
 }
