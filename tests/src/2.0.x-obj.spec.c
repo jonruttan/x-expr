@@ -182,8 +182,8 @@ static char *test_obj_prim_type_name(void)
 	p_base = x_mksatom(NULL, 0);
 	p_args = x_mkspair(p_base, p_base, p_base);
 	p_ret = x_obj_prim_type_name(p_base, p_args);
-	_it_should("return the base when args is nil",
-		x_obj_isnil(p_base, p_ret)
+	_it_should("return atom type name when first arg is a simple atom",
+		(x_obj_t *)x_type_atom_obj == p_ret
 	);
 	x_obj_free(p_args);
 	x_obj_free(p_base);
@@ -337,8 +337,8 @@ static char *test_obj_prim_units(void)
 	p_base = x_mksatom(NULL, 0);
 	p_args = x_mkspair(p_base, p_base, p_base);
 	p_ret = x_obj_prim_units(p_base, p_args);
-	_it_should("return nil when args is nil",
-		x_obj_isnil(p_base, p_ret)
+	_it_should("return atom units when first arg is a simple atom",
+		p_ret == x_type_units_atom_obj
 	);
 	x_obj_free(p_args);
 	x_obj_free(p_base);
@@ -390,14 +390,14 @@ static char *test_obj_prim_units(void)
 	p_obj = x_obj_make(p_base, p_type, 0, 1, TEST_TYPE_LENGTH);
 	p_args = x_mkspair(p_base, p_obj, p_base);
 	p_ret = x_obj_prim_units(p_base, p_args);
-	_it_should("return the base when type object is set and "
-		"byte function is nil",
-		p_base == p_ret
+	_it_should("return nil when type object is set and "
+		"units hook is nil",
+		x_obj_isnil(p_base, p_ret)
 	);
 
 	p_ret = x_obj_prim_units(p_base, p_args);
-	_it_should("return the base when type object is set",
-		p_base == p_ret
+	_it_should("return nil when type object is set but no hook",
+		x_obj_isnil(p_base, p_ret)
 	);
 	x_obj_free(p_obj);
 	x_obj_free(p_args);
@@ -514,8 +514,8 @@ static char *test_obj_prim_length(void)
 	p_base = x_mksatom(NULL, 0);
 	p_args = x_mkspair(p_base, p_base, p_base);
 	p_ret = x_obj_prim_length(p_base, p_args);
-	_it_should("return nil when args is nil",
-		x_obj_isnil(p_base, p_ret)
+	_it_should("return atom length when first arg is a simple atom",
+		p_ret == x_type_length_atom_obj
 	);
 	x_obj_free(p_args);
 	x_obj_free(p_base);
@@ -567,14 +567,14 @@ static char *test_obj_prim_length(void)
 	p_obj = x_obj_make(p_base, p_type, 0, 1, TEST_TYPE_LENGTH);
 	p_args = x_mkspair(p_base, p_obj, p_base);
 	p_ret = x_obj_prim_length(p_base, p_args);
-	_it_should("return the base when type object is set and "
-		"byte function is nil",
-		p_base == p_ret
+	_it_should("return nil when type object is set and "
+		"length hook is nil",
+		x_obj_isnil(p_base, p_ret)
 	);
 
 	p_ret = x_obj_prim_length(p_base, p_args);
-	_it_should("return the base when type object is set",
-		p_base == p_ret
+	_it_should("return nil when type object is set but no hook",
+		x_obj_isnil(p_base, p_ret)
 	);
 	x_obj_free(p_obj);
 	x_obj_free(p_args);
@@ -669,8 +669,8 @@ static char *test_obj_is_nil(void)
 	x_obj_free(p_obj);
 
 	p_base = x_mksatom(NULL, 0);
-	_it_should("return true when base is an object and value is base",
-		1 == x_obj_isnil(p_base, p_base)
+	_it_should("return false when base is an object and value is base",
+		0 == x_obj_isnil(p_base, p_base)
 	);
 
 	_it_should("return true when base is an object and value is NULL",
@@ -678,7 +678,7 @@ static char *test_obj_is_nil(void)
 	);
 
 	p_obj = x_mksatom(p_base, 0);
-	_it_should("return false when base is and object and value is another object",
+	_it_should("return false when base is an object and value is another object",
 		0 == x_obj_isnil(p_base, p_obj)
 	);
 
