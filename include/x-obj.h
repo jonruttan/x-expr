@@ -249,6 +249,23 @@ x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj);
 
+/*
+ * # Hooks
+ *
+ * Function pointers set by the parent project to extend x-obj behavior.
+ * Default to NULL; when NULL, the hook is skipped.
+ */
+#ifdef X_TYPE
+extern x_prim_fn x_obj_hook_type_name;
+extern x_prim_fn x_obj_hook_units;
+extern x_prim_fn x_obj_hook_length;
+extern void (*x_obj_hook_error)(x_obj_t *, x_char_t *, x_obj_t *);
+#endif /* X_TYPE */
+
+#ifdef X_PROFILE
+extern void (*x_obj_hook_alloc)(x_obj_t *);
+#endif /* X_PROFILE */
+
 #ifdef X_TYPE
 x_obj_t *x_obj_call(x_obj_t *p_base, x_obj_t *p_obj);
 x_obj_t *x_obj_eval(x_obj_t *p_base, x_obj_t *p_obj);

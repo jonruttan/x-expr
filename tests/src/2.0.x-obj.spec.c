@@ -60,23 +60,23 @@ static char *test_obj_sys_alloc(void)
 
 	p_obj[0] = x_obj_alloc(NULL, (x_obj_t *)x_type_atom_obj, 2, 3);
 	_it_should("make a new object", p_obj[0] != NULL);
-	_it_should("set the new object's gc pointer to NULL", x_obj_gc(p_obj[0]) == NULL);
+	_it_should("set the new object's gc pointer to NULL", x_obj_heap(p_obj[0]) == NULL);
 	_it_should("set the new object's type to the value given", x_obj_type(p_obj[0]) == (x_obj_t *)x_type_atom_obj);
 	_it_should("set the new object's flags to the value given", x_obj_flags(p_obj[0]) == 2);
 
 	p_obj[1] = x_obj_alloc(p_obj[0], (x_obj_t *)x_type_atom_obj, 3, 4);
 	_it_should("make a new object", p_obj[1] != NULL);
-	_it_should("set the new object's gc pointer to NULL", x_obj_gc(p_obj[1]) == NULL);
+	_it_should("set the new object's gc pointer to NULL", x_obj_heap(p_obj[1]) == NULL);
 	_it_should("set the new object's type to the value given", x_obj_type(p_obj[1]) == (x_obj_t *)x_type_atom_obj);
 	_it_should("set the new object's flags to the value given", x_obj_flags(p_obj[1]) == 3);
-	_it_should("set the p_base object's gc pointer to the new object", x_obj_gc(p_obj[0]) == p_obj[1]);
+	_it_should("set the p_base object's gc pointer to the new object", x_obj_heap(p_obj[0]) == p_obj[1]);
 
 	p_obj[2] = x_obj_alloc(p_obj[0], (x_obj_t *)x_type_atom_obj, 4, 5);
 	_it_should("make a new object", p_obj[2] != NULL);
-	_it_should("set the new object's gc pointer to obj1", x_obj_gc(p_obj[2]) == p_obj[1]);
+	_it_should("set the new object's gc pointer to obj1", x_obj_heap(p_obj[2]) == p_obj[1]);
 	_it_should("set the new object's type to the value given", x_obj_type(p_obj[2]) == (x_obj_t *)x_type_atom_obj);
 	_it_should("set the new object's flags to the value given", x_obj_flags(p_obj[2]) == 4);
-	_it_should("set the p_base object's gc pointer to the new object", x_obj_gc(p_obj[0]) == p_obj[2]);
+	_it_should("set the p_base object's gc pointer to the new object", x_obj_heap(p_obj[0]) == p_obj[2]);
 
 	x_sys_free(p_obj[2]);
 	x_sys_free(p_obj[1]);
@@ -93,7 +93,7 @@ static char *test_obj_sys_make(void)
 
 	p_obj = x_obj_make(NULL, (x_obj_t *)x_type_atom_obj, 2, 3, (void *)4, (void *)5);
 	_it_should("make a new object", p_obj != NULL);
-	_it_should("set the new object's gc pointer to NULL", x_obj_gc(p_obj) == NULL);
+	_it_should("set the new object's gc pointer to NULL", x_obj_heap(p_obj) == NULL);
 	_it_should("set the new object's type to the value given", x_obj_type(p_obj) == (x_obj_t *)x_type_atom_obj);
 	_it_should("set the new object's flags to the value given", x_obj_flags(p_obj) == 2);
 	_it_should("set the new object's first element", x_obj_data_ptr(p_obj)[0].p == (void *)4);
@@ -946,7 +946,7 @@ static char *test_make_atom(void)
 	p_obj = x_mkfsatom(p_base, flags, value);
 	_it_should("make an atom with the supplied base, flags and value",
 		x_obj_type_issatom(p_obj)
-		&& p_obj == x_obj_gc(p_base)
+		&& p_obj == x_obj_heap(p_base)
 		&& flags == x_obj_flags(p_obj)
 		&& value == x_int(x_obj_data(p_obj))
 	);
@@ -977,7 +977,7 @@ static char *test_make_atom_own(void)
 	p_obj = x_mkfsatomown(p_base, flags, value);
 	_it_should("make an atom with the supplied base, flags and value",
 		x_obj_type_issatom(p_obj)
-		&& p_obj == x_obj_gc(p_base)
+		&& p_obj == x_obj_heap(p_base)
 		&& (flags | X_OBJ_FLAG_OWN) == x_obj_flags(p_obj)
 		&& value == x_int(x_obj_data(p_obj))
 	);
@@ -1009,7 +1009,7 @@ static char *test_make_pair(void)
 	p_obj = x_mkfspair(p_base, flags, values[0], values[1]);
 	_it_should("make a pair with the supplied base, flags and values",
 		x_obj_type_isspair(p_obj)
-		&& p_obj == x_obj_gc(p_base)
+		&& p_obj == x_obj_heap(p_base)
 		&& flags == x_obj_flags(p_obj)
 		&& values[0] == x_int(x_obj_data(p_obj))
 		&& values[1] == x_int(x_obj_data_ptr(p_obj)[1])
@@ -1040,7 +1040,7 @@ static char *test_mkatom(void)
 	p_obj = x_mksatom(p_base, value);
 	_it_should("make an atom with the supplied base and value",
 		x_obj_type_issatom(p_obj)
-		&& p_obj == x_obj_gc(p_base)
+		&& p_obj == x_obj_heap(p_base)
 		&& X_OBJ_FLAG_NONE == x_obj_flags(p_obj)
 		&& value == x_int(x_obj_data(p_obj))
 	);
@@ -1070,7 +1070,7 @@ static char *test_mkatomown(void)
 	p_obj = x_mksatomown(p_base, value);
 	_it_should("make an atom with the supplied base, flags and value",
 		x_obj_type_issatom(p_obj)
-		&& p_obj == x_obj_gc(p_base)
+		&& p_obj == x_obj_heap(p_base)
 		&& X_OBJ_FLAG_OWN == x_obj_flags(p_obj)
 		&& value == x_int(x_obj_data(p_obj))
 	);
@@ -1101,7 +1101,7 @@ static char *test_mkpair(void)
 	p_obj = x_mkspair(p_base, values[0], values[1]);
 	_it_should("make a pair with the supplied base, flags and values",
 		x_obj_type_isspair(p_obj)
-		&& p_obj == x_obj_gc(p_base)
+		&& p_obj == x_obj_heap(p_base)
 		&& X_OBJ_FLAG_NONE == x_obj_flags(p_obj)
 		&& values[0] == x_int(x_obj_data(p_obj))
 		&& values[1] == x_int(x_obj_data_ptr(p_obj)[1])

@@ -17,7 +17,6 @@
  * # Includes
  */
 #include "x-obj.h"
-#include "x-base.h"
 
 
 x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_NAME}),
@@ -26,6 +25,20 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 	x_type_units_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_PAIR}),
 	x_type_length_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_ATOM}),
 	x_type_length_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_PAIR});
+
+/*
+ * # Hook Definitions
+ */
+#ifdef X_TYPE
+x_prim_fn x_obj_hook_type_name = NULL;
+x_prim_fn x_obj_hook_units = NULL;
+x_prim_fn x_obj_hook_length = NULL;
+void (*x_obj_hook_error)(x_obj_t *, x_char_t *, x_obj_t *) = NULL;
+#endif /* X_TYPE */
+
+#ifdef X_PROFILE
+void (*x_obj_hook_alloc)(x_obj_t *) = NULL;
+#endif /* X_PROFILE */
 
 /*
  * # Object Functions
@@ -53,10 +66,8 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 		x_obj_heap(p_obj) = x_obj_heap(p_base);
 		x_obj_heap(p_base) = p_obj;
 #ifdef X_PROFILE
-		if (x_base_isset(p_base)
-			&& x_restobj(x_restobj(x_restobj(x_firstobj(p_base)))) != NULL
-			&& x_base_field_profile(p_base) != NULL)
-			x_atomint(x_base_field_profile_allocs(p_base))++;
+		if (x_obj_hook_alloc != NULL)
+			x_obj_hook_alloc(p_base);
 #endif /* X_PROFILE */
 	} else {
 		x_obj_heap(p_obj) = NULL;
@@ -112,8 +123,8 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 #ifdef X_TYPE
-	if (x_base_isset(p_base) && x_base_field_hook_type_name(p_base) != NULL) {
-		return x_atomfn(x_base_field_hook_type_name(p_base))(p_base, p_args);
+	if (x_obj_hook_type_name != NULL) {
+		return x_obj_hook_type_name(p_base, p_args);
 	}
 #endif /* X_TYPE */
 
@@ -161,8 +172,8 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 #ifdef X_TYPE
-	if (x_base_isset(p_base) && x_base_field_hook_units(p_base) != NULL) {
-		return x_atomfn(x_base_field_hook_units(p_base))(p_base, p_args);
+	if (x_obj_hook_units != NULL) {
+		return x_obj_hook_units(p_base, p_args);
 	}
 #endif /* X_TYPE */
 
@@ -210,8 +221,8 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 #ifdef X_TYPE
-	if (x_base_isset(p_base) && x_base_field_hook_length(p_base) != NULL) {
-		return x_atomfn(x_base_field_hook_length(p_base))(p_base, p_args);
+	if (x_obj_hook_length != NULL) {
+		return x_obj_hook_length(p_base, p_args);
 	}
 #endif /* X_TYPE */
 
@@ -240,8 +251,8 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 	x_char_t *symbol = NULL;
 
 #ifdef X_TYPE
-	if (x_base_isset(p_base) && x_base_field_hook_error(p_base) != NULL) {
-		x_base_error(p_base, message, p_obj);
+	if (x_obj_hook_error != NULL) {
+		x_obj_hook_error(p_base, message, p_obj);
 		return;
 	}
 #endif /* X_TYPE */
@@ -258,7 +269,7 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 
 void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt, va_list ap)
 {
-	int fd = x_base_isset(p_base) ? x_atomint(x_base_field_fileerr(p_base)) : STDERR_FILENO;
+	int fd = STDERR_FILENO;
 
 	_x_debug_va(file, line, fd, fmt, ap);
 }
