@@ -87,13 +87,13 @@ EXECUTABLE=x
 # Options to be added to $(DEFS)
 DEFS?=$(OSDEF) -DX_MACHINE="$(X_MACHINE)"
 
-default: all strip
+default: all strip ## Build and strip
 
-all: $(SOURCES) $(EXECUTABLE)
+all: $(SOURCES) $(EXECUTABLE) ## Build all
 
-debug: $(EXECUTABLE)-debug
+debug: $(EXECUTABLE)-debug ## Build debug target
 
-strip: $(EXECUTABLE)
+strip: $(EXECUTABLE) ## Strip symbols from target
 	strip $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS) $(EXTRA_OBJS)
@@ -106,11 +106,11 @@ $(EXECUTABLE)-debug: $(EXECUTABLE)
 .c.o:
 	$(CC) -c $(CFLAGS) $(DEFS) -o $@ $<
 
-lint:
+lint: ## Lint sources
 	$(CC) -fsyntax-only $(CFLAGS) -g -Wall -pedantic $(SOURCES)
 .PHONY: lint
 
-valgrind:
+valgrind: ## Run Valgrind on target
 	$(CC) $(CFLAGS) -g -Wall $(SOURCES) && valgrind -v --leak-check=full ./a.out && rm a.out
 .PHONY: valgrind
 
@@ -122,34 +122,38 @@ ifndef TESTS
 TESTS=$(PATH_TESTS)/src/*.spec.c
 endif
 
-test:
+test: ## Run tests
 	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
 .PHONY: test
 
-test-quick:
+test-quick: ## Run fast tests (no Valgrind)
 	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" RUNNER=command sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
 .PHONY: test
 
-tests: test
+tests: test ## Run tests (alias)
 .PHONY: tests
 
-coverage:
+coverage: ## Run tests with coverage report
 	CFLAGS="$(CFLAGS) -fno-common -O0 -g --coverage -I. -DTESTS" \
 		ANALYZER_FLAGS="--print-summary --txt" \
 		sh $(PATH_TESTS)/test-runner/test-runner-coverage.sh $(TESTS)
 .PHONY: coverage
 
-coverage-macros:
+coverage-macros: ## Check macro coverage
 	sh $(PATH_TESTS)/test-runner/macro-coverage.sh include $(PATH_TESTS)/src
 .PHONY: coverage-macros
 
-watch:
+watch: ## Watch source for changes
 	while true; do \
 		fswatch -o --event Created --event Updated --event MovedTo $(HEADERS) $(SOURCES) tests | \
 		make debug && make test; \
 	done
 .PHONY: watch
 
-clean:
+clean: ## Clean compiled files
 	rm -f $(EXECUTABLE) $(EXECUTABLE)-debug *.out $(SRCDIR)/*.o $(SRCDIR)/**/*.o *.core core
 .PHONY: clean
+
+help: ## Display this help section
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[32m%-38s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+.PHONY: help
