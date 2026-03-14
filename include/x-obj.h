@@ -57,8 +57,10 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_MASK=0x7F
 #else /* X_HEAP */
 	X_OBJ_FLAG_HEAP=0x80,
+	X_OBJ_FLAG_SHARED=0x100,
+	X_OBJ_FLAG_EXT=0x200,
 
-	X_OBJ_FLAG_MASK=0xFF
+	X_OBJ_FLAG_MASK=0x3FF
 #endif /* X_HEAP */
 } x_obj_flag_t;
 
@@ -129,6 +131,8 @@ typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
 #define x_obj_data_i(X,I)			(x_obj_data_ptr((X))[(I)])
 #define x_obj_data(X)				x_obj_data_i((X),0)
 
+#define x_obj_meta_slot(X, I)		((X)[-((int)(I) + 1)])
+
 #ifdef X_HEAP
 #define x_obj_set(T,F,...)			{ { .v = NULL }, { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
 #else /* X_HEAP */
@@ -146,6 +150,8 @@ extern x_satom_t x_type_units_atom_obj;
 extern x_satom_t x_type_units_pair_obj;
 extern x_satom_t x_type_length_atom_obj;
 extern x_satom_t x_type_length_pair_obj;
+
+extern size_t x_obj_meta_extra;
 
 #define x_obj_type_issatom(X)		(x_obj_type((X)) == x_type_atom_obj)
 #define x_obj_type_isspair(X)		(x_obj_type((X)) == x_type_pair_obj)

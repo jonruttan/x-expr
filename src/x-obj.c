@@ -51,11 +51,17 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
 	x_obj_t *p_obj;
+	size_t extra = x_obj_meta_extra;
 
-	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (X_OBJ_META_LEN + units));
+	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (extra + X_OBJ_META_LEN + units));
 
 	if (p_obj == NULL) {
 		return NULL;
+	}
+
+	if (extra > 0) {
+		p_obj += extra;
+		flags |= X_OBJ_FLAG_EXT;
 	}
 
 	x_obj_type(p_obj) = p_type;
@@ -101,11 +107,17 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
 
 void x_obj_free(x_obj_t *p_obj)
 {
+	x_obj_t *p_alloc = p_obj;
+
 	if (x_obj_flags(p_obj) & X_OBJ_FLAG_OWN) {
 		x_sys_free(x_firstobj(p_obj));
 	}
 
-	x_sys_free(p_obj);
+	if (x_obj_flags(p_obj) & X_OBJ_FLAG_EXT) {
+		p_alloc = p_obj - x_obj_meta_extra;
+	}
+
+	x_sys_free(p_alloc);
 }
 
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)

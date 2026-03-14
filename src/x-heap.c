@@ -60,7 +60,8 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
 		*prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
 
 	while (gc) {
-		if (flags && x_obj_flags(gc) & flags) {
+		if ((flags && x_obj_flags(gc) & flags)
+			|| (x_obj_flags(gc) & X_OBJ_FLAG_SHARED)) {
 			x_obj_flags(gc) &= ~flags;
 			prev = gc;
 			gc = x_obj_heap(gc);
