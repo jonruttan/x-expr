@@ -151,6 +151,9 @@ extern x_satom_t x_type_units_pair_obj;
 extern x_satom_t x_type_length_atom_obj;
 extern x_satom_t x_type_length_pair_obj;
 
+extern x_satom_t x_true_obj;
+extern x_satom_t x_false_obj;
+
 extern size_t x_obj_meta_extra;
 
 #define x_obj_type_issatom(X)		(x_obj_type((X)) == x_type_atom_obj)

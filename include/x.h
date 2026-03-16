@@ -130,17 +130,8 @@
  *
  * @constant x_int_t
  */
-#ifdef __STDC__
-
 typedef long x_int_t;
 #define X_INT_STR_PRINTF_CONV	"l"
-
-#else /* __STDC__v */
-
-typedef long long x_int_t;
-#define X_INT_STR_PRINTF_CONV	"ll"
-
-#endif /* __STDC__ */
 
 /* Ensure x_int_t and pointers are the same size for union parity. */
 typedef char x_assert_int_ptr_size[sizeof(x_int_t) == sizeof(void *) ? 1 : -1];
