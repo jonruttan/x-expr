@@ -21,6 +21,49 @@
 #ifdef X_HEAP
 
 /*
+ * # Conservative Stack Scanning
+ *
+ * The stack base is recorded once at interpreter startup.
+ * During GC mark, we scan the C stack for values that match
+ * heap object addresses. This prevents sweep from freeing
+ * objects that are only referenced from C local variables.
+ */
+void *x_heap_stack_base = NULL;
+
+void x_heap_mark_stack(x_obj_t *p_base, x_obj_flag_t flags,
+	x_heap_mark_fn_t p_mark_fn)
+{
+	volatile int stack_top;
+	void **lo, **hi, **p;
+	x_obj_t *gc;
+
+	if (x_heap_stack_base == NULL) {
+		return;
+	}
+
+	/* Determine stack scan range (stack may grow up or down) */
+	lo = (void **)&stack_top;
+	hi = (void **)x_heap_stack_base;
+
+	if (lo > hi) {
+		void **tmp = lo; lo = hi; hi = tmp;
+	}
+
+	/* For each aligned word on the stack, check if it matches
+	 * any heap object address. O(stack * heap) but uses only
+	 * the existing heap chain — no external functions. */
+	for (p = lo; p < hi; p++) {
+		for (gc = x_obj_heap(p_base); gc != NULL; gc = x_obj_heap(gc)) {
+			if ((void *)gc == *p) {
+				x_heap_mark(p_base, gc, flags, p_mark_fn);
+
+				break;
+			}
+		}
+	}
+}
+
+/*
  * # Heap Management Functions
  */
 x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
@@ -61,7 +104,7 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
 
 	while (gc) {
 		if ((flags && x_obj_flags(gc) & flags)
-			|| (x_obj_flags(gc) & X_OBJ_FLAG_SHARED)) {
+			|| (x_obj_flags(gc) & (X_OBJ_FLAG_SHARED | X_OBJ_FLAG_SYSTEM))) {
 			x_obj_flags(gc) &= ~flags;
 			prev = gc;
 			gc = x_obj_heap(gc);

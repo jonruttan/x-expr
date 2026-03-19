@@ -59,8 +59,9 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_HEAP=0x80,
 	X_OBJ_FLAG_SHARED=0x100,
 	X_OBJ_FLAG_EXT=0x200,
+	X_OBJ_FLAG_SYSTEM=0x400,
 
-	X_OBJ_FLAG_MASK=0x3FF
+	X_OBJ_FLAG_MASK=0x7FF
 #endif /* X_HEAP */
 } x_obj_flag_t;
 

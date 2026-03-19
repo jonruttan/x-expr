@@ -42,6 +42,14 @@ x_obj_t *x_heap_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
 	x_heap_mark_fn_t p_mark_fn);
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags,
 	x_heap_free_fn_t p_free_fn);
+
+/* Conservative stack scanning: mark heap objects referenced from C stack.
+ * Call x_heap_stack_init() once at startup to record the stack base.
+ * x_heap_mark_stack() scans the C stack during GC mark phase. */
+extern void *x_heap_stack_base;
+void x_heap_mark_stack(x_obj_t *p_base, x_obj_flag_t flags,
+	x_heap_mark_fn_t p_mark_fn);
+
 #endif /* X_HEAP */
 
 #endif /* X_HEAP_H */
