@@ -67,12 +67,12 @@ typedef enum x_obj_flag_enum
 
 typedef union x_datum_union x_obj_t;
 
-typedef x_obj_t * (*x_prim_fn)(x_obj_t *p_base, x_obj_t *p_args);
+typedef x_obj_t * (*x_callable_fn)(x_obj_t *p_base, x_obj_t *p_args);
 
 union x_datum_union
 {
 	x_obj_t *p;
-	x_prim_fn fn;
+	x_callable_fn fn;
 	x_int_t i;
 	x_char_t c;
 	x_char_t *s;
@@ -266,9 +266,9 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj);
  * Default to NULL; when NULL, the hook is skipped.
  */
 #ifdef X_TYPE
-extern x_prim_fn x_obj_hook_type_name;
-extern x_prim_fn x_obj_hook_units;
-extern x_prim_fn x_obj_hook_length;
+extern x_callable_fn x_obj_hook_type_name;
+extern x_callable_fn x_obj_hook_units;
+extern x_callable_fn x_obj_hook_length;
 extern void (*x_obj_hook_error)(x_obj_t *, x_char_t *, x_obj_t *);
 #endif /* X_TYPE */
 

@@ -33,9 +33,9 @@ x_satom_t x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)"#f"}
  * # Hook Definitions
  */
 #ifdef X_TYPE
-x_prim_fn x_obj_hook_type_name = NULL;
-x_prim_fn x_obj_hook_units = NULL;
-x_prim_fn x_obj_hook_length = NULL;
+x_callable_fn x_obj_hook_type_name = NULL;
+x_callable_fn x_obj_hook_units = NULL;
+x_callable_fn x_obj_hook_length = NULL;
 void (*x_obj_hook_error)(x_obj_t *, x_char_t *, x_obj_t *) = NULL;
 #endif /* X_TYPE */
 
