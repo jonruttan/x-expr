@@ -16,18 +16,37 @@
 /*
  * # Includes
  */
-#include <stdio.h>			/* For *vsprintf */
+#include <stdio.h>			/* vsprintf() */
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef X_CLOCK
+#include <time.h>			/* clock() */
+#endif /* X_CLOCK */
+
 #include "x-sys.h"
 #include "x-lib.h"
 
-#ifndef TESTS
+#ifndef X_SYS_FUNC
+#define X_SYS_FUNC(F)		F
+#endif /* X_SYS_FUNC */
+
 
 /*
  * # System Functions
  */
+
+/*
+ * Cause normal process termination.
+ *
+ * @param {int} status An integer returned to the parent.
+ * @returns The exit function does not return.
+ */
+void x_sys_exit(int status)
+{
+	X_SYS_FUNC(exit)(status);
+}
+
 /*
  * Allocate a memory vector from the heap.
  *
@@ -37,7 +56,7 @@
  */
 void *x_sys_malloc(size_t size)
 {
-	return malloc(size);
+	return X_SYS_FUNC(malloc)(size);
 }
 
 /*
@@ -49,7 +68,7 @@ void *x_sys_malloc(size_t size)
  */
 void x_sys_free(void *ptr)
 {
-	free(ptr);
+	X_SYS_FUNC(free)(ptr);
 }
 
 /*
@@ -63,7 +82,7 @@ void x_sys_free(void *ptr)
  */
 ssize_t x_sys_read(int fd, void *p_buf, size_t size)
 {
-	return read(fd, p_buf, size);
+	return X_SYS_FUNC(read)(fd, p_buf, size);
 }
 
 /*
@@ -77,18 +96,7 @@ ssize_t x_sys_read(int fd, void *p_buf, size_t size)
  */
 ssize_t x_sys_write(int fd, const void *p_buf, size_t size)
 {
-	return write(fd, p_buf, size);
-}
-
-/*
- * Cause normal process termination.
- *
- * @param {int} status An integer returned to the parent.
- * @returns The exit function does not return.
- */
-void x_sys_exit(int status)
-{
-	exit(status);
+	return X_SYS_FUNC(write)(fd, p_buf, size);
 }
 
 /*
@@ -101,7 +109,7 @@ void x_sys_exit(int status)
  */
 int x_sys_open(const char *path, int flags)
 {
-	return open(path, flags);
+	return X_SYS_FUNC(open)(path, flags);
 }
 
 /*
@@ -113,20 +121,17 @@ int x_sys_open(const char *path, int flags)
  */
 int x_sys_close(int fd)
 {
-	return close(fd);
+	return X_SYS_FUNC(close)(fd);
 }
 
-#endif /* TESTS */
-
-#ifdef X_CLOCK
-#include <time.h>
-
-x_int_t x_sys_clock(void)
-{
-	return (x_int_t)(clock() * 1000000 / CLOCKS_PER_SEC);
-}
-#endif /* X_CLOCK */
-
+/*
+ * Read a character from a file.
+ *
+ * @function x_sys_read_char
+ * @param (int) fd The file descriptor to read from.
+ * @returns {x_char_t} on success, X_SYS_EOF on error.
+ */
+/* NOTE: Compositional, move to library? */
 x_char_t x_sys_read_char(int fd)
 {
 	x_char_t c;
@@ -138,3 +143,9 @@ x_char_t x_sys_read_char(int fd)
 	return c;
 }
 
+#ifdef X_CLOCK
+x_int_t x_sys_clock(void)
+{
+	return (x_int_t)(X_SYS_FUNC(clock)() * 1000000 / CLOCKS_PER_SEC);
+}
+#endif /* X_CLOCK */
