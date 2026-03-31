@@ -50,18 +50,19 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_STR,
 	X_OBJ_FLAG_PTR,
 
+	X_OBJ_FLAG_TYPE_MASK=0xF0,
+
 	X_OBJ_FLAG_OWN=0x20,
 	X_OBJ_FLAG_RO=0x40,
+	X_OBJ_FLAG_META=0x80,
 
 #ifndef X_HEAP
-	X_OBJ_FLAG_MASK=0x7F
+	X_OBJ_FLAG_MASK=0xFF
 #else /* X_HEAP */
-	X_OBJ_FLAG_HEAP=0x80,
 	X_OBJ_FLAG_SHARED=0x100,
-	X_OBJ_FLAG_EXT=0x200,
-	X_OBJ_FLAG_SYSTEM=0x400,
+	X_OBJ_FLAG_HEAP=0x200,
 
-	X_OBJ_FLAG_MASK=0x7FF
+	X_OBJ_FLAG_MASK=0x3FF
 #endif /* X_HEAP */
 } x_obj_flag_t;
 
@@ -107,8 +108,6 @@ enum {
 #define X_OBJ_UNITS_META			X_OBJ_META_LEN
 #endif /* X_OBJ_UNITS_META */
 
-#define X_OBJ_UNITS_BASE			X_OBJ_META_LEN
-
 #define X_OBJ_UNITS_ATOM			1
 #define X_OBJ_UNITS_PAIR			2
 
@@ -117,32 +116,7 @@ enum {
 
 
 typedef x_obj_t x_satom_t[X_OBJ_META_LEN + X_OBJ_UNITS_ATOM];
-
 typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
-
-#ifdef X_HEAP
-#define x_obj_heap(X)				((X)[X_OBJ_META_HEAP].p)
-#endif /* X_HEAP */
-
-#define x_obj_type(X)				((X)[X_OBJ_META_TYPE].p)
-
-#define x_obj_flags(X)				((X)[X_OBJ_META_FLAGS].i)
-
-#define x_obj_data_ptr(X)			((X) + X_OBJ_META_LEN)
-#define x_obj_data_i(X,I)			(x_obj_data_ptr((X))[(I)])
-#define x_obj_data(X)				x_obj_data_i((X),0)
-
-#define x_obj_meta_slot(X, I)		((X)[-((int)(I) + 1)])
-
-#ifdef X_HEAP
-#define x_obj_set(T,F,...)			{ { .v = NULL }, { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
-#else /* X_HEAP */
-#define x_obj_set(T,F,...)			{ { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
-#endif /* X_HEAP */
-
-
-#define x_obj_type_isnil(B,X)		x_obj_isnil((B), x_obj_type(X))
-#define x_obj_is_type(B,X,T)		(x_lib_strcmp(x_obj_type_name((B), (X)), (T)) == 0)
 
 extern x_satom_t x_type_atom_obj;
 extern x_satom_t x_type_pair_obj;
@@ -155,18 +129,37 @@ extern x_satom_t x_type_length_pair_obj;
 extern x_satom_t x_true_obj;
 extern x_satom_t x_false_obj;
 
-extern size_t x_obj_meta_extra;
+
+#ifdef X_HEAP
+#define x_obj_heap(X)				((X)[X_OBJ_META_HEAP].p)
+#endif /* X_HEAP */
+
+#define x_obj_type(X)				((X)[X_OBJ_META_TYPE].p)
+
+#define x_obj_flags(X)				((X)[X_OBJ_META_FLAGS].i)
+
+#define x_obj_data_ptr(X)			((X) + X_OBJ_META_LEN)
+#define x_obj_data_i(X,I)			(x_obj_data_ptr((X))[(I)])
+#define x_obj_data(X)				x_obj_data_i((X), 0)
+
+#define x_obj_meta_i(X, I)			((X)[-((I) + 1)])
+
+#ifdef X_HEAP
+#define x_obj_set(T,F,...)			{ { .v = NULL }, { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
+#else /* X_HEAP */
+#define x_obj_set(T,F,...)			{ { .p = (T) }, { .i = (F) }, __VA_ARGS__ }
+#endif /* X_HEAP */
+
+
+#define x_obj_type_isnil(B,X)		x_obj_isnil((B), x_obj_type(X))
+#define x_obj_is_type(B,X,T)		(x_lib_strcmp(x_obj_type_name((B), (X)), (T)) == 0)
 
 #define x_obj_type_issatom(X)		(x_obj_type((X)) == x_type_atom_obj)
 #define x_obj_type_isspair(X)		(x_obj_type((X)) == x_type_pair_obj)
 
-#define x_mkfsatom(B,F,X)			x_obj_make((B), x_type_atom_obj, (F), X_OBJ_LENGTH_ATOM, (X))
-#define x_mkfsatomown(B,F,X)		x_obj_make((B), x_type_atom_obj, (F) | X_OBJ_FLAG_OWN, X_OBJ_LENGTH_ATOM, (X))
-#define x_mkfspair(B,F,X,Y)			x_obj_make((B), x_type_pair_obj, (F), X_OBJ_LENGTH_PAIR, (X), (Y))
-
-#define x_mksatom(B,X)				x_mkfsatom((B), X_OBJ_FLAG_NONE, (X))
-#define x_mksatomown(B,X)			x_mkfsatomown((B), X_OBJ_FLAG_NONE, (X))
-#define x_mkspair(B,X,Y)			x_mkfspair((B), X_OBJ_FLAG_NONE, (X), (Y))
+#define x_mksatom(B,F,X)			x_obj_make((B), x_type_atom_obj, (F), X_OBJ_LENGTH_ATOM, (X))
+#define x_mksatomown(B,F,X)			x_obj_make((B), x_type_atom_obj, (F) | X_OBJ_FLAG_OWN, X_OBJ_LENGTH_ATOM, (X))
+#define x_mkspair(B,F,X,Y)			x_obj_make((B), x_type_pair_obj, (F), X_OBJ_LENGTH_PAIR, (X), (Y))
 
 
 #define x_obj(X)					((X).p)
@@ -244,7 +237,7 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj);
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t size);
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t size, va_list ap);
 x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t size, ...);
-void x_obj_free(x_obj_t *p_obj);
+void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj);
 
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args);
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj);
@@ -258,32 +251,6 @@ x_obj_t *x_atom_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj);
-
-/*
- * # Hooks
- *
- * Function pointers set by the parent project to extend x-obj behavior.
- * Default to NULL; when NULL, the hook is skipped.
- */
-#ifdef X_TYPE
-extern x_callable_fn x_obj_hook_type_name;
-extern x_callable_fn x_obj_hook_units;
-extern x_callable_fn x_obj_hook_length;
-extern void (*x_obj_hook_error)(x_obj_t *, x_char_t *, x_obj_t *);
-#endif /* X_TYPE */
-
-#ifdef X_PROFILE
-extern void (*x_obj_hook_alloc)(x_obj_t *);
-#endif /* X_PROFILE */
-
-#ifdef X_TYPE
-x_obj_t *x_obj_call(x_obj_t *p_base, x_obj_t *p_obj);
-x_obj_t *x_obj_eval(x_obj_t *p_base, x_obj_t *p_obj);
-x_obj_t *x_obj_convert(x_obj_t *p_base, x_obj_t *p_obj);
-
-x_obj_t *x_obj_read(x_obj_t *p_base, x_obj_t *p_obj);
-x_obj_t *x_obj_write(x_obj_t *p_base, x_obj_t *p_obj);
-#endif /* X_TYPE */
 
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj);
 

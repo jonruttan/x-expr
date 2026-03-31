@@ -21,7 +21,7 @@
  */
 #include "x-obj.h"
 
-#define x_cons(B,X,Y)		x_mkspair((B), (X), (Y))
+#define x_cons(B,F,X,Y)		x_mkspair((B), (F), (X), (Y))
 
 #define x_car(X)			x_firstobj(X)
 #define x_cdr(X)			x_restobj(X)

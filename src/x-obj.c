@@ -16,7 +16,7 @@
 /*
  * # Includes
  */
-#include "x-obj.h"
+#include "x-base.h"
 
 
 x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_NAME}),
@@ -29,19 +29,6 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 x_satom_t x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)"#t"});
 x_satom_t x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)"#f"});
 
-/*
- * # Hook Definitions
- */
-#ifdef X_TYPE
-x_callable_fn x_obj_hook_type_name = NULL;
-x_callable_fn x_obj_hook_units = NULL;
-x_callable_fn x_obj_hook_length = NULL;
-void (*x_obj_hook_error)(x_obj_t *, x_char_t *, x_obj_t *) = NULL;
-#endif /* X_TYPE */
-
-#ifdef X_PROFILE
-void (*x_obj_hook_alloc)(x_obj_t *) = NULL;
-#endif /* X_PROFILE */
 
 /*
  * # Object Functions
@@ -54,7 +41,10 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
 	x_obj_t *p_obj;
-	size_t extra = x_obj_meta_extra;
+	size_t extra = (p_base != NULL
+		&& ! x_obj_isnil(p_base, x_obj_type(p_base))
+		&& x_base_isset(p_base))
+		? (size_t)x_atomint(x_base_field_obj_meta_extra(p_base)) : 0;
 
 	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (extra + X_OBJ_META_LEN + units));
 
@@ -62,26 +52,28 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 		return NULL;
 	}
 
+#ifdef X_HEAP
 	if (extra > 0) {
 		p_obj += extra;
-		flags |= X_OBJ_FLAG_EXT;
+		flags |= X_OBJ_FLAG_META;
 	}
 
-	x_obj_type(p_obj) = p_type;
-	x_obj_flags(p_obj) = flags;
-
-#ifdef X_HEAP
 	if (p_base) {
 		x_obj_heap(p_obj) = x_obj_heap(p_base);
 		x_obj_heap(p_base) = p_obj;
+
 #ifdef X_PROFILE
-		if (x_obj_hook_alloc != NULL)
-			x_obj_hook_alloc(p_base);
+		if (x_base_isset(p_base)) {
+			x_atomint(x_base_field_profile_allocs(p_base))++;
+		}
 #endif /* X_PROFILE */
 	} else {
 		x_obj_heap(p_obj) = NULL;
 	}
 #endif /* X_HEAP */
+
+	x_obj_type(p_obj) = p_type;
+	x_obj_flags(p_obj) = flags;
 
 	return p_obj;
 }
@@ -108,7 +100,7 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
 	return p_obj;
 }
 
-void x_obj_free(x_obj_t *p_obj)
+void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_alloc = p_obj;
 
@@ -116,9 +108,15 @@ void x_obj_free(x_obj_t *p_obj)
 		x_sys_free(x_firstobj(p_obj));
 	}
 
-	if (x_obj_flags(p_obj) & X_OBJ_FLAG_EXT) {
-		p_alloc = p_obj - x_obj_meta_extra;
+#ifdef X_HEAP
+	if (x_obj_flags(p_obj) & X_OBJ_FLAG_META) {
+		size_t extra = (p_base != NULL
+			&& !x_obj_isnil(p_base, x_obj_type(p_base))
+			&& x_base_isset(p_base))
+			? (size_t)x_atomint(x_base_field_obj_meta_extra(p_base)) : 0;
+		p_alloc = p_obj - extra;
 	}
+#endif /* X_HEAP */
 
 	x_sys_free(p_alloc);
 }
@@ -137,11 +135,10 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 		return x_obj_type(p_obj);
 	}
 
-#ifdef X_TYPE
-	if (x_obj_hook_type_name != NULL) {
-		return x_obj_hook_type_name(p_base, p_args);
+	if (x_base_isset(p_base)
+		&& ! x_obj_isnil(p_base, x_base_field_hook_type_name(p_base))) {
+		return x_atomfn(x_base_field_hook_type_name(p_base))(p_base, p_args);
 	}
-#endif /* X_TYPE */
 
 	return NULL;
 }
@@ -186,11 +183,10 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 		return x_atom_prim_units(p_base, p_args);
 	}
 
-#ifdef X_TYPE
-	if (x_obj_hook_units != NULL) {
-		return x_obj_hook_units(p_base, p_args);
+	if (x_base_isset(p_base)
+		&& ! x_obj_isnil(p_base, x_base_field_hook_units(p_base))) {
+		return x_atomfn(x_base_field_hook_units(p_base))(p_base, p_args);
 	}
-#endif /* X_TYPE */
 
 	return NULL;
 }
@@ -235,11 +231,10 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 		return x_atom_prim_length(p_base, p_args);
 	}
 
-#ifdef X_TYPE
-	if (x_obj_hook_length != NULL) {
-		return x_obj_hook_length(p_base, p_args);
+	if (x_base_isset(p_base)
+		&& ! x_obj_isnil(p_base, x_base_field_hook_length(p_base))) {
+		return x_atomfn(x_base_field_hook_length(p_base))(p_base, p_args);
 	}
-#endif /* X_TYPE */
 
 	return NULL;
 }
@@ -265,12 +260,12 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 {
 	x_char_t *symbol = NULL;
 
-#ifdef X_TYPE
-	if (x_obj_hook_error != NULL) {
-		x_obj_hook_error(p_base, message, p_obj);
+	if (x_base_isset(p_base)
+		&& ! x_obj_isnil(p_base, x_base_field_hook_error(p_base))) {
+		((void (*)(x_obj_t *, x_char_t *, x_obj_t *))
+			x_firstptr(x_base_field_hook_error(p_base)))(p_base, message, p_obj);
 		return;
 	}
-#endif /* X_TYPE */
 
 	if (p_obj != NULL && x_obj_type_issatom(p_obj)) {
 		symbol = x_atomstr(p_obj);
