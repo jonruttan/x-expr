@@ -19,10 +19,7 @@
 /*
  * # Includes
  */
-#include <stdarg.h>		/* For *va_list* */
-/*
-#include <sys/types.h>
-*/
+#include <stdarg.h>		/* va_list */
 
 /*#define X_USE_STDLIB*/
 /*#define X_USE_STDLIB_NONSTD*/
@@ -40,16 +37,16 @@
  */
 #define X_VERSION "0.1.0"
 
+#ifdef DEBUG
 #define X_DEBUG_BUFFER_SIZE	65536
+#endif /* DEBUG */
 
 /*
  * Whether to include Heap structures.
  *
  * @constant X_HEAP
  */
-#ifndef X_HEAP
 /*#define X_HEAP*/
-#endif /* X_HEAP */
 
 /*
  * The C compiler's target machine, for example, `i686-pc-linux-gnu`.
@@ -147,6 +144,7 @@ typedef char x_assert_int_ptr_size[sizeof(x_int_t) == sizeof(void *) ? 1 : -1];
 typedef char x_char_t;
 #define X_INT_CHAR_PRINTF_CONV	"c"
 
+#define X_STR_LITERAL(s) (x_char_t *)(s), (sizeof(s) - 1)
 
 /*
  * # Definitions
@@ -154,12 +152,10 @@ typedef char x_char_t;
 #ifdef DEBUG
 
 void _x_debug_va(char *file, long unsigned line, int fd, char *fmt, va_list ap);
-#define x_debug_va(fd, fmt, ap)\
-	_x_debug_va(__FILE__, __LINE__, fd, fmt, ap)
+#define x_debug_va(fd, fmt, ap) _x_debug_va(__FILE__, __LINE__, fd, fmt, ap)
 
 void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...);
-#define x_debug(fd, fmt, ...)\
-	_x_debug(__FILE__, __LINE__, fd, fmt, __VA_ARGS__)
+#define x_debug(fd, fmt, ...) _x_debug(__FILE__, __LINE__, fd, fmt, __VA_ARGS__)
 
 #else /* DEBUG */
 

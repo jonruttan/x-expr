@@ -13,11 +13,11 @@
 #undef X_USE_STDLIB
 #endif /* X_TEST_LIB */
 
+#include "test-helper-system.c"
+
 #include "src/x-sys.c"
 #include "src/x-lib.c"
 #include "src/x.c"
-
-#include "helper-system-functions.c"
 
 
 /*
@@ -26,6 +26,9 @@
 static void _setup(void)
 {
 	helper_set_alloc(MEM_GUARANTEED);
+	helper_sys_funcs.exit = mock_exit;
+	helper_sys_funcs.malloc = helper_malloc;
+	helper_sys_funcs.free = helper_free;
 }
 
 static void _teardown(void)
@@ -36,6 +39,16 @@ static void _teardown(void)
 /*
  * ## Test Runners
  */
+static char *test_lib_abs(void)
+{
+	_it_should("return positive for positive", 5 == x_lib_abs(5));
+	_it_should("return positive for negative", 5 == x_lib_abs(-5));
+	_it_should("return zero for zero", 0 == x_lib_abs(0));
+	_it_should("return 1 for -1", 1 == x_lib_abs(-1));
+
+	return NULL;
+}
+
 static char *test_lib_inttostr(void)
 {
 	x_char_t dst[16], *p_dst;
@@ -255,7 +268,7 @@ static char *test_lib_memdup(void)
 	helper_alloc_reset();
 	p_dst = x_lib_memdup(NULL, 16);
 	_it_should("have called alloc", 1 == helper_alloc_count());
-	_it_should("return NULL on alloc failure", p_dst == NULL);
+	_it_should("return NULL on alloc failure", NULL == p_dst);
 	x_sys_free(p_dst);
 
 	return NULL;
@@ -263,9 +276,7 @@ static char *test_lib_memdup(void)
 
 static char *test_lib_memset(void)
 {
-	x_char_t buffer[TEST_SIZE],
-		memcmp_buffer[TEST_SIZE];
-	x_char_t *p_ret;
+	x_char_t buffer[TEST_SIZE], memcmp_buffer[TEST_SIZE], *p_ret;
 	int byte;
 	size_t size;
 
@@ -307,6 +318,20 @@ static char *test_lib_strchr(void)
 	return NULL;
 }
 
+static char *test_lib_strlen(void)
+{
+	const x_char_t *p_str = (x_char_t *)"Hello, World!";
+
+	_it_should("calculate string length when p_str is a valid C string",
+		x_lib_strlen(p_str) == strlen((char *)p_str)
+	);
+	_it_should("calculate string length 0 when p_str is an empty string",
+		0 == x_lib_strlen((x_char_t *)"")
+	);
+
+	return NULL;
+}
+
 static char *test_lib_strcmp(void)
 {
 	int n;
@@ -327,20 +352,6 @@ static char *test_lib_strcmp(void)
 
 	n = x_lib_strcmp((x_char_t *)"abc", (x_char_t *)"ab");
 	_it_should("return > 0 when second string is shorter", n > 0);
-
-	return NULL;
-}
-
-static char *test_lib_strlen(void)
-{
-	const x_char_t *p_str = (x_char_t *)"Hello, World!";
-
-	_it_should("calculate string length when p_str is a valid C string",
-		x_lib_strlen(p_str) == strlen((char *)p_str)
-	);
-	_it_should("calculate string length 0 when p_str is an empty string",
-		0 == x_lib_strlen((x_char_t *)"")
-	);
 
 	return NULL;
 }
@@ -751,25 +762,15 @@ static char *test_lib_strtoint(void)
 	return NULL;
 }
 
-static char *test_lib_abs(void)
-{
-	_it_should("return positive for positive", 5 == x_lib_abs(5));
-	_it_should("return positive for negative", 5 == x_lib_abs(-5));
-	_it_should("return zero for zero", 0 == x_lib_abs(0));
-	_it_should("return 1 for -1", 1 == x_lib_abs(-1));
-
-	return NULL;
-}
-
 static char *run_tests() {
 	_run_test(test_lib_abs);
 	_run_test(test_lib_inttostr);
 	_run_test(test_lib_memcpy);
 	_run_test(test_lib_memdup);
 	_run_test(test_lib_memset);
+	_run_test(test_lib_strlen);
 	_run_test(test_lib_strchr);
 	_run_test(test_lib_strcmp);
-	_run_test(test_lib_strlen);
 	_run_test(test_lib_strncmp);
 	_run_test(test_lib_strndup);
 	_run_test(test_lib_strtoint);

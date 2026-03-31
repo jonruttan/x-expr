@@ -130,18 +130,11 @@ test-quick: ## Run fast tests (no Valgrind)
 	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" RUNNER=command sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
 .PHONY: test
 
-tests: test ## Run tests (alias)
-.PHONY: tests
-
 coverage: ## Run tests with coverage report
 	CFLAGS="$(CFLAGS) -fno-common -O0 -g --coverage -I. -DTESTS" \
 		ANALYZER_FLAGS="--print-summary --txt" \
 		sh $(PATH_TESTS)/test-runner/test-runner-coverage.sh $(TESTS)
 .PHONY: coverage
-
-coverage-macros: ## Check macro coverage
-	sh $(PATH_TESTS)/test-runner/macro-coverage.sh include $(PATH_TESTS)/src
-.PHONY: coverage-macros
 
 watch: ## Watch source for changes
 	while true; do \

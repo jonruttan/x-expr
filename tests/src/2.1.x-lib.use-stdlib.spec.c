@@ -4,4 +4,4 @@
 
 #define X_TEST_LIB
 #define X_USE_STDLIB
-#include "1.0.x-lib.spec.c"
+#include "2.0.x-lib.spec.c"

@@ -191,6 +191,14 @@ void *x_lib_memset(void *p_dest, int byte, size_t size)
 #endif /* X_USE_STDLIB */
 }
 
+/*
+ * Locate the first occurance of a character in a string.
+ *
+ * @function x_lib_strchr
+ * @param {const x_char_t *} p_str A pointer to the C string memory.
+ * @param {int} c The character to search for.
+ * @returns {x_char_t *} The position of the character, or _NULL_ if not found.
+ */
 x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
 {
 #ifdef X_USE_STDLIB
@@ -201,28 +209,6 @@ x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
 	for (;*ps && *ps != c; ps++) ;
 
 	return *ps ? (x_char_t *)ps : NULL;
-#endif /* X_USE_STDLIB */
-}
-
-/*
- * Compare two strings.
- *
- * @function x_lib_strcmp
- * @param {const x_char_t *} p_str1 A pointer to the first string to compare.
- * @param {const x_char_t *} p_str2 A pointer to the second string to compare.
- * @returns {int} The difference between the two strings.
- */
-int x_lib_strcmp(const x_char_t *p_str1, const x_char_t *p_str2)
-{
-#ifdef X_USE_STDLIB
-	return strcmp((char *)p_str1, (char *)p_str2);
-#else
-	const x_char_t *ps1 = (const x_char_t *)p_str1;
-	const x_char_t *ps2 = (const x_char_t *)p_str2;
-
-	for (;*ps1 && *ps2 && *ps2 == *ps1; ps1++, ps2++) ;
-
-	return *ps1 - *ps2;
 #endif /* X_USE_STDLIB */
 }
 
@@ -245,6 +231,28 @@ size_t x_lib_strlen(const x_char_t *p_str)
 	for (size=0; *p_str++; size++) ;
 
 	return size;
+#endif /* X_USE_STDLIB */
+}
+
+/*
+ * Compare two strings.
+ *
+ * @function x_lib_strcmp
+ * @param {const x_char_t *} p_str1 A pointer to the first string to compare.
+ * @param {const x_char_t *} p_str2 A pointer to the second string to compare.
+ * @returns {int} The difference between the two strings.
+ */
+int x_lib_strcmp(const x_char_t *p_str1, const x_char_t *p_str2)
+{
+#ifdef X_USE_STDLIB
+	return strcmp((char *)p_str1, (char *)p_str2);
+#else
+	const x_char_t *ps1 = (const x_char_t *)p_str1;
+	const x_char_t *ps2 = (const x_char_t *)p_str2;
+
+	for (;*ps1 && *ps2 && *ps2 == *ps1; ps1++, ps2++) ;
+
+	return *ps1 - *ps2;
 #endif /* X_USE_STDLIB */
 }
 

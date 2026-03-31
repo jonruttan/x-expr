@@ -28,11 +28,11 @@
  */
 void x_error(int fd, x_char_t *message, x_char_t *symbol)
 {
-	x_sys_write(fd, (x_char_t *)"*** ERROR: ", 11);
+	x_sys_write(fd, X_STR_LITERAL("*** ERROR: "));
 	x_sys_write(fd, message, x_lib_strlen(message));
 
 	if (symbol) {
-		x_sys_write(fd, (x_char_t *)" '", 2);
+		x_sys_write(fd, X_STR_LITERAL(" '"));
 		x_sys_write(fd, symbol, x_lib_strlen(symbol));
 	}
 
