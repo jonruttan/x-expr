@@ -34,6 +34,8 @@
 typedef enum x_obj_flag_enum
 {
 	X_OBJ_FLAG_NONE=0x0,
+
+	/* Object type system flags. */
 	X_OBJ_FLAG_OBJ=0x0,
 
 	X_OBJ_FLAG_1=0x1,
@@ -43,6 +45,8 @@ typedef enum x_obj_flag_enum
 
 	X_OBJ_FLAG_ATTR_MASK=0xF,
 
+	/* Simple type system enumeration 0x10 - 0x1F. */
+	X_OBJ_FLAG_SIMPLE_TYPE=0x10,
 	X_OBJ_FLAG_PRIM=0x10,
 	X_OBJ_FLAG_FN,
 	X_OBJ_FLAG_INT,
