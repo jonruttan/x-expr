@@ -68,12 +68,12 @@ typedef enum x_obj_flag_enum
 
 typedef union x_datum_union x_obj_t;
 
-typedef x_obj_t * (*x_callable_fn)(x_obj_t *p_base, x_obj_t *p_args);
+typedef x_obj_t * (*x_fn_t)(x_obj_t *p_base, x_obj_t *p_args);
 
 union x_datum_union
 {
 	x_obj_t *p;
-	x_callable_fn fn;
+	x_fn_t fn;
 	x_int_t i;
 	x_char_t c;
 	x_char_t *s;
