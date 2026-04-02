@@ -21,9 +21,9 @@
  */
 #include "x-lib.h"
 
-#define X_TYPE_NIL_NAME				"NIL"
-#define X_TYPE_ATOM_NAME			"ATOM"
-#define X_TYPE_PAIR_NAME			"PAIR"
+#define X_TYPE_NIL_SYMBOL				"NIL"
+#define X_TYPE_ATOM_SYMBOL			"ATOM"
+#define X_TYPE_PAIR_SYMBOL			"PAIR"
 
 
 #define X_OBJ_DUMP_BUFFER_SIZE	65536

@@ -232,11 +232,11 @@ static char *test_obj_is_type(void)
 	x_satom_t obj = x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, {.i = 0});
 
 	_it_should("return true when type name matches",
-		1 == x_obj_is_type(NULL, obj, X_TYPE_ATOM_NAME)
+		1 == x_obj_is_type(NULL, obj, X_TYPE_ATOM_SYMBOL)
 	);
 
 	_it_should("return false when type name does not match",
-		0 == x_obj_is_type(NULL, obj, X_TYPE_PAIR_NAME)
+		0 == x_obj_is_type(NULL, obj, X_TYPE_PAIR_SYMBOL)
 	);
 
 	return NULL;
@@ -1106,14 +1106,14 @@ static char *test_obj_type_name(void)
 	p_obj = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
 	s = x_obj_type_name(NULL, p_obj);
 	_it_should("return atom's type name when base is NULL",
-		0 == strcmp(X_TYPE_ATOM_NAME, s)
+		0 == strcmp(X_TYPE_ATOM_SYMBOL, s)
 	);
 	x_obj_free(NULL, p_obj);
 
 	p_obj = x_mkspair(NULL, X_OBJ_FLAG_NONE, 0, 0);
 	s = x_obj_type_name(NULL, p_obj);
 	_it_should("return pair's type name when base is NULL",
-		0 == strcmp(X_TYPE_PAIR_NAME, s)
+		0 == strcmp(X_TYPE_PAIR_SYMBOL, s)
 	);
 	x_obj_free(NULL, p_obj);
 
@@ -1122,7 +1122,7 @@ static char *test_obj_type_name(void)
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	s = x_obj_type_name(p_base, p_obj);
 	_it_should("return atom's type name when base is empty",
-		0 == strcmp(X_TYPE_ATOM_NAME, s)
+		0 == strcmp(X_TYPE_ATOM_SYMBOL, s)
 	);
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
@@ -1131,7 +1131,7 @@ static char *test_obj_type_name(void)
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	s = x_obj_type_name(p_base, p_obj);
 	_it_should("return pair's type name when base is empty",
-		0 == strcmp(X_TYPE_PAIR_NAME, s)
+		0 == strcmp(X_TYPE_PAIR_SYMBOL, s)
 	);
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
@@ -1518,7 +1518,7 @@ static char *test_obj_dump(void)
 	_x_obj_dump(__FILE__, __LINE__, NULL, NULL, "dump-nil");
 	_it_should("dump nil with NIL type",
 		NULL != strstr(buffer, "dump-nil")
-		&& NULL != strstr(buffer, X_TYPE_NIL_NAME)
+		&& NULL != strstr(buffer, X_TYPE_NIL_SYMBOL)
 	);
 
 	helper_file_reset();
@@ -1527,7 +1527,7 @@ static char *test_obj_dump(void)
 	_x_obj_dump(__FILE__, __LINE__, NULL, p_obj, "dump-atom");
 	_it_should("dump atom with ATOM type",
 		NULL != strstr(buffer, "dump-atom")
-		&& NULL != strstr(buffer, X_TYPE_ATOM_NAME)
+		&& NULL != strstr(buffer, X_TYPE_ATOM_SYMBOL)
 	);
 	x_obj_free(NULL, p_obj);
 
@@ -1539,7 +1539,7 @@ static char *test_obj_dump(void)
 	_x_obj_dump(__FILE__, __LINE__, NULL, p_obj, "dump-pair");
 	_it_should("dump pair with PAIR type",
 		NULL != strstr(buffer, "dump-pair")
-		&& NULL != strstr(buffer, X_TYPE_PAIR_NAME)
+		&& NULL != strstr(buffer, X_TYPE_PAIR_SYMBOL)
 	);
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_b);

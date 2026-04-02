@@ -19,8 +19,8 @@
 #include "x-base.h"
 
 
-x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_NAME}),
-	x_type_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_PAIR_NAME}),
+x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_SYMBOL}),
+	x_type_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_PAIR_SYMBOL}),
 	x_type_units_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_ATOM}),
 	x_type_units_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_PAIR}),
 	x_type_length_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_ATOM}),
@@ -151,7 +151,7 @@ x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 	p_name = x_obj_prim_type_name(p_base, (x_obj_t *)args);
 
 	if (x_obj_isnil(p_base, p_name)) {
-		return X_TYPE_NIL_NAME;
+		return X_TYPE_NIL_SYMBOL;
 	}
 
 	return x_atomstr(p_name);
@@ -338,13 +338,13 @@ void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj
 
 		if (x_obj_type_isspair(p_obj)) {
 			if (x_obj_isnil(p_base, x_firstobj(p_obj))) {
-				s += sprintf(s, X_TYPE_NIL_NAME);
+				s += sprintf(s, X_TYPE_NIL_SYMBOL);
 			} else {
 				s += sprintf(s, "0x%"X_INT_STR_PRINTF_CONV"x", x_atomint(x_firstobj(p_obj)));
 			}
 
 			if (x_obj_isnil(p_base, x_restobj(p_obj))) {
-				s += sprintf(s, ", "X_TYPE_NIL_NAME);
+				s += sprintf(s, ", "X_TYPE_NIL_SYMBOL);
 			} else {
 				s += sprintf(s, ", 0x%"X_INT_STR_PRINTF_CONV"x", x_atomint(x_restobj(p_obj)));
 			}
