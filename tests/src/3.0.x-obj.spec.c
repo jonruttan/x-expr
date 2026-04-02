@@ -96,6 +96,7 @@ static char *test_flag_constants(void)
 
 	_it_should("define X_OBJ_FLAG_ATTR_MASK",  0x0F == X_OBJ_FLAG_ATTR_MASK);
 
+	_it_should("define X_OBJ_FLAG_SIMPLE_TYPE", 0x10 == X_OBJ_FLAG_SIMPLE_TYPE);
 	_it_should("define X_OBJ_FLAG_PRIM",       0x10 == X_OBJ_FLAG_PRIM);
 	_it_should("define X_OBJ_FLAG_FN",         0x11 == X_OBJ_FLAG_FN);
 	_it_should("define X_OBJ_FLAG_INT",        0x12 == X_OBJ_FLAG_INT);
@@ -111,6 +112,54 @@ static char *test_flag_constants(void)
 	_it_should("define X_OBJ_FLAG_SHARED",     0x100 == X_OBJ_FLAG_SHARED);
 	_it_should("define X_OBJ_FLAG_HEAP",       0x200 == X_OBJ_FLAG_HEAP);
 	_it_should("define X_OBJ_FLAG_MASK",       0x3FF == X_OBJ_FLAG_MASK);
+
+	return NULL;
+}
+
+static char *test_type_symbols(void)
+{
+	_it_should("have distinct type symbols",
+		0 != strcmp(X_TYPE_NIL_SYMBOL, X_TYPE_ATOM_SYMBOL)
+		&& 0 != strcmp(X_TYPE_NIL_SYMBOL, X_TYPE_PAIR_SYMBOL)
+		&& 0 != strcmp(X_TYPE_ATOM_SYMBOL, X_TYPE_PAIR_SYMBOL)
+	);
+
+	return NULL;
+}
+
+static char *test_symbols(void)
+{
+	_it_should("have distinct symbols",
+		0 != strcmp(X_OBJ_TRUE_SYMBOL, X_OBJ_FALSE_SYMBOL)
+	);
+
+	return NULL;
+}
+
+static char *test_true_false_objects(void)
+{
+	_it_should("define x_true_obj with X_OBJ_TRUE_SYMBOL",
+		0 == strcmp(x_atomstr(x_true_obj), X_OBJ_TRUE_SYMBOL)
+	);
+
+	_it_should("define x_false_obj with X_OBJ_FALSE_SYMBOL",
+		0 == strcmp(x_atomstr(x_false_obj), X_OBJ_FALSE_SYMBOL)
+	);
+
+	return NULL;
+}
+
+static char *test_fn_t_typedef(void)
+{
+	x_fn_t fn = test_prim_fn;
+
+	_it_should("assign a function to x_fn_t",
+		fn == test_prim_fn
+	);
+
+	_it_should("call through x_fn_t and return NULL",
+		NULL == fn(NULL, NULL)
+	);
 
 	return NULL;
 }
@@ -1591,6 +1640,10 @@ static char *run_tests()
 {
 	_run_test(test_meta_layout);
 	_run_test(test_flag_constants);
+	_run_test(test_type_symbols);
+	_run_test(test_symbols);
+	_run_test(test_true_false_objects);
+	_run_test(test_fn_t_typedef);
 
 	_run_test(test_obj_heap);
 	_run_test(test_obj_type);
