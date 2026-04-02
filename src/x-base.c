@@ -18,7 +18,7 @@
  */
 #include "x-base.h"
 
-#define nil			p_base
+#define nil			NULL
 #define pair(X,Y)	(x_mkspair(p_base, X_OBJ_FLAG_SHARED, (X), (Y)))
 #define atom(X)		(x_mksatom(p_base, X_OBJ_FLAG_SHARED, (X)))
 

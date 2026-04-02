@@ -47,7 +47,7 @@ x_obj_t * (test_prim_fn)(x_obj_t *p_base, x_obj_t *p_args)
 /*
  * ## Test Helpers
  */
-#define nil			p_base
+#define nil			NULL
 #define pair(X,Y)	(x_mkspair(p_base, X_OBJ_FLAG_NONE, (X), (Y)))
 #define atom(X)		(x_mksatom(p_base, X_OBJ_FLAG_NONE, (X)))
 
