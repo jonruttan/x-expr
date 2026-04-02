@@ -945,6 +945,79 @@ static char *test_obj_sys_free(void)
 	return NULL;
 }
 
+static char *test_obj_push(void)
+{
+	x_obj_t *p_ret, *p_args;
+	x_spair_t stack = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 1}, {.p = NULL});
+
+	helper_alloc_reset();
+
+	/* push without flags */
+	p_args = x_mkspair(NULL, X_OBJ_FLAG_NONE,
+		x_mksatom(NULL, X_OBJ_FLAG_NONE, &x_firstobj((x_obj_t *)stack)),
+		x_mkspair(NULL, X_OBJ_FLAG_NONE,
+			x_mksatom(NULL, X_OBJ_FLAG_NONE, 42), NULL));
+	p_ret = x_obj_push(NULL, p_args);
+	_it_should("push value and return it",
+		42 == x_atomint(p_ret)
+	);
+	_it_should("new pair has no flags",
+		X_OBJ_FLAG_NONE == (x_obj_flags(x_firstobj((x_obj_t *)stack)) & ~X_OBJ_FLAG_ATTR_MASK)
+	);
+
+	/* push with flags */
+	p_args = x_mkspair(NULL, X_OBJ_FLAG_NONE,
+		x_mksatom(NULL, X_OBJ_FLAG_NONE, &x_firstobj((x_obj_t *)stack)),
+		x_mkspair(NULL, X_OBJ_FLAG_NONE,
+			x_mksatom(NULL, X_OBJ_FLAG_NONE, 99),
+			x_mkspair(NULL, X_OBJ_FLAG_NONE,
+				x_mksatom(NULL, X_OBJ_FLAG_NONE, X_OBJ_FLAG_RO), NULL)));
+	p_ret = x_obj_push(NULL, p_args);
+	_it_should("push with flags and return value",
+		99 == x_atomint(p_ret)
+	);
+	_it_should("new pair has RO flag",
+		X_OBJ_FLAG_RO == (x_obj_flags(x_firstobj((x_obj_t *)stack)) & X_OBJ_FLAG_RO)
+	);
+
+	return NULL;
+}
+
+static char *test_obj_pop(void)
+{
+	x_obj_t *p_ret, *p_args;
+	x_spair_t stack = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 1}, {.p = NULL});
+
+	helper_alloc_reset();
+
+	/* push two values then pop them */
+	p_args = x_mkspair(NULL, X_OBJ_FLAG_NONE,
+		x_mksatom(NULL, X_OBJ_FLAG_NONE, &x_firstobj((x_obj_t *)stack)),
+		x_mkspair(NULL, X_OBJ_FLAG_NONE,
+			x_mksatom(NULL, X_OBJ_FLAG_NONE, 10), NULL));
+	x_obj_push(NULL, p_args);
+
+	p_args = x_mkspair(NULL, X_OBJ_FLAG_NONE,
+		x_mksatom(NULL, X_OBJ_FLAG_NONE, &x_firstobj((x_obj_t *)stack)),
+		x_mkspair(NULL, X_OBJ_FLAG_NONE,
+			x_mksatom(NULL, X_OBJ_FLAG_NONE, 20), NULL));
+	x_obj_push(NULL, p_args);
+
+	p_args = x_mkspair(NULL, X_OBJ_FLAG_NONE,
+		x_mksatom(NULL, X_OBJ_FLAG_NONE, &x_firstobj((x_obj_t *)stack)), NULL);
+	p_ret = x_obj_pop(NULL, p_args);
+	_it_should("pop returns last pushed value",
+		20 == x_atomint(p_ret)
+	);
+
+	p_ret = x_obj_pop(NULL, p_args);
+	_it_should("pop returns first pushed value",
+		10 == x_atomint(p_ret)
+	);
+
+	return NULL;
+}
+
 static char *test_obj_prim_type_name(void)
 {
 	x_obj_t *p_base, *p_obj, *p_args, *p_ret;
@@ -1585,6 +1658,9 @@ static char *run_tests()
 	_run_test(test_obj_sys_alloc);
 	_run_test(test_obj_sys_make);
 	_run_test(test_obj_sys_free);
+
+	_run_test(test_obj_push);
+	_run_test(test_obj_pop);
 
 	_run_test(test_obj_prim_type_name);
 	_run_test(test_obj_type_name);

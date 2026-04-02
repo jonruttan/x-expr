@@ -252,6 +252,9 @@ x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj);
 
+x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args);
+
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj);
 
 #ifdef DEBUG

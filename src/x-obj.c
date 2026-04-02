@@ -44,7 +44,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 	size_t extra = (p_base != NULL
 		&& ! x_obj_isnil(p_base, x_obj_type(p_base))
 		&& x_base_isset(p_base))
-		? (size_t)x_atomint(x_base_field_obj_meta_extra(p_base)) : 0;
+		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
 
 	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (extra + X_OBJ_META_LEN + units));
 
@@ -64,7 +64,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 
 #ifdef X_PROFILE
 		if (x_base_isset(p_base)) {
-			x_atomint(x_base_field_profile_allocs(p_base))++;
+			x_atomint(x_firstobj(x_base_field_profile_allocs(p_base)))++;
 		}
 #endif /* X_PROFILE */
 	} else {
@@ -113,7 +113,7 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 		size_t extra = (p_base != NULL
 			&& !x_obj_isnil(p_base, x_obj_type(p_base))
 			&& x_base_isset(p_base))
-			? (size_t)x_atomint(x_base_field_obj_meta_extra(p_base)) : 0;
+			? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
 		p_alloc = p_obj - extra;
 	}
 #endif /* X_HEAP */
@@ -136,8 +136,8 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_base_field_hook_type_name(p_base))) {
-		return x_atomfn(x_base_field_hook_type_name(p_base))(p_base, p_args);
+		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_type_name(p_base)))) {
+		return x_atomfn(x_firstobj(x_base_field_hook_type_name(p_base)))(p_base, p_args);
 	}
 
 	return NULL;
@@ -184,8 +184,8 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_base_field_hook_units(p_base))) {
-		return x_atomfn(x_base_field_hook_units(p_base))(p_base, p_args);
+		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_units(p_base)))) {
+		return x_atomfn(x_firstobj(x_base_field_hook_units(p_base)))(p_base, p_args);
 	}
 
 	return NULL;
@@ -232,8 +232,8 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_base_field_hook_length(p_base))) {
-		return x_atomfn(x_base_field_hook_length(p_base))(p_base, p_args);
+		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_length(p_base)))) {
+		return x_atomfn(x_firstobj(x_base_field_hook_length(p_base)))(p_base, p_args);
 	}
 
 	return NULL;
@@ -253,6 +253,29 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 	return x_atomint(p_length);
 }
 
+x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args)
+{
+	x_obj_t **p_field = (x_obj_t **)x_atomptr(x_firstobj(p_args));
+	x_obj_t *p_value = x_firstobj(x_restobj(p_args));
+	x_obj_flag_t flags = x_obj_isnil(p_base, x_restobj(x_restobj(p_args)))
+		? X_OBJ_FLAG_NONE
+		: (x_obj_flag_t)x_atomint(x_firstobj(x_restobj(x_restobj(p_args))));
+
+	*p_field = x_mkspair(p_base, flags, p_value, *p_field);
+
+	return x_firstobj(*p_field);
+}
+
+x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
+{
+	x_obj_t **p_field = (x_obj_t **)x_atomptr(x_firstobj(p_args));
+	x_obj_t *p_top = x_firstobj(*p_field);
+
+	*p_field = x_restobj(*p_field);
+
+	return p_top;
+}
+
 /*
  * Output an error message to *stderr*, then **exit**.
  */
@@ -261,9 +284,9 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 	x_char_t *symbol = NULL;
 
 	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_base_field_hook_error(p_base))) {
+		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_error(p_base)))) {
 		((void (*)(x_obj_t *, x_char_t *, x_obj_t *))
-			x_firstptr(x_base_field_hook_error(p_base)))(p_base, message, p_obj);
+			x_firstptr(x_firstobj(x_base_field_hook_error(p_base))))(p_base, message, p_obj);
 		return;
 	}
 
