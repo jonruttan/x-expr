@@ -37,10 +37,6 @@
  */
 #define X_VERSION "0.1.0"
 
-#ifdef DEBUG
-#define X_DEBUG_BUFFER_SIZE	65536
-#endif /* DEBUG */
-
 /*
  * Whether to include Heap structures.
  *
@@ -61,6 +57,23 @@
 #ifndef X_MACHINE
 #define X_MACHINE "undefined"
 #endif /* X_MACHINE */
+
+/*
+ * Disable optimization for functions that depend on stack layout.
+ *
+ * @constant X_NO_OPTIMIZE
+ */
+#if defined(__clang__)
+#define X_NO_OPTIMIZE __attribute__((optnone))
+#elif defined(__GNUC__)
+#define X_NO_OPTIMIZE __attribute__((optimize("O0")))
+#else
+#define X_NO_OPTIMIZE
+#endif
+
+#ifdef DEBUG
+#define X_DEBUG_BUFFER_SIZE	65536
+#endif /* DEBUG */
 
 /*
  * The C compiler's target CPU architecture.
