@@ -24,10 +24,9 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 	x_type_units_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_ATOM}),
 	x_type_units_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_PAIR}),
 	x_type_length_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_ATOM}),
-	x_type_length_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_PAIR});
-
-x_satom_t x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)"#t"});
-x_satom_t x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)"#f"});
+	x_type_length_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_PAIR}),
+	x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_TRUE_SYMBOL}),
+	x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_FALSE_SYMBOL});
 
 
 /*
@@ -319,7 +318,7 @@ void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ..
 void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj, char *msg)
 {
 	x_char_t *type = x_obj_type_name(p_base, p_obj);
-	char data_buffer[X_OBJ_DUMP_BUFFER_SIZE], *s = "",
+	char data_buffer[X_DEBUG_BUFFER_SIZE], *s = "",
 		flag_buffer[(sizeof(x_obj_flag_t) << 3) + 1], *flags = "-";
 
 	if (p_obj != NULL) {

@@ -25,8 +25,8 @@
 #define X_TYPE_ATOM_SYMBOL			"ATOM"
 #define X_TYPE_PAIR_SYMBOL			"PAIR"
 
-
-#define X_OBJ_DUMP_BUFFER_SIZE	65536
+#define X_OBJ_TRUE_SYMBOL			"#t"
+#define X_OBJ_FALSE_SYMBOL			"#f"
 
 /*
  * # Data Structures
