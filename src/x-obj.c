@@ -47,10 +47,12 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 /**
  * Allocate an uninitialized object.
  *
- * Allocates memory for metadata + @p units data units. If the base
- * environment specifies extra metadata (obj_meta_extra), additional
- * units are prepended and the META flag is set. When X_HEAP is enabled,
- * the new object is linked into the heap chain.
+ * Allocates `sizeof(x_obj_t) * (extra + META_LEN + units)` bytes where
+ * @p extra is the obj_meta_extra count from the base. When extra > 0,
+ * the returned pointer is advanced past the extension region and the
+ * META flag is set so x_obj_free() can adjust back. With X_HEAP enabled,
+ * the new object is prepended to the heap chain via `x_obj_heap()` and
+ * the profile allocation counter is incremented.
  *
  * @param p_base The base environment (for extra metadata size and heap chain).
  * @param p_type Type descriptor pointer to store in metadata.
@@ -395,8 +397,10 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 /**
  * Push a value onto a field stack.
  *
- * The field stack is a linked list of pairs. This creates a new pair
- * `(value . *field)` and stores it back into the field pointer.
+ * A field stack is a pair chain: `(current . (prev . (prev2 . nil)))`.
+ * Push creates `(value . *field)` and writes it back to `*field`,
+ * saving the old value in the rest chain. The first argument is a
+ * void pointer to the field's `x_obj_t *` variable.
  *
  * @param p_base The base environment.
  * @param p_args Pair list: (field-pointer value [flags]).
@@ -437,9 +441,10 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
 /**
  * Output an error message to stderr and exit.
  *
- * If the error hook is set in the base, delegates to it. Otherwise
- * extracts a string symbol from the object (if it is a static atom)
- * and calls x_error().
+ * If the error hook is set in the base, delegates to it via a cast
+ * to `void (*)(x_obj_t *, x_char_t *, x_obj_t *)` -- note this is a
+ * different signature than x_fn_t. Otherwise, extracts a string symbol
+ * from the object (if it is a static atom) and calls x_error().
  *
  * @param p_base  The base environment.
  * @param message Error message string.

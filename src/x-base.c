@@ -27,8 +27,10 @@
  * Create a new base environment object.
  *
  * Allocates and assembles the nested pair tree that holds all environment
- * state: I/O descriptors, profiling counters, hook functions, and heap
- * management pointers. See x-base.h for the tree structure.
+ * state. Each leaf value is wrapped as `pair(atom(value), nil)` to form
+ * a one-element stack (see x-base.h). The tree layout matches the field
+ * accessor macros: x_base_field_filein() navigates to the filein leaf,
+ * x_base_field_hook_type_name() to the type_name hook, etc.
  *
  * @param p_base Existing base for allocation context, or NULL for bootstrap.
  * @param base   Initialization parameters (file descriptors, hooks, etc.).
@@ -112,9 +114,11 @@ x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
 /**
  * Write data from an atom to the base's output or write buffer.
  *
- * If the base has an active write buffer, data is copied into it.
- * Otherwise, writes to the fileout descriptor from the base environment,
- * falling back to STDOUT_FILENO if the base is not initialized.
+ * Checks the write_buf field first: if it holds a non-nil pair
+ * `(pointer . position)`, data is memcpy'd into the buffer at the
+ * current position and the position is advanced. Otherwise, writes
+ * to the fileout file descriptor, falling back to STDOUT_FILENO
+ * if the base is not initialized.
  *
  * @param p_base The base environment.
  * @param p_args Pair list: (source-atom byte-count).

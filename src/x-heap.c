@@ -21,10 +21,12 @@
 /**
  * Walk a pair tree, setting mark flags on each reachable object.
  *
- * For pairs, recursively marks the first branch and tail-iterates
- * the rest branch. For non-pair objects, calls the mark hook
- * (x_heap_mark_fn_t) from the base if set. Already-marked objects
- * (those with @p flags already set) are skipped.
+ * Traversal strategy: for each pair, recursively mark the first branch
+ * (depth-first), then tail-iterate the rest branch (avoids stack overflow
+ * on long lists). For non-pair objects, calls the mark hook
+ * (x_heap_mark_fn_t) from the base if set -- the hook can return a next
+ * object to continue tail-iteration, or NULL to stop. Already-marked
+ * objects (those with @p flags already set) are skipped to avoid cycles.
  *
  * @param p_base The base environment.
  * @param p_obj  Root object to start marking from.
@@ -137,10 +139,12 @@ X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags
 /**
  * Sweep the heap, freeing unmarked objects.
  *
- * Walks the heap chain starting from @p p_obj. Objects that have the
- * given @p flags set (or X_OBJ_FLAG_SHARED) are retained and their
- * mark flags are cleared. Unmarked objects are freed via x_obj_free(),
- * with the free hook called first if set.
+ * Walks the heap chain starting from @p p_obj. For each object:
+ * - **Retained** if it has the mark @p flags set, or X_OBJ_FLAG_SHARED.
+ *   The mark flags are then cleared for the next GC cycle.
+ * - **Freed** otherwise: the free hook (x_heap_free_fn_t) is called
+ *   first for type-specific cleanup, then x_obj_free(). The heap chain
+ *   is relinked to skip the freed object.
  *
  * @note If the top object on the heap is deleted, the heap structure
  *       will fragment.

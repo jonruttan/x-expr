@@ -44,12 +44,16 @@
  * Object flag and type tag bitfield.
  *
  * Layout:
- * - Bits 0--3: attribute flags (X_OBJ_FLAG_1 through X_OBJ_FLAG_4)
- * - Bits 4--7: simple type tag (PRIM, FN, INT, CHAR, STR, PTR)
- * - Bit  5:    OWN -- object owns its data (freed on x_obj_free)
- * - Bit  6:    RO  -- read-only
- * - Bit  7:    META -- extra metadata units were allocated
- * - Bits 8--9: (X_HEAP only) SHARED and HEAP flags
+ * - Bits 0--3: user attribute flags (X_OBJ_FLAG_1 through X_OBJ_FLAG_4)
+ * - Bits 4--7: simple type tag -- determines which x_datum_union member is
+ *   valid: PRIM/FN use `.fn`, INT uses `.i`, CHAR uses `.c`, STR uses `.s`,
+ *   PTR uses `.v`, default (OBJ) uses `.p`
+ * - Bit  5:    OWN -- object owns its first data unit's pointer; x_obj_free()
+ *   will call x_sys_free() on it before freeing the object itself
+ * - Bit  6:    RO  -- read-only (advisory)
+ * - Bit  7:    META -- extra metadata units were prepended during allocation;
+ *   x_obj_free() adjusts the pointer backward before freeing
+ * - Bits 8--9: (X_HEAP only) SHARED prevents GC sweep; HEAP is reserved
  */
 typedef enum x_obj_flag_enum
 {
@@ -100,8 +104,11 @@ typedef union x_datum_union x_obj_t;
 /**
  * Native function pointer type.
  *
- * All built-in primitive functions share this signature. The first argument
- * is the base/environment object; the second is a pair list of arguments.
+ * All built-in primitive functions share this signature. Arguments are
+ * passed as a pair list: `(arg0 . (arg1 . (arg2 . nil)))`. Extract
+ * values with `x_firstobj(p_args)` for the first argument,
+ * `x_firstobj(x_restobj(p_args))` for the second, and so on. Use
+ * typed accessors (x_atomint, x_atomstr, etc.) on extracted atoms.
  *
  * @param p_base The base environment object.
  * @param p_args A pair list of arguments.
@@ -113,7 +120,9 @@ typedef x_obj_t * (*x_fn_t)(x_obj_t *p_base, x_obj_t *p_args);
  * Datum union -- the storage unit for all object values.
  *
  * Every x_obj_t is one instance of this union. Which member is valid
- * depends on the object's type flags.
+ * depends on the object's type flags: INT uses `.i`, CHAR uses `.c`,
+ * STR uses `.s`, PRIM/FN use `.fn`, PTR uses `.v`, and the default
+ * (pair linkage, type pointers) uses `.p`.
  */
 union x_datum_union
 {
@@ -133,10 +142,19 @@ union x_datum_union
  *
  * Each object in memory is an array of x_obj_t units:
  *
- * ```
- * [heap?] [type] [flags] [data_0] [data_1] ...
- * |<--- metadata ------->|<----- data ------->|
- * ```
+ * @code
+ * Without extra metadata:
+ *   [heap?] [type] [flags] [data_0] [data_1] ...
+ *   |<--- metadata ------->|<----- data ------->|
+ *                           ^-- x_obj_data_ptr()
+ *
+ * With extra metadata (obj_meta_extra = N):
+ *   [extra_N-1] ... [extra_0] [heap?] [type] [flags] [data_0] ...
+ *   |<-- extension -------->|<--- metadata ------->|<-- data -->|
+ *                                                   ^-- x_obj_data_ptr()
+ *   Access extra units via x_obj_meta_i(X, I):
+ *     I=0 -> unit just before [heap], I=1 -> two before, etc.
+ * @endcode
  *
  * The data pointer returned by x_obj_alloc() points at `data_0`.
  * Metadata fields are at negative offsets from the data pointer.
@@ -264,8 +282,8 @@ extern x_satom_t x_false_obj;				/**< The canonical false object (\#f). */
 /**
  * Static initializer for an object's metadata and data units.
  *
- * Produces a brace-enclosed initializer list suitable for x_satom_t
- * or x_spair_t arrays.
+ * For use with x_satom_t or x_spair_t arrays declared at file scope
+ * or on the stack. Produces a brace-enclosed initializer list.
  *
  * @param T Type pointer (x_obj_t * or NULL).
  * @param F Flags value (x_obj_flag_t).
@@ -475,10 +493,10 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args);
 /** Get the logical length of an object. */
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj);
 
-/** Push a value onto a field stack. */
+/** Push a value onto a field stack: field becomes (value . old-field). */
 x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args);
 
-/** Pop a value from a field stack. */
+/** Pop a value from a field stack: returns first of field, advances to rest. */
 x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args);
 
 /** Output an error message to stderr and exit. */

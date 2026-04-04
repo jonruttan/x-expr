@@ -10,7 +10,11 @@
  * Field accessor macros navigate this tree without hard-coding offsets.
  *
  * @details
- * Every leaf field is a stack: `(current-value . saved-values)`.
+ * Every leaf field is stored as a pair: `(current-value . saved-values)`.
+ * Fields are initialized with `(value . nil)`. Any field can be used as
+ * a stack via x_obj_push() / x_obj_pop() to save and restore values.
+ * To read a field's current value, use `x_firstobj(field)` then extract
+ * the appropriate datum (e.g. `x_atomint()` for integers).
  *
  * @code
  * (lit base-data
@@ -71,19 +75,23 @@
 /** Get the files list (filein, fileout, fileerr, write-buf, buffer). */
 #define x_base_field_files(X)				x_restobj(x_firstobj(x_base_field_io_group(X)))
 
-/** Get the filein field (standard input file descriptor stack). */
+/** Get the filein field. Value: integer atom (file descriptor). */
 #define x_base_field_filein(X)				x_firstobj(x_base_field_files(X))
 
-/** Get the fileout field (standard output file descriptor stack). */
+/** Get the fileout field. Value: integer atom (file descriptor). */
 #define x_base_field_fileout(X)				x_firstobj(x_restobj(x_base_field_files(X)))
 
-/** Get the fileerr field (standard error file descriptor stack). */
+/** Get the fileerr field. Value: integer atom (file descriptor). */
 #define x_base_field_fileerr(X)				x_firstobj(x_restobj(x_restobj(x_base_field_files(X))))
 
-/** Get the write buffer field (buffered output pointer + position). */
+/**
+ * Get the write buffer field.
+ * Value: pair `(pointer . position)` when active, or nil when disabled.
+ * When set, x_base_write() copies data here instead of writing to fileout.
+ */
 #define x_base_field_write_buf(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_files(X)))))
 
-/** Get the input buffer field. */
+/** Get the input buffer field. Reserved for extension use. */
 #define x_base_field_buffer(X)				x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_files(X))))))
 
 /** @} */
@@ -100,22 +108,42 @@
 /** Get the profile pair (counters). */
 #define x_base_field_profile(X)				x_firstobj(x_firstobj(x_base_field_meta_group(X)))
 
-/** Get the allocation counter field. */
+/** Get the allocation counter field. Value: integer atom, incremented by x_obj_alloc(). */
 #define x_base_field_profile_allocs(X)		x_firstobj(x_base_field_profile(X))
 
 /** Get the hooks list (type-name, units, length, error). */
 #define x_base_field_hooks(X)				x_restobj(x_firstobj(x_base_field_meta_group(X)))
 
-/** Get the type_name hook field (called to resolve custom type names). */
+/**
+ * Get the type_name hook field. Value: atom with x_fn_t function pointer.
+ * Signature: `x_obj_t *(*)(x_obj_t *p_base, x_obj_t *p_args)` --
+ * p_args is a pair list whose first element is the object to name.
+ * Must return a type name atom (string data), or NULL.
+ */
 #define x_base_field_hook_type_name(X)		x_firstobj(x_base_field_hooks(X))
 
-/** Get the units hook field (called to determine custom type unit counts). */
+/**
+ * Get the units hook field. Value: atom with x_fn_t function pointer.
+ * Same calling convention as type_name. Must return an integer atom
+ * with the number of data units, or NULL.
+ */
 #define x_base_field_hook_units(X)			x_firstobj(x_restobj(x_base_field_hooks(X)))
 
-/** Get the length hook field (called to determine custom type lengths). */
+/**
+ * Get the length hook field. Value: atom with x_fn_t function pointer.
+ * Same calling convention as type_name. Must return an integer atom
+ * with the logical length, or NULL.
+ */
 #define x_base_field_hook_length(X)			x_firstobj(x_restobj(x_restobj(x_base_field_hooks(X))))
 
-/** Get the error hook field (called for error handling). */
+/**
+ * Get the error hook field. Value: atom with void pointer to function.
+ *
+ * @note Unlike the other hooks, the error hook does NOT follow the
+ * x_fn_t signature. Its actual signature is:
+ * `void (*)(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)`.
+ * It is dispatched via a cast from x_firstptr(), not x_atomfn().
+ */
 #define x_base_field_hook_error(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_hooks(X)))))
 
 /** @} */
@@ -129,16 +157,24 @@
 /** Get the heap group pair. */
 #define x_base_field_heap_group(X)			x_firstobj(x_restobj(x_base_field_meta_group(X)))
 
-/** Get the extra metadata units count field. */
+/**
+ * Get the extra metadata units count field. Value: integer atom.
+ * When > 0, x_obj_alloc() prepends this many extra units before each
+ * object's standard metadata, accessible via x_obj_meta_i().
+ */
 #define x_base_field_obj_meta_extra(X)		x_firstobj(x_base_field_heap_group(X))
 
-/** Get the heap mark function hook field. */
+/** Get the heap mark hook field. Value: atom with x_heap_mark_fn_t pointer. */
 #define x_base_field_heap_mark(X)			x_firstobj(x_restobj(x_base_field_heap_group(X)))
 
-/** Get the heap free function hook field. */
+/** Get the heap free hook field. Value: atom with x_heap_free_fn_t pointer. */
 #define x_base_field_heap_free(X)			x_firstobj(x_restobj(x_restobj(x_base_field_heap_group(X))))
 
-/** Get the C call stack base pointer field (for GC stack scanning). */
+/**
+ * Get the C call stack base pointer field. Value: atom with void pointer.
+ * Captured at base creation time; used by x_heap_callstack_mark() to
+ * determine the stack region to scan for object references.
+ */
 #define x_base_field_stack_base(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))
 
 /** @} */
@@ -155,15 +191,15 @@ struct x_base_t
 	x_int_t fileout;			/**< Output file descriptor (e.g. STDOUT_FILENO). */
 	x_int_t fileerr;			/**< Error file descriptor (e.g. STDERR_FILENO). */
 
-	x_obj_t *p_hook_type_name;	/**< Type name resolution hook, or NULL. */
-	x_obj_t *p_hook_units;		/**< Units count hook, or NULL. */
-	x_obj_t *p_hook_length;		/**< Length hook, or NULL. */
-	x_obj_t *p_hook_error;		/**< Error handling hook, or NULL. */
+	x_obj_t *p_hook_type_name;	/**< Type name hook (x_fn_t atom), or NULL. */
+	x_obj_t *p_hook_units;		/**< Units hook (x_fn_t atom), or NULL. */
+	x_obj_t *p_hook_length;		/**< Length hook (x_fn_t atom), or NULL. */
+	x_obj_t *p_hook_error;		/**< Error hook (void * atom, different signature), or NULL. */
 
-	x_int_t obj_meta_extra;		/**< Number of extra metadata units per object. */
-	x_obj_t *p_heap_mark;		/**< Heap mark function hook, or NULL. */
-	x_obj_t *p_heap_free;		/**< Heap free function hook, or NULL. */
-	void *p_stack_base;			/**< C call stack base address for GC scanning. */
+	x_int_t obj_meta_extra;		/**< Extra metadata units per object (0 for none). */
+	x_obj_t *p_heap_mark;		/**< Mark hook (x_heap_mark_fn_t atom), or NULL. */
+	x_obj_t *p_heap_free;		/**< Free hook (x_heap_free_fn_t atom), or NULL. */
+	void *p_stack_base;			/**< C stack base address for GC scanning (e.g. `&main_local`). */
 };
 
 /**
