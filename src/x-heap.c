@@ -25,6 +25,11 @@
  * the rest branch. For non-pair objects, calls the mark hook
  * (x_heap_mark_fn_t) from the base if set. Already-marked objects
  * (those with @p flags already set) are skipped.
+ *
+ * @param p_base The base environment.
+ * @param p_obj  Root object to start marking from.
+ * @param flags  Flags to set on each marked object.
+ * @return The last object visited.
  */
 x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
@@ -63,6 +68,12 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  * Iterates through each pointer-sized value in the region from
  * @p p_start to @p p_start + @p size, comparing against all objects
  * in the heap chain. Any match is marked via x_heap_tree_mark().
+ *
+ * @param p_base  The base environment.
+ * @param p_start Start of the memory region to scan.
+ * @param size    Size of the region in bytes.
+ * @param flags   Flags to set on each marked object.
+ * @return NULL.
  */
 x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
 	x_obj_flag_t flags)
@@ -91,6 +102,10 @@ x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
  * stack base stored in the base object, then scans that region with
  * x_heap_vector_mark(). Uses X_NO_OPTIMIZE to prevent the compiler
  * from optimizing away the stack frame variable.
+ *
+ * @param p_base The base environment.
+ * @param flags  Flags to set on each marked object.
+ * @return Result of x_heap_vector_mark() on the stack region.
  */
 X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags)
 {
@@ -129,6 +144,11 @@ X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags
  *
  * @note If the top object on the heap is deleted, the heap structure
  *       will fragment.
+ *
+ * @param p_base The base environment.
+ * @param p_obj  Start of the heap chain to sweep.
+ * @param flags  Mark flags to check (objects with these flags are retained).
+ * @return The base object.
  */
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {

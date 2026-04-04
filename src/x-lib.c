@@ -28,7 +28,12 @@
 
 #endif /* X_USE_STDLIB */
 
-/** Compute the absolute value of an integer. */
+/**
+ * Compute the absolute value of an integer.
+ *
+ * @param i The integer value.
+ * @return The absolute value of @p i.
+ */
 int x_lib_abs(int i)
 {
 #ifdef X_USE_STDLIB
@@ -49,6 +54,11 @@ int x_lib_abs(int i)
  * @note The caller must provide sufficient storage in @p p_str.
  *       The minimum buffer size depends on the base. For base 2 (binary),
  *       the buffer needs at least `8 * sizeof(x_int_t) + 1` bytes.
+ *
+ * @param num   The integer to convert.
+ * @param p_str Destination buffer for the resulting string.
+ * @param base  Numeric base (2--36).
+ * @return Pointer to @p p_str, or NULL if arguments are invalid.
  */
 x_char_t *x_lib_inttostr(x_int_t num, x_char_t *p_str, unsigned short base)
 {
@@ -86,7 +96,14 @@ x_char_t *x_lib_inttostr(x_int_t num, x_char_t *p_str, unsigned short base)
 #endif /* X_USE_STDLIB_NONSTD */
 }
 
-/** Copy bytes from a source buffer to a destination buffer. */
+/**
+ * Copy bytes from a source buffer to a destination buffer.
+ *
+ * @param p_dest Pointer to the destination buffer.
+ * @param p_src  Pointer to the source buffer.
+ * @param size   Number of bytes to copy.
+ * @return Pointer to @p p_dest.
+ */
 void *x_lib_memcpy(void *p_dest, const void *p_src, size_t size)
 {
 #ifdef X_USE_STDLIB
@@ -109,6 +126,10 @@ void *x_lib_memcpy(void *p_dest, const void *p_src, size_t size)
  * Allocates a new buffer via x_sys_malloc() and copies @p size bytes
  * from @p p_src into it. If @p p_src is NULL, the buffer is allocated
  * but not copied (and optionally zeroed if X_OPT_MEMZERO is defined).
+ *
+ * @param p_src Pointer to the source memory, or NULL.
+ * @param size  Number of bytes to duplicate.
+ * @return Pointer to the new buffer, or NULL on allocation failure.
  */
 void *x_lib_memdup(const void *p_src, size_t size)
 {
@@ -130,7 +151,14 @@ void *x_lib_memdup(const void *p_src, size_t size)
 	return p_dst;
 }
 
-/** Fill a memory region with a constant byte. */
+/**
+ * Fill a memory region with a constant byte.
+ *
+ * @param p_dest Pointer to the destination buffer.
+ * @param byte   The byte value to fill with.
+ * @param size   Number of bytes to set.
+ * @return Pointer to @p p_dest.
+ */
 void *x_lib_memset(void *p_dest, int byte, size_t size)
 {
 #ifdef X_USE_STDLIB
@@ -146,7 +174,13 @@ void *x_lib_memset(void *p_dest, int byte, size_t size)
 #endif /* X_USE_STDLIB */
 }
 
-/** Locate the first occurrence of a character in a string. */
+/**
+ * Locate the first occurrence of a character in a string.
+ *
+ * @param p_str The string to search.
+ * @param c     The character to find (as an int).
+ * @return Pointer to the first occurrence, or NULL if not found.
+ */
 x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
 {
 #ifdef X_USE_STDLIB
@@ -164,6 +198,9 @@ x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
  * Calculate the length of a null-terminated string.
  *
  * @note This function does not handle wide characters.
+ *
+ * @param p_str The string to measure.
+ * @return The length in bytes, excluding the null terminator.
  */
 size_t x_lib_strlen(const x_char_t *p_str)
 {
@@ -178,7 +215,13 @@ size_t x_lib_strlen(const x_char_t *p_str)
 #endif /* X_USE_STDLIB */
 }
 
-/** Compare two null-terminated strings. */
+/**
+ * Compare two null-terminated strings.
+ *
+ * @param p_str1 First string.
+ * @param p_str2 Second string.
+ * @return Negative, zero, or positive value indicating ordering.
+ */
 int x_lib_strcmp(const x_char_t *p_str1, const x_char_t *p_str2)
 {
 #ifdef X_USE_STDLIB
@@ -193,7 +236,14 @@ int x_lib_strcmp(const x_char_t *p_str1, const x_char_t *p_str2)
 #endif /* X_USE_STDLIB */
 }
 
-/** Compare two strings up to a maximum of @p n characters. */
+/**
+ * Compare two strings up to a maximum of @p n characters.
+ *
+ * @param p_str1 First string.
+ * @param p_str2 Second string.
+ * @param n      Maximum number of characters to compare.
+ * @return Negative, zero, or positive value indicating ordering.
+ */
 int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
 {
 #ifdef X_USE_STDLIB
@@ -213,6 +263,10 @@ int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
  *
  * Allocates a new buffer via x_lib_memdup(), copies up to @p size
  * bytes from @p p_str, and null-terminates the result.
+ *
+ * @param p_str The source string.
+ * @param size  Maximum number of characters to copy.
+ * @return Pointer to the new string, or NULL on allocation failure.
  */
 x_char_t *x_lib_strndup(const x_char_t *p_str, size_t size)
 {
@@ -236,6 +290,11 @@ x_char_t *x_lib_strndup(const x_char_t *p_str, size_t size)
  *
  * Leading whitespace is skipped. An optional `+` or `-` sign is accepted.
  * If @p pp_end is non-NULL, it is set to point past the last parsed character.
+ *
+ * @param p_str  The string to parse.
+ * @param pp_end Output: pointer past the last parsed character, or NULL.
+ * @param base   Numeric base (0 for auto-detect, or 2--36).
+ * @return The parsed integer value.
  */
 x_int_t x_lib_strtoint(const x_char_t *p_str, x_char_t **pp_end, unsigned short base)
 {

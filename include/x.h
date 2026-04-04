@@ -216,17 +216,7 @@ void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...);
 
 /** @} */
 
-/**
- * Output an error message and terminate the process.
- *
- * Writes `"*** ERROR: "` followed by the message (and optionally the
- * symbol in quotes) to the given file descriptor, then calls x_sys_exit()
- * with X_SYS_EXIT_FAILURE.
- *
- * @param fd      File descriptor to write the error message to.
- * @param message A C string error message.
- * @param symbol  A C string with additional context, or NULL.
- */
+/** Output an error message and terminate the process. */
 void x_error(int fd, x_char_t *message, x_char_t *symbol);
 
 #endif /* X_H */

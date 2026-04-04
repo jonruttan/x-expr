@@ -32,7 +32,13 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 /** @} */
 
 
-/** Test whether an object is nil (NULL). */
+/**
+ * Test whether an object is nil (NULL).
+ *
+ * @param p_base The base environment (unused, reserved for hook dispatch).
+ * @param p_obj  The object to test.
+ * @return Non-zero if @p p_obj is NULL, zero otherwise.
+ */
 int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	return p_obj == NULL;
@@ -45,6 +51,12 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * environment specifies extra metadata (obj_meta_extra), additional
  * units are prepended and the META flag is set. When X_HEAP is enabled,
  * the new object is linked into the heap chain.
+ *
+ * @param p_base The base environment (for extra metadata size and heap chain).
+ * @param p_type Type descriptor pointer to store in metadata.
+ * @param flags  Initial flags for the new object.
+ * @param units  Number of data units to allocate.
+ * @return Pointer to the new object's metadata, or NULL on failure.
  */
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
@@ -90,6 +102,13 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
  * Create an object with data units from a va_list.
  *
  * Allocates via x_obj_alloc() then fills @p units data slots from @p ap.
+ *
+ * @param p_base The base environment.
+ * @param p_type Type descriptor pointer.
+ * @param flags  Initial flags.
+ * @param units  Number of data units.
+ * @param ap     Variable argument list of x_obj_t * values for each data unit.
+ * @return Pointer to the new object, or NULL on allocation failure.
  */
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, va_list ap)
 {
@@ -105,6 +124,13 @@ x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, siz
  * Create an object with data units from variadic arguments.
  *
  * Convenience wrapper that calls x_obj_make_va().
+ *
+ * @param p_base The base environment.
+ * @param p_type Type descriptor pointer.
+ * @param flags  Initial flags.
+ * @param units  Number of data units.
+ * @param ...    Data unit values (as x_obj_t *).
+ * @return Pointer to the new object, or NULL on allocation failure.
  */
 x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, ...)
 {
@@ -124,6 +150,9 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
  * If the OWN flag is set, the first data unit's pointer is freed first.
  * If the META flag is set, the allocation pointer is adjusted back past
  * the extra metadata units before freeing.
+ *
+ * @param p_base The base environment.
+ * @param p_obj  The object to free.
  */
 void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -151,6 +180,10 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
  *
  * For built-in atoms and pairs, returns the type descriptor directly.
  * For user-defined types, delegates to the type_name hook in the base.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list whose first element is the object to inspect.
+ * @return The type name atom, or NULL for nil objects.
  */
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -178,6 +211,10 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
  * Get the type name string for an object.
  *
  * Wraps x_obj_prim_type_name() to return a C string directly.
+ *
+ * @param p_base The base environment.
+ * @param p_obj  The object to inspect.
+ * @return The type name as a C string (e.g. "ATOM", "PAIR"), or "NIL".
  */
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -193,13 +230,25 @@ x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 	return x_atomstr(p_name);
 }
 
-/** Primitive: return the units count for an atom. */
+/**
+ * Primitive: return the units count for an atom.
+ *
+ * @param p_base The base environment (unused).
+ * @param p_args Unused.
+ * @return The atom units constant object (X_OBJ_UNITS_ATOM).
+ */
 x_obj_t *x_atom_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_units_atom_obj;
 }
 
-/** Primitive: return the units count for a pair. */
+/**
+ * Primitive: return the units count for a pair.
+ *
+ * @param p_base The base environment (unused).
+ * @param p_args Unused.
+ * @return The pair units constant object (X_OBJ_UNITS_PAIR).
+ */
 x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_units_pair_obj;
@@ -210,6 +259,10 @@ x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args)
  *
  * Dispatches to x_atom_prim_units() or x_pair_prim_units() for
  * built-in types. For user-defined types, delegates to the units hook.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list whose first element is the object.
+ * @return The units constant object, or NULL for nil.
  */
 x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -239,6 +292,10 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
  * Get the number of data units for an object.
  *
  * Wraps x_obj_prim_units() and extracts the integer value.
+ *
+ * @param p_base The base environment.
+ * @param p_obj  The object to measure.
+ * @return The unit count, defaulting to X_OBJ_UNITS_ATOM for nil.
  */
 x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -254,13 +311,25 @@ x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj)
 	return x_atomint(p_units);
 }
 
-/** Primitive: return the length constant for an atom. */
+/**
+ * Primitive: return the length constant for an atom.
+ *
+ * @param p_base The base environment (unused).
+ * @param p_args Unused.
+ * @return The atom length constant object (X_OBJ_LENGTH_ATOM).
+ */
 x_obj_t *x_atom_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_length_atom_obj;
 }
 
-/** Primitive: return the length constant for a pair. */
+/**
+ * Primitive: return the length constant for a pair.
+ *
+ * @param p_base The base environment (unused).
+ * @param p_args Unused.
+ * @return The pair length constant object (X_OBJ_LENGTH_PAIR).
+ */
 x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_length_pair_obj;
@@ -271,6 +340,10 @@ x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args)
  *
  * Dispatches to x_atom_prim_length() or x_pair_prim_length() for
  * built-in types. For user-defined types, delegates to the length hook.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list whose first element is the object.
+ * @return The length constant object, or NULL for nil.
  */
 x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -300,6 +373,10 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
  * Get the logical length of an object.
  *
  * Wraps x_obj_prim_length() and extracts the integer value.
+ *
+ * @param p_base The base environment.
+ * @param p_obj  The object to measure.
+ * @return The length, or 0 for nil.
  */
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 {
@@ -320,6 +397,10 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
  *
  * The field stack is a linked list of pairs. This creates a new pair
  * `(value . *field)` and stores it back into the field pointer.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list: (field-pointer value [flags]).
+ * @return The pushed value.
  */
 x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -338,6 +419,10 @@ x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args)
  * Pop a value from a field stack.
  *
  * Removes the top pair from `*field` and returns its first element.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list: (field-pointer).
+ * @return The popped value.
  */
 x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -355,6 +440,10 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  * If the error hook is set in the base, delegates to it. Otherwise
  * extracts a string symbol from the object (if it is a static atom)
  * and calls x_error().
+ *
+ * @param p_base  The base environment.
+ * @param message Error message string.
+ * @param p_obj   Related object for context, or NULL.
  */
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 {

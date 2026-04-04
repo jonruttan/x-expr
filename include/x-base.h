@@ -171,37 +171,13 @@ struct x_base_t
  * @{
  */
 
-/**
- * Create a new base environment object.
- *
- * Allocates and assembles the nested pair tree described in the file
- * header from the given initialization parameters.
- *
- * @param p_base Existing base for allocation context, or NULL for bootstrap.
- * @param base   Initialization parameters.
- * @return The new base object.
- */
+/** Create a new base environment object. */
 x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base);
 
-/**
- * Read data from the base's input file descriptor.
- *
- * @param p_base The base environment.
- * @param p_args Pair list: (destination-atom byte-count).
- * @return The destination atom on success, or NULL on failure.
- */
+/** Read data from the base's input file descriptor. */
 x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args);
 
-/**
- * Write data to the base's output file descriptor or write buffer.
- *
- * If the base has a write buffer set, data is copied there. Otherwise
- * it is written to the output file descriptor.
- *
- * @param p_base The base environment.
- * @param p_args Pair list: (source-atom byte-count).
- * @return The source atom on success, or NULL on failure.
- */
+/** Write data to the base's output file descriptor or write buffer. */
 x_obj_t *x_base_write(x_obj_t *p_base, x_obj_t *p_args);
 
 /** @} */

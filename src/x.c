@@ -22,6 +22,10 @@
  * Writes `"*** ERROR: "` followed by @p message. If @p symbol is
  * non-NULL, appends `" '"` and the symbol string. Then terminates
  * the process with X_SYS_EXIT_FAILURE.
+ *
+ * @param fd      File descriptor to write the error to.
+ * @param message A C string error message to output.
+ * @param symbol  A C string with additional context, or NULL.
  */
 void x_error(int fd, x_char_t *message, x_char_t *symbol)
 {

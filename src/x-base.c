@@ -29,6 +29,10 @@
  * Allocates and assembles the nested pair tree that holds all environment
  * state: I/O descriptors, profiling counters, hook functions, and heap
  * management pointers. See x-base.h for the tree structure.
+ *
+ * @param p_base Existing base for allocation context, or NULL for bootstrap.
+ * @param base   Initialization parameters (file descriptors, hooks, etc.).
+ * @return The newly created base object.
  */
 x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 {
@@ -85,6 +89,10 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
  *
  * Uses the filein descriptor from the base environment, or falls back
  * to STDIN_FILENO if the base is not initialized.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list: (destination-atom byte-count).
+ * @return The destination atom on success, or NULL on read failure.
  */
 x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -107,6 +115,10 @@ x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
  * If the base has an active write buffer, data is copied into it.
  * Otherwise, writes to the fileout descriptor from the base environment,
  * falling back to STDOUT_FILENO if the base is not initialized.
+ *
+ * @param p_base The base environment.
+ * @param p_args Pair list: (source-atom byte-count).
+ * @return The source atom on success, or NULL on write failure.
  */
 x_obj_t *x_base_write(x_obj_t *p_base, x_obj_t *p_args)
 {

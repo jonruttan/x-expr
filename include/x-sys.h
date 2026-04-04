@@ -46,79 +46,32 @@
  * @{
  */
 
-/**
- * Allocate a memory block from the heap.
- *
- * @param size The number of bytes to allocate.
- * @return A pointer to the allocated memory, or NULL on failure.
- */
+/** Allocate a memory block from the heap. */
 void *x_sys_malloc(size_t size);
 
-/**
- * Free a previously allocated memory block.
- *
- * @param ptr Pointer to the memory block to free.
- */
+/** Free a previously allocated memory block. */
 void x_sys_free(void *ptr);
 
-/**
- * Read bytes from a file descriptor.
- *
- * @param fd    File descriptor to read from.
- * @param p_buf Pointer to the destination buffer.
- * @param size  Maximum number of bytes to read.
- * @return The number of bytes actually read, or -1 on error.
- */
+/** Read bytes from a file descriptor. */
 ssize_t x_sys_read(int fd, void *p_buf, size_t size);
 
-/**
- * Write bytes to a file descriptor.
- *
- * @param fd    File descriptor to write to.
- * @param p_buf Pointer to the source buffer.
- * @param size  Number of bytes to write.
- * @return The number of bytes actually written, or -1 on error.
- */
+/** Write bytes to a file descriptor. */
 ssize_t x_sys_write(int fd, const void *p_buf, size_t size);
 
-/**
- * Terminate the process.
- *
- * @param status Exit status code returned to the parent process.
- */
+/** Terminate the process. */
 void x_sys_exit(int status);
 
-/**
- * Open a file by path.
- *
- * @param path File path to open.
- * @param flags Open flags (e.g. O_RDONLY).
- * @return A file descriptor on success, or -1 on error.
- */
+/** Open a file by path. */
 int x_sys_open(const char *path, int flags);
 
-/**
- * Close a file descriptor.
- *
- * @param fd The file descriptor to close.
- * @return 0 on success, -1 on error.
- */
+/** Close a file descriptor. */
 int x_sys_close(int fd);
 
-/**
- * Read a single character from a file descriptor.
- *
- * @param fd File descriptor to read from.
- * @return The character read, or X_SYS_EOF on error or end-of-file.
- */
+/** Read a single character from a file descriptor. */
 x_char_t x_sys_read_char(int fd);
 
 #ifdef X_CLOCK
-/**
- * Read the CPU clock in microseconds.
- *
- * @return Elapsed CPU time in microseconds since process start.
- */
+/** Read the CPU clock in microseconds. */
 x_int_t x_sys_clock(void);
 #endif /* X_CLOCK */
 
