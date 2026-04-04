@@ -13,7 +13,19 @@
  * -# **Mark**: call x_heap_tree_mark() on known roots and/or
  *    x_heap_callstack_mark() to scan the C stack for references.
  * -# **Sweep**: call x_heap_sweep() to free all unmarked objects.
- *    Objects with X_OBJ_FLAG_SHARED are always retained.
+ *    Objects with X_OBJ_FLAG_SHARED are always retained. Mark flags
+ *    are cleared during sweep, preparing for the next cycle.
+ *
+ * **Rooting rules** -- an object survives GC if any of these apply:
+ * - It has X_OBJ_FLAG_SHARED set (permanent; used for base tree nodes).
+ * - It is reachable from a pair tree passed to x_heap_tree_mark().
+ * - It is referenced by a C local variable on the stack (found by
+ *   x_heap_callstack_mark() scanning between the current frame and
+ *   the stored stack base).
+ * - It is stored in a base environment field (reachable when the
+ *   base tree is marked).
+ *
+ * Objects not reachable by any of the above are collected during sweep.
  *
  * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan

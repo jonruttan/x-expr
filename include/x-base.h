@@ -14,7 +14,14 @@
  * Fields are initialized with `(value . nil)`. Any field can be used as
  * a stack via x_obj_push() / x_obj_pop() to save and restore values.
  * To read a field's current value, use `x_firstobj(field)` then extract
- * the appropriate datum (e.g. `x_atomint()` for integers).
+ * the appropriate datum (e.g. `x_atomint()` for integers). To
+ * temporarily override a field (e.g. redirect I/O for a nested scope),
+ * push a new value before entering the scope and pop it on exit.
+ *
+ * The tree has three extension points (marked below) where downstream
+ * projects can attach additional state: `env+ctrl` for environment
+ * bindings, `type-alist` for type dispatch tables, and `io-state`
+ * for I/O subsystem extensions. These start as nil.
  *
  * @code
  * (lit base-data
@@ -111,7 +118,14 @@
 /** Get the allocation counter field. Value: integer atom, incremented by x_obj_alloc(). */
 #define x_base_field_profile_allocs(X)		x_firstobj(x_base_field_profile(X))
 
-/** Get the hooks list (type-name, units, length, error). */
+/**
+ * Get the hooks list (type-name, units, length, error).
+ *
+ * Hooks are only dispatched for objects whose type pointer is NOT one
+ * of the built-in static types (x_type_atom_obj, x_type_pair_obj).
+ * Dispatch priority: check static type (pointer identity, O(1)),
+ * then call the hook if set, then fall back to NULL.
+ */
 #define x_base_field_hooks(X)				x_restobj(x_firstobj(x_base_field_meta_group(X)))
 
 /**
@@ -172,8 +186,9 @@
 
 /**
  * Get the C call stack base pointer field. Value: atom with void pointer.
- * Captured at base creation time; used by x_heap_callstack_mark() to
- * determine the stack region to scan for object references.
+ * Should be captured near program entry (e.g. `&argc` in main) and
+ * passed via x_base_t.p_stack_base. Used by x_heap_callstack_mark()
+ * to determine the stack region to scan for object references.
  */
 #define x_base_field_stack_base(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))
 

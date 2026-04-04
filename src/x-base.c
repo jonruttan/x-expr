@@ -27,10 +27,13 @@
  * Create a new base environment object.
  *
  * Allocates and assembles the nested pair tree that holds all environment
- * state. Each leaf value is wrapped as `pair(atom(value), nil)` to form
- * a one-element stack (see x-base.h). The tree layout matches the field
- * accessor macros: x_base_field_filein() navigates to the filein leaf,
- * x_base_field_hook_type_name() to the type_name hook, etc.
+ * state. Every node is allocated with X_OBJ_FLAG_SHARED (via the local
+ * pair/atom macros) so the base tree is immune to garbage collection.
+ * Each leaf value is wrapped as `pair(atom(value), nil)` to form a
+ * one-element field stack (see x-base.h). Hook values passed as NULL
+ * produce `(nil . nil)` leaves (hook disabled). The tree layout matches
+ * the field accessor macros: x_base_field_filein() navigates to the
+ * filein leaf, x_base_field_hook_type_name() to the type_name hook, etc.
  *
  * @param p_base Existing base for allocation context, or NULL for bootstrap.
  * @param base   Initialization parameters (file descriptors, hooks, etc.).

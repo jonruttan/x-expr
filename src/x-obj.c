@@ -399,8 +399,10 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
  *
  * A field stack is a pair chain: `(current . (prev . (prev2 . nil)))`.
  * Push creates `(value . *field)` and writes it back to `*field`,
- * saving the old value in the rest chain. The first argument is a
- * void pointer to the field's `x_obj_t *` variable.
+ * saving the old value in the rest chain. Use this to temporarily
+ * override a base field (e.g. redirect I/O) and restore it later
+ * with x_obj_pop(). The first argument is a void pointer to the
+ * field's `x_obj_t *` variable (one level of indirection).
  *
  * @param p_base The base environment.
  * @param p_args Pair list: (field-pointer value [flags]).
@@ -442,8 +444,9 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  * Output an error message to stderr and exit.
  *
  * If the error hook is set in the base, delegates to it via a cast
- * to `void (*)(x_obj_t *, x_char_t *, x_obj_t *)` -- note this is a
- * different signature than x_fn_t. Otherwise, extracts a string symbol
+ * to `void (*)(x_obj_t *, x_char_t *, x_obj_t *)` -- this differs from
+ * x_fn_t because error handlers take raw arguments (not a pair list)
+ * and may not return (they typically exit). Otherwise, extracts a string symbol
  * from the object (if it is a static atom) and calls x_error().
  *
  * @param p_base  The base environment.

@@ -105,10 +105,19 @@ typedef union x_datum_union x_obj_t;
  * Native function pointer type.
  *
  * All built-in primitive functions share this signature. Arguments are
- * passed as a pair list: `(arg0 . (arg1 . (arg2 . nil)))`. Extract
- * values with `x_firstobj(p_args)` for the first argument,
- * `x_firstobj(x_restobj(p_args))` for the second, and so on. Use
- * typed accessors (x_atomint, x_atomstr, etc.) on extracted atoms.
+ * passed as a pair list: `(arg0 . (arg1 . (arg2 . nil)))`.
+ *
+ * @details Extraction pattern:
+ * - First arg: `x_firstobj(p_args)`
+ * - Second arg: `x_firstobj(x_restobj(p_args))`
+ * - Third arg: `x_firstobj(x_restobj(x_restobj(p_args)))`
+ *
+ * For optional arguments, check `x_restobj()` for nil before extracting
+ * the next element (see x_obj_push() for an example).
+ *
+ * Use typed accessors on extracted atoms: x_atomint() for integers,
+ * x_atomstr() for strings, x_atomfn() for function pointers,
+ * x_atomptr() for void pointers.
  *
  * @param p_base The base environment object.
  * @param p_args A pair list of arguments.
@@ -158,6 +167,14 @@ union x_datum_union
  *
  * The data pointer returned by x_obj_alloc() points at `data_0`.
  * Metadata fields are at negative offsets from the data pointer.
+ *
+ * With X_HEAP enabled, x_obj_heap() links each object into a
+ * singly-linked LIFO chain anchored at the base -- newest allocations
+ * are at the head. This chain is walked during GC sweep.
+ *
+ * When extra metadata is present (obj_meta_extra > 0), x_obj_alloc()
+ * sets X_OBJ_FLAG_META so that x_obj_free() knows to adjust the
+ * pointer back past the extension region before calling x_sys_free().
  * @{
  */
 

@@ -100,10 +100,12 @@ x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
 /**
  * Mark objects referenced from the C call stack.
  *
- * Determines the stack bounds between the current position and the
- * stack base stored in the base object, then scans that region with
- * x_heap_vector_mark(). Uses X_NO_OPTIMIZE to prevent the compiler
- * from optimizing away the stack frame variable.
+ * Determines the stack bounds between a volatile local variable
+ * (current frame) and the stack base captured at base creation time,
+ * then scans that region with x_heap_vector_mark(). The lo/hi swap
+ * handles both upward- and downward-growing stacks. X_NO_OPTIMIZE
+ * prevents the compiler from optimizing away the local whose address
+ * anchors the current stack position.
  *
  * @param p_base The base environment.
  * @param flags  Flags to set on each marked object.
