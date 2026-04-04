@@ -22,8 +22,26 @@
 
 #include <stdarg.h>		/* va_list */
 
+/**
+ * @name Compile-Time Toggles
+ *
+ * These are disabled by default. Define them on the compiler command
+ * line (e.g. `-DX_HEAP`) or uncomment them here to enable.
+ *
+ * - **X_USE_STDLIB** -- Use standard library implementations for
+ *   x-lib functions (e.g. memcpy, strlen, strcmp) instead of the
+ *   built-in versions.
+ * - **X_USE_STDLIB_NONSTD** -- Use non-standard library extensions
+ *   (e.g. ltoa). Requires X_USE_STDLIB.
+ * - **X_HEAP** -- Enable heap management and garbage collection.
+ *   Objects are allocated on a tracked heap chain with additional
+ *   metadata (heap pointer, shared/heap flags). Required by x-heap.h.
+ * @{
+ */
 /*#define X_USE_STDLIB*/
 /*#define X_USE_STDLIB_NONSTD*/
+/*#define X_HEAP*/
+/** @} */
 
 /**
  * @name Constants
@@ -37,15 +55,6 @@
  * specification.
  */
 #define X_VERSION "0.1.0"
-
-/**
- * Enable heap management and garbage collection support.
- *
- * When defined, objects are allocated on a tracked heap chain and
- * additional metadata (heap pointer, shared/heap flags) is stored
- * per object. Required by x-heap.h functions.
- */
-/*#define X_HEAP*/
 
 /**
  * The C compiler's target machine identifier.
