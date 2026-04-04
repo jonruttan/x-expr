@@ -1,30 +1,27 @@
-/*
- * # Computational Expressions in C
+/**
+ * @file x.c
+ * @brief Core implementation -- error reporting and debug output.
  *
- * ## x.c -- Implementation
- *
- * @description Computational Expressions in C
- * @author [Jon Ruttan](jonruttan@gmail.com)
+ * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
+ */
+
+/*
  *     ., .,
  *     {O,O}
  *     (   )
  *      " "
  */
-/*
- * # Includes
- */
+
 #include "x-lib.h"
 
-/*
- * Output an error message to *stderr*, then **exit**.
+/**
+ * Output an error message to a file descriptor, then exit.
  *
- * @function x_error
- * @param {x_char_t *} message A C string error message to output.
- * @param {x_char_t *} symbol A C string with additional symbolic information
- *                     or _NULL_.
+ * Writes `"*** ERROR: "` followed by @p message. If @p symbol is
+ * non-NULL, appends `" '"` and the symbol string. Then terminates
+ * the process with X_SYS_EXIT_FAILURE.
  */
 void x_error(int fd, x_char_t *message, x_char_t *symbol)
 {
@@ -42,6 +39,18 @@ void x_error(int fd, x_char_t *message, x_char_t *symbol)
 
 #ifdef DEBUG
 
+/**
+ * @internal
+ * Write a formatted debug message with va_list.
+ *
+ * Prepends source location and wraps in `*** DEBUG(...): ... ***` markers.
+ *
+ * @param file Source file name (__FILE__).
+ * @param line Source line number (__LINE__).
+ * @param fd   File descriptor to write to.
+ * @param fmt  printf-style format string.
+ * @param ap   Variable argument list.
+ */
 void _x_debug_va(char *file, long unsigned line, int fd, char *fmt, va_list ap)
 {
 	x_char_t buffer[X_DEBUG_BUFFER_SIZE], *s;
@@ -59,6 +68,16 @@ void _x_debug_va(char *file, long unsigned line, int fd, char *fmt, va_list ap)
 	x_sys_write(fd, s, x_lib_strlen(s));
 }
 
+/**
+ * @internal
+ * Write a formatted debug message with variadic arguments.
+ *
+ * @param file Source file name (__FILE__).
+ * @param line Source line number (__LINE__).
+ * @param fd   File descriptor to write to.
+ * @param fmt  printf-style format string.
+ * @param ...  Format arguments.
+ */
 void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...)
 {
 	va_list ap;

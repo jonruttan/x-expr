@@ -1,67 +1,70 @@
 #ifndef X_H
 #define X_H
 
-/*
- * # Computational Expressions in C
+/**
+ * @file x.h
+ * @brief Core definitions for computational expressions.
  *
- * ## x.h -- Header
+ * Provides fundamental types, architecture detection, debug utilities,
+ * and error handling for the x-expr library.
  *
- * @description Computational Expressions in C
- * @author [Jon Ruttan](jonruttan@gmail.com)
+ * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
+ */
+
+/*
  *     ., .,
  *     {O,O}
  *     (   )
  *      " "
  */
-/*
- * # Includes
- */
+
 #include <stdarg.h>		/* va_list */
 
 /*#define X_USE_STDLIB*/
 /*#define X_USE_STDLIB_NONSTD*/
 
-/*
- * # Constants
+/**
+ * @name Constants
+ * @{
  */
-/*
- * The current version of the Computational Expressions. Version numbering
- * conforms to the [Symantic Versioning] spec.
+
+/**
+ * The current version of the x-expr library.
  *
- * [Symantic Versioning]: http://semver.org/
- *
- * @constant X_VERSION
+ * Version numbering conforms to the [Semantic Versioning](http://semver.org/)
+ * specification.
  */
 #define X_VERSION "0.1.0"
 
-/*
- * Whether to include Heap structures.
+/**
+ * Enable heap management and garbage collection support.
  *
- * @constant X_HEAP
+ * When defined, objects are allocated on a tracked heap chain and
+ * additional metadata (heap pointer, shared/heap flags) is stored
+ * per object. Required by x-heap.h functions.
  */
 /*#define X_HEAP*/
 
-/*
- * The C compiler's target machine, for example, `i686-pc-linux-gnu`.
+/**
+ * The C compiler's target machine identifier.
  *
- * To override the default value of `undefined`, a value can be passed to the
- * C compiler (preprocessor) via the command line. When supported by the
- * compiler, this value will be the output generated when calling the compiler
- * with the `-dumpmachine` switch.
- *
- * @constant X_MACHINE
+ * For example, `i686-pc-linux-gnu`. To override the default value of
+ * `"undefined"`, pass a value to the C preprocessor via the command line.
+ * When supported by the compiler, this is typically the output of
+ * the `-dumpmachine` switch.
  */
 #ifndef X_MACHINE
 #define X_MACHINE "undefined"
 #endif /* X_MACHINE */
 
-/*
- * Disable optimization for functions that depend on stack layout.
+/**
+ * Compiler attribute to disable optimization for a function.
  *
- * @constant X_NO_OPTIMIZE
+ * Applied to functions that depend on stack layout (e.g. call-stack
+ * scanning in the garbage collector). Expands to the appropriate
+ * compiler-specific attribute, or nothing if unsupported.
  */
 #if defined(__clang__)
 #define X_NO_OPTIMIZE __attribute__((optnone))
@@ -72,19 +75,20 @@
 #endif
 
 #ifdef DEBUG
+/** Size in bytes of the debug output buffer. */
 #define X_DEBUG_BUFFER_SIZE	65536
 #endif /* DEBUG */
 
-/*
- * The C compiler's target CPU architecture.
+/**
+ * The C compiler's target CPU architecture as a string literal.
  *
- * Values are determined by probing the C compiler's definitions for matches to
- * known architecture values, or set to the value `undefined` when no match is
- * found.
+ * Determined by probing compiler predefined macros for known architecture
+ * values. Resolves to one of: `"alpha"`, `"amd64"`, `"arm"`, `"arm64"`,
+ * `"blackfin"`, `"convex"`, `"epiphany"`, `"pa_risc"`, `"x86"`, `"ia64"`,
+ * `"m68k"`, `"mips"`, `"powerpc"`, `"pyramid9810"`, `"rs6000"`, `"sparc"`,
+ * `"superh"`, `"systemz"`, `"tms320"`, `"tms470"`, or `"undefined"`.
  *
- * Adapted from <https://sourceforge.net/p/predef/wiki/Architectures/>
- *
- * @constant X_ARCH
+ * Adapted from https://sourceforge.net/p/predef/wiki/Architectures/
  */
 #if __alpha__ || __alpha || _M_ALPHA
 #define X_ARCH "alpha"
@@ -130,53 +134,99 @@
 #define X_ARCH "undefined"
 #endif
 
-/*
- * # Basic Types
- *
- * ## Integers
+/** @} */
+
+/**
+ * @name Basic Types
+ * @{
  */
-/*
- * The *integer* type.
- *
- * @constant x_int_t
- */
+
+/** The integer type used throughout x-expr. Sized to match pointer width. */
 typedef long x_int_t;
+
+/** Printf length modifier for x_int_t values (e.g. `"l"` for `long`). */
 #define X_INT_STR_PRINTF_CONV	"l"
 
-/* Ensure x_int_t and pointers are the same size for union parity. */
+/** Compile-time assertion that x_int_t and pointers are the same size. */
 typedef char x_assert_int_ptr_size[sizeof(x_int_t) == sizeof(void *) ? 1 : -1];
 
-/*
- * ## Characters
- */
-/*
- * The *character* type.
- *
- * @constant x_char_t
- */
+/** The character type used throughout x-expr. */
 typedef char x_char_t;
+
+/** Printf conversion specifier for x_char_t values. */
 #define X_INT_CHAR_PRINTF_CONV	"c"
 
+/**
+ * Expand a string literal into a pointer and length pair.
+ *
+ * Produces two arguments: a `(x_char_t *)` pointer and the string length
+ * (excluding the null terminator). Useful with x_sys_write().
+ *
+ * @param s A string literal.
+ */
 #define X_STR_LITERAL(s) (x_char_t *)(s), (sizeof(s) - 1)
 
-/*
- * # Definitions
+/** @} */
+
+/**
+ * @name Debug Utilities
+ * @{
  */
+
 #ifdef DEBUG
 
+/** @internal */
 void _x_debug_va(char *file, long unsigned line, int fd, char *fmt, va_list ap);
+
+/**
+ * Write a formatted debug message with va_list arguments.
+ *
+ * Automatically prepends the source file name and line number.
+ * Compiles to a no-op when DEBUG is not defined.
+ *
+ * @param fd   File descriptor to write to.
+ * @param fmt  printf-style format string.
+ * @param ap   Variable argument list.
+ */
 #define x_debug_va(fd, fmt, ap) _x_debug_va(__FILE__, __LINE__, fd, fmt, ap)
 
+/** @internal */
 void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...);
+
+/**
+ * Write a formatted debug message.
+ *
+ * Automatically prepends the source file name and line number.
+ * Compiles to a no-op when DEBUG is not defined.
+ *
+ * @param fd   File descriptor to write to.
+ * @param fmt  printf-style format string.
+ * @param ...  Format arguments.
+ */
 #define x_debug(fd, fmt, ...) _x_debug(__FILE__, __LINE__, fd, fmt, __VA_ARGS__)
 
 #else /* DEBUG */
 
+/** @copydoc x_debug_va */
 #define x_debug_va(fd, fmt, ap)		{}
+/** @copydoc x_debug */
 #define x_debug(fd, fmt, ...)		{}
 
 #endif /* DEBUG */
 
+/** @} */
+
+/**
+ * Output an error message and terminate the process.
+ *
+ * Writes `"*** ERROR: "` followed by the message (and optionally the
+ * symbol in quotes) to the given file descriptor, then calls x_sys_exit()
+ * with X_SYS_EXIT_FAILURE.
+ *
+ * @param fd      File descriptor to write the error message to.
+ * @param message A C string error message.
+ * @param symbol  A C string with additional context, or NULL.
+ */
 void x_error(int fd, x_char_t *message, x_char_t *symbol);
 
 #endif /* X_H */

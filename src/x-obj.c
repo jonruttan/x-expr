@@ -1,24 +1,26 @@
-/*
- * # Computational Expressions in C
+/**
+ * @file x-obj.c
+ * @brief Implementation of the core object system.
  *
- * ## x-obj.c -- Implementation - Objects
- *
- * @description Computational Expressions in C
- * @author [Jon Ruttan](jonruttan@gmail.com)
+ * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
+ */
+
+/*
  *     ., .,
  *     {O,O}
  *     (   )
  *      " "
  */
-/*
- * # Includes
- */
+
 #include "x-base.h"
 
 
+/** @name Global Type and Constant Objects
+ *
+ * Statically initialized atoms used as type descriptors and constants.
+ * @{ */
 x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_SYMBOL}),
 	x_type_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_PAIR_SYMBOL}),
 	x_type_units_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_ATOM}),
@@ -27,16 +29,23 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 	x_type_length_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_PAIR}),
 	x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_TRUE_SYMBOL}),
 	x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_FALSE_SYMBOL});
+/** @} */
 
 
-/*
- * # Object Functions
- */
+/** Test whether an object is nil (NULL). */
 int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	return p_obj == NULL;
 }
 
+/**
+ * Allocate an uninitialized object.
+ *
+ * Allocates memory for metadata + @p units data units. If the base
+ * environment specifies extra metadata (obj_meta_extra), additional
+ * units are prepended and the META flag is set. When X_HEAP is enabled,
+ * the new object is linked into the heap chain.
+ */
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
 	x_obj_t *p_obj;
@@ -77,6 +86,11 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 	return p_obj;
 }
 
+/**
+ * Create an object with data units from a va_list.
+ *
+ * Allocates via x_obj_alloc() then fills @p units data slots from @p ap.
+ */
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, va_list ap)
 {
 	x_obj_t *p_obj = x_obj_alloc(p_base, p_type, flags, units);
@@ -87,6 +101,11 @@ x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, siz
 	return p_obj;
 }
 
+/**
+ * Create an object with data units from variadic arguments.
+ *
+ * Convenience wrapper that calls x_obj_make_va().
+ */
 x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, ...)
 {
 	x_obj_t *p_obj;
@@ -99,6 +118,13 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
 	return p_obj;
 }
 
+/**
+ * Free an object and its owned data.
+ *
+ * If the OWN flag is set, the first data unit's pointer is freed first.
+ * If the META flag is set, the allocation pointer is adjusted back past
+ * the extra metadata units before freeing.
+ */
 void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_alloc = p_obj;
@@ -120,6 +146,12 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 	x_sys_free(p_alloc);
 }
 
+/**
+ * Primitive: get the type name object for an object.
+ *
+ * For built-in atoms and pairs, returns the type descriptor directly.
+ * For user-defined types, delegates to the type_name hook in the base.
+ */
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_obj;
@@ -142,6 +174,11 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 	return NULL;
 }
 
+/**
+ * Get the type name string for an object.
+ *
+ * Wraps x_obj_prim_type_name() to return a C string directly.
+ */
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_name;
@@ -156,16 +193,24 @@ x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 	return x_atomstr(p_name);
 }
 
+/** Primitive: return the units count for an atom. */
 x_obj_t *x_atom_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_units_atom_obj;
 }
 
+/** Primitive: return the units count for a pair. */
 x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_units_pair_obj;
 }
 
+/**
+ * Primitive: return the units count for any object.
+ *
+ * Dispatches to x_atom_prim_units() or x_pair_prim_units() for
+ * built-in types. For user-defined types, delegates to the units hook.
+ */
 x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_obj;
@@ -190,6 +235,11 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 	return NULL;
 }
 
+/**
+ * Get the number of data units for an object.
+ *
+ * Wraps x_obj_prim_units() and extracts the integer value.
+ */
 x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_units;
@@ -204,16 +254,24 @@ x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj)
 	return x_atomint(p_units);
 }
 
+/** Primitive: return the length constant for an atom. */
 x_obj_t *x_atom_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_length_atom_obj;
 }
 
+/** Primitive: return the length constant for a pair. */
 x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
 	return x_type_length_pair_obj;
 }
 
+/**
+ * Primitive: return the length for any object.
+ *
+ * Dispatches to x_atom_prim_length() or x_pair_prim_length() for
+ * built-in types. For user-defined types, delegates to the length hook.
+ */
 x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_obj;
@@ -238,6 +296,11 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 	return NULL;
 }
 
+/**
+ * Get the logical length of an object.
+ *
+ * Wraps x_obj_prim_length() and extracts the integer value.
+ */
 x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_length;
@@ -252,6 +315,12 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
 	return x_atomint(p_length);
 }
 
+/**
+ * Push a value onto a field stack.
+ *
+ * The field stack is a linked list of pairs. This creates a new pair
+ * `(value . *field)` and stores it back into the field pointer.
+ */
 x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t **p_field = (x_obj_t **)x_atomptr(x_firstobj(p_args));
@@ -265,6 +334,11 @@ x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args)
 	return x_firstobj(*p_field);
 }
 
+/**
+ * Pop a value from a field stack.
+ *
+ * Removes the top pair from `*field` and returns its first element.
+ */
 x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t **p_field = (x_obj_t **)x_atomptr(x_firstobj(p_args));
@@ -275,8 +349,12 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
 	return p_top;
 }
 
-/*
- * Output an error message to *stderr*, then **exit**.
+/**
+ * Output an error message to stderr and exit.
+ *
+ * If the error hook is set in the base, delegates to it. Otherwise
+ * extracts a string symbol from the object (if it is a static atom)
+ * and calls x_error().
  */
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 {
@@ -299,6 +377,10 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 
 #ifdef DEBUG
 
+/**
+ * @internal
+ * Write a formatted debug message using the object system's base.
+ */
 void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt, va_list ap)
 {
 	int fd = STDERR_FILENO;
@@ -306,6 +388,10 @@ void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt,
 	_x_debug_va(file, line, fd, fmt, ap);
 }
 
+/**
+ * @internal
+ * Write a formatted debug message using the object system's base.
+ */
 void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ...)
 {
 	va_list ap;
@@ -315,6 +401,13 @@ void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ..
 	va_end(ap);
 }
 
+/**
+ * @internal
+ * Dump an object's type, flags, and data for debugging.
+ *
+ * Outputs a formatted line showing the object's type name, flag bits
+ * (in binary), memory address, and data contents.
+ */
 void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj, char *msg)
 {
 	x_char_t *type = x_obj_type_name(p_base, p_obj);

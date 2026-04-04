@@ -1,21 +1,19 @@
-/*
- * # Computational Expressions in C
+/**
+ * @file x-lib.c
+ * @brief Implementation of portable library utility functions.
  *
- * ## x-lib.c -- Implementation - Library Functions
- *
- * @description Computational Expressions in C
- * @author [Jon Ruttan](jonruttan@gmail.com)
+ * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
+ */
+
+/*
  *     ., .,
  *     {O,O}
  *     (   )
  *      " "
  */
-/*
- * # Includes
- */
+
 #include "x-lib.h"
 
 #ifdef X_USE_STDLIB
@@ -30,16 +28,7 @@
 
 #endif /* X_USE_STDLIB */
 
-/*
- * # Library Functions
- */
-/*
- * Compute the absolute value of the integer i.
- *
- * @function x_lib_abs
- * @param {int} i The integer to compute the value on.
- * @returns {i} The absolute value of i.
- */
+/** Compute the absolute value of an integer. */
 int x_lib_abs(int i)
 {
 #ifdef X_USE_STDLIB
@@ -49,33 +38,17 @@ int x_lib_abs(int i)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Convert an integer to a string.
+/**
+ * Convert an integer to a string representation.
  *
- * Converts the integer value from val into an ASCII representation that will
- * be stored under _str_.
+ * Converts @p num into an ASCII string stored in @p p_str using the
+ * given numeric @p base (2--36). If @p base is greater than 10, digits
+ * after '9' use lowercase letters starting with 'a'. If @p num is
+ * negative, a minus sign is prepended.
  *
- * Conversion is done using a numeric _base_, which may be a number between 2
- * (binary conversion) and up to 36. If base is greater than 10, the next
- * digit after '9' will be the letter 'a'.
- *
- * If val is negative, a minus sign will be prepended.
- *
- * **NOTE:** The caller is responsible for providing sufficient storage in
- *           _str_. If the buffer is too small, you risk a buffer overflow.
- *
- * **NOTE:** The minimal size of the buffer _str_ depends on the choice of
- *           _base_. For example, if the base is 2 (binary), you need to supply
- *           a buffer with a minimal length of `8 * sizeof (int_t) + 1`
- *           characters, _i.e. one character for each bit plus one for the
- *           string terminator_. Using a larger base will require a smaller
- *           minimal buffer size.
- *
- * @function x_lib_inttostr
- * @param {int_t} num The integer to be converted.
- * @param {x_char_t *} str A C string to store the converted representation.
- * @param {unsigned short} base The number base to convert to.
- * @returns The pointer passed as _str_.
+ * @note The caller must provide sufficient storage in @p p_str.
+ *       The minimum buffer size depends on the base. For base 2 (binary),
+ *       the buffer needs at least `8 * sizeof(x_int_t) + 1` bytes.
  */
 x_char_t *x_lib_inttostr(x_int_t num, x_char_t *p_str, unsigned short base)
 {
@@ -113,15 +86,7 @@ x_char_t *x_lib_inttostr(x_int_t num, x_char_t *p_str, unsigned short base)
 #endif /* X_USE_STDLIB_NONSTD */
 }
 
-/*
- * Copy bytes from a source memory vector to a destination.
- *
- * @function x_lib_memcpy
- * @param {void *} p_dest A pointer to the destination memory vector.
- * @param {const void *} p_src A pointer to the source memory vector.
- * @param {size_t} size The number of bytes to copy.
- * @returns {void *} The pointer to the destination memory vector.
- */
+/** Copy bytes from a source buffer to a destination buffer. */
 void *x_lib_memcpy(void *p_dest, const void *p_src, size_t size)
 {
 #ifdef X_USE_STDLIB
@@ -138,14 +103,12 @@ void *x_lib_memcpy(void *p_dest, const void *p_src, size_t size)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Duplicate a memory vector.
+/**
+ * Duplicate a memory region.
  *
- * @function x_lib_memdup
- * @param {const void *} p_src A pointer to the source memory vector.
- * @param {size_t} size The size of the memory vector in bytes.
- * @returns {void *} A pointer to the duplicate memory vector, or _NULL_ on
- *                   error.
+ * Allocates a new buffer via x_sys_malloc() and copies @p size bytes
+ * from @p p_src into it. If @p p_src is NULL, the buffer is allocated
+ * but not copied (and optionally zeroed if X_OPT_MEMZERO is defined).
  */
 void *x_lib_memdup(const void *p_src, size_t size)
 {
@@ -167,15 +130,7 @@ void *x_lib_memdup(const void *p_src, size_t size)
 	return p_dst;
 }
 
-/*
- * Fill a memory vector with a constant byte.
- *
- * @function x_lib_memset
- * @param {void *} p_vector A pointer to the destination memory vector.
- * @param {int} byte The constant byte value.
- * @param {size_t} size The number of bytes to set.
- * @returns {void *} The pointer to the destination memory vector.
- */
+/** Fill a memory region with a constant byte. */
 void *x_lib_memset(void *p_dest, int byte, size_t size)
 {
 #ifdef X_USE_STDLIB
@@ -191,14 +146,7 @@ void *x_lib_memset(void *p_dest, int byte, size_t size)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Locate the first occurance of a character in a string.
- *
- * @function x_lib_strchr
- * @param {const x_char_t *} p_str A pointer to the C string memory.
- * @param {int} c The character to search for.
- * @returns {x_char_t *} The position of the character, or _NULL_ if not found.
- */
+/** Locate the first occurrence of a character in a string. */
 x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
 {
 #ifdef X_USE_STDLIB
@@ -212,14 +160,10 @@ x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Calculate the length of a C string.
+/**
+ * Calculate the length of a null-terminated string.
  *
- * **NOTE:** This function doesn't handle wide characters.
- *
- * @function x_lib_strlen
- * @param {const x_char_t *} p_str A pointer to the C string memory vector.
- * @returns {size_t} The size of the string in bytes.
+ * @note This function does not handle wide characters.
  */
 size_t x_lib_strlen(const x_char_t *p_str)
 {
@@ -234,14 +178,7 @@ size_t x_lib_strlen(const x_char_t *p_str)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Compare two strings.
- *
- * @function x_lib_strcmp
- * @param {const x_char_t *} p_str1 A pointer to the first string to compare.
- * @param {const x_char_t *} p_str2 A pointer to the second string to compare.
- * @returns {int} The difference between the two strings.
- */
+/** Compare two null-terminated strings. */
 int x_lib_strcmp(const x_char_t *p_str1, const x_char_t *p_str2)
 {
 #ifdef X_USE_STDLIB
@@ -256,15 +193,7 @@ int x_lib_strcmp(const x_char_t *p_str1, const x_char_t *p_str2)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Compare two strings, to a maximum of `n` characters.
- *
- * @function x_lib_strcmp
- * @param {const x_char_t *} p_str1 A pointer to the first string to compare.
- * @param {const x_char_t *} p_str2 A pointer to the second string to compare.
- * @param {size_t} n The maximum number of characters to compare.
- * @returns {int} The difference between the two strings.
- */
+/** Compare two strings up to a maximum of @p n characters. */
 int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
 {
 #ifdef X_USE_STDLIB
@@ -279,14 +208,11 @@ int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
 #endif /* X_USE_STDLIB */
 }
 
-/*
- * Duplicate a C string memory vector.
+/**
+ * Duplicate a string up to a given size.
  *
- * @function x_lib_strdup
- * @param {const x_char_t *} p_str A pointer to a C string memory vector.
- * @param {size_t} size The size of the C string memory vector in bytes.
- * @returns {x_char_t *} A pointer to the duplicate C string memory vector, or
- *                   _NULL_ on error.
+ * Allocates a new buffer via x_lib_memdup(), copies up to @p size
+ * bytes from @p p_str, and null-terminates the result.
  */
 x_char_t *x_lib_strndup(const x_char_t *p_str, size_t size)
 {
@@ -301,6 +227,16 @@ x_char_t *x_lib_strndup(const x_char_t *p_str, size_t size)
 	return p_clone;
 }
 
+/**
+ * Convert a string to an integer.
+ *
+ * Parses @p p_str as a signed integer in the given @p base (2--36).
+ * If @p base is 0, the base is auto-detected from the prefix:
+ * `0x` for hexadecimal, `0` for octal, otherwise decimal.
+ *
+ * Leading whitespace is skipped. An optional `+` or `-` sign is accepted.
+ * If @p pp_end is non-NULL, it is set to point past the last parsed character.
+ */
 x_int_t x_lib_strtoint(const x_char_t *p_str, x_char_t **pp_end, unsigned short base)
 {
 #ifdef X_USE_STDLIB

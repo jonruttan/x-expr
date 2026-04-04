@@ -1,30 +1,30 @@
-/*
- * # Computational Expressions in C
+/**
+ * @file x-heap.c
+ * @brief Implementation of heap management and mark-sweep garbage collection.
  *
- * ## x-heap.c -- Implementation - Heap Management
- *
- * @description Computational Expressions in C
- * @author [Jon Ruttan](jonruttan@gmail.com)
+ * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
+ */
+
+/*
  *     ., .,
  *     {O,O}
  *     (   )
  *      " "
  */
-/*
- * # Includes
- */
+
 #include "x-heap.h"
 
 #ifdef X_HEAP
 
-/*
- * # Heap Tree Mark
+/**
+ * Walk a pair tree, setting mark flags on each reachable object.
  *
- * Walk a pair tree, setting flags on each object.
- * For non-pair objects, calls the mark hook from the base if set.
+ * For pairs, recursively marks the first branch and tail-iterates
+ * the rest branch. For non-pair objects, calls the mark hook
+ * (x_heap_mark_fn_t) from the base if set. Already-marked objects
+ * (those with @p flags already set) are skipped.
  */
 x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
@@ -57,11 +57,12 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 	return p_obj;
 }
 
-/*
- * # Heap Vector Mark
+/**
+ * Scan a memory region for heap object pointers and mark them.
  *
- * Scan a memory region for pointer-sized values that match heap
- * object addresses, marking any matches.
+ * Iterates through each pointer-sized value in the region from
+ * @p p_start to @p p_start + @p size, comparing against all objects
+ * in the heap chain. Any match is marked via x_heap_tree_mark().
  */
 x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
 	x_obj_flag_t flags)
@@ -83,11 +84,13 @@ x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
 	return NULL;
 }
 
-/*
- * # Heap Callstack Mark
+/**
+ * Mark objects referenced from the C call stack.
  *
- * Scan the C call stack for heap object references.
- * Uses the stack base captured in the base object at creation.
+ * Determines the stack bounds between the current position and the
+ * stack base stored in the base object, then scans that region with
+ * x_heap_vector_mark(). Uses X_NO_OPTIMIZE to prevent the compiler
+ * from optimizing away the stack frame variable.
  */
 X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags)
 {
@@ -116,13 +119,16 @@ X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags
 	return x_heap_vector_mark(p_base, lo, (size_t)((char *)hi - (char *)lo), flags);
 }
 
-/*
- * # Heap Sweep
+/**
+ * Sweep the heap, freeing unmarked objects.
  *
- * Walk the heap chain, freeing objects that don't have the given
- * flags set. Calls the free hook from the base if set.
+ * Walks the heap chain starting from @p p_obj. Objects that have the
+ * given @p flags set (or X_OBJ_FLAG_SHARED) are retained and their
+ * mark flags are cleared. Unmarked objects are freed via x_obj_free(),
+ * with the free hook called first if set.
  *
- * NOTE: If the top object is deleted the heap structure will fragment.
+ * @note If the top object on the heap is deleted, the heap structure
+ *       will fragment.
  */
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {

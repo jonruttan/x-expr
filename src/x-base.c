@@ -1,27 +1,35 @@
-/*
- * # Computational Expressions in C
+/**
+ * @file x-base.c
+ * @brief Implementation of the base environment object.
  *
- * ## x-base.c -- Implementation - Base
- *
- * @description Computational Expressions in C
- * @author [Jon Ruttan](jonruttan@gmail.com)
+ * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
+ */
+
+/*
  *     ., .,
  *     {O,O}
  *     (   )
  *      " "
  */
-/*
- * # Includes
- */
+
 #include "x-base.h"
 
+/** @internal Shorthand for NULL used in the base tree construction. */
 #define nil			NULL
+/** @internal Shorthand for creating a shared pair in the base tree. */
 #define pair(X,Y)	(x_mkspair(p_base, X_OBJ_FLAG_SHARED, (X), (Y)))
+/** @internal Shorthand for creating a shared atom in the base tree. */
 #define atom(X)		(x_mksatom(p_base, X_OBJ_FLAG_SHARED, (X)))
 
+/**
+ * Create a new base environment object.
+ *
+ * Allocates and assembles the nested pair tree that holds all environment
+ * state: I/O descriptors, profiling counters, hook functions, and heap
+ * management pointers. See x-base.h for the tree structure.
+ */
 x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 {
 	p_base = x_obj_make(p_base, NULL, X_OBJ_FLAG_NONE,
@@ -72,6 +80,12 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 #undef pair
 #undef atom
 
+/**
+ * Read data from the base's input file descriptor into an atom.
+ *
+ * Uses the filein descriptor from the base environment, or falls back
+ * to STDIN_FILENO if the base is not initialized.
+ */
 x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
 {
 	int fd = x_base_isset(p_base)
@@ -87,6 +101,13 @@ x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
 	return NULL;
 }
 
+/**
+ * Write data from an atom to the base's output or write buffer.
+ *
+ * If the base has an active write buffer, data is copied into it.
+ * Otherwise, writes to the fileout descriptor from the base environment,
+ * falling back to STDOUT_FILENO if the base is not initialized.
+ */
 x_obj_t *x_base_write(x_obj_t *p_base, x_obj_t *p_args)
 {
 	x_obj_t *p_atom = x_firstobj(p_args), *p_buf;
