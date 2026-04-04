@@ -143,6 +143,10 @@ watch: ## Watch source for changes
 	done
 .PHONY: watch
 
+doc: ## Generate C reference documentation (HTML + man pages)
+	/opt/homebrew/bin/doxygen Doxyfile
+.PHONY: doc
+
 clean: ## Clean compiled files
 	rm -f $(EXECUTABLE) $(EXECUTABLE)-debug *.out $(SRCDIR)/*.o $(SRCDIR)/**/*.o *.core core
 .PHONY: clean
