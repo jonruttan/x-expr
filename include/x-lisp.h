@@ -11,11 +11,13 @@
  * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- *
- *         ., .,
- *         {O,O}
- *         (   )
- *          " "
+ */
+
+/*
+ *     ., .,
+ *     {O,O}
+ *     (   )
+ *      " "
  */
 
 #include "x-obj.h"
@@ -47,14 +49,14 @@
  * @{
  */
 
-#define x_car(X)			x_firstobj(X)	/**< First element of pair X. */
-#define x_cdr(X)			x_restobj(X)	/**< Rest element of pair X. */
+#define x_car(X)			x_firstobj(X)		/**< First element of pair X. */
+#define x_cdr(X)			x_restobj(X)		/**< Rest element of pair X. */
 
 /* 2-deep */
-#define x_caar(X)			x_car(x_car(X))	/**< car(car(X)) */
-#define x_cadr(X)			x_car(x_cdr(X))	/**< car(cdr(X)) */
-#define x_cdar(X)			x_cdr(x_car(X))	/**< cdr(car(X)) */
-#define x_cddr(X)			x_cdr(x_cdr(X))	/**< cdr(cdr(X)) */
+#define x_caar(X)			x_car(x_car(X))		/**< car(car(X)) */
+#define x_cadr(X)			x_car(x_cdr(X))		/**< car(cdr(X)) */
+#define x_cdar(X)			x_cdr(x_car(X))		/**< cdr(car(X)) */
+#define x_cddr(X)			x_cdr(x_cdr(X))		/**< cdr(cdr(X)) */
 
 /* 3-deep */
 #define x_caaar(X)			x_car(x_caar(X))	/**< car(car(car(X))) */

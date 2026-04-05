@@ -55,38 +55,38 @@
  */
 typedef enum x_obj_flag_enum
 {
-	X_OBJ_FLAG_NONE=0x0,		/**< No flags set. */
+	X_OBJ_FLAG_NONE=0x0,			/**< No flags set. */
 
-	X_OBJ_FLAG_OBJ=0x0,		/**< Base object type (no type tag). */
+	X_OBJ_FLAG_OBJ=0x0,				/**< Base object type (no type tag). */
 
-	X_OBJ_FLAG_1=0x1,			/**< Attribute bit 0. */
-	X_OBJ_FLAG_2=0x2,			/**< Attribute bit 1. */
-	X_OBJ_FLAG_3=0x4,			/**< Attribute bit 2. */
-	X_OBJ_FLAG_4=0x8,			/**< Attribute bit 3. */
+	X_OBJ_FLAG_1=0x1,				/**< Attribute bit 0. */
+	X_OBJ_FLAG_2=0x2,				/**< Attribute bit 1. */
+	X_OBJ_FLAG_3=0x4,				/**< Attribute bit 2. */
+	X_OBJ_FLAG_4=0x8,				/**< Attribute bit 3. */
 
-	X_OBJ_FLAG_ATTR_MASK=0xF,	/**< Mask for the attribute nibble. */
+	X_OBJ_FLAG_ATTR_MASK=0xF,		/**< Mask for the attribute nibble. */
 
-	X_OBJ_FLAG_SIMPLE_TYPE=0x10,/**< Base value for the simple type range. */
-	X_OBJ_FLAG_PRIM=0x10,		/**< Native primitive function. */
-	X_OBJ_FLAG_FN,				/**< User-defined function. */
-	X_OBJ_FLAG_INT,				/**< Integer datum. */
-	X_OBJ_FLAG_CHAR,			/**< Character datum. */
-	X_OBJ_FLAG_STR,				/**< String pointer datum. */
-	X_OBJ_FLAG_PTR,				/**< Void pointer datum. */
+	X_OBJ_FLAG_SIMPLE_TYPE=0x10,	/**< Base value for the simple type range. */
+	X_OBJ_FLAG_PRIM=0x10,			/**< Native primitive function. */
+	X_OBJ_FLAG_FN,					/**< User-defined function. */
+	X_OBJ_FLAG_INT,					/**< Integer datum. */
+	X_OBJ_FLAG_CHAR,				/**< Character datum. */
+	X_OBJ_FLAG_STR,					/**< String pointer datum. */
+	X_OBJ_FLAG_PTR,					/**< Void pointer datum. */
 
-	X_OBJ_FLAG_TYPE_MASK=0xF0,	/**< Mask for the type nibble. */
+	X_OBJ_FLAG_TYPE_MASK=0xF0,		/**< Mask for the type nibble. */
 
-	X_OBJ_FLAG_OWN=0x20,		/**< Object owns its data (freed with object). */
-	X_OBJ_FLAG_RO=0x40,		/**< Read-only flag. */
-	X_OBJ_FLAG_META=0x80,		/**< Extra metadata units were allocated. */
+	X_OBJ_FLAG_OWN=0x20,			/**< Object owns its data (freed with object). */
+	X_OBJ_FLAG_RO=0x40,				/**< Read-only flag. */
+	X_OBJ_FLAG_META=0x80,			/**< Extra metadata units were allocated. */
 
 #ifndef X_HEAP
-	X_OBJ_FLAG_MASK=0xFF		/**< Mask covering all valid flags. */
+	X_OBJ_FLAG_MASK=0xFF			/**< Mask covering all valid flags. */
 #else /* X_HEAP */
-	X_OBJ_FLAG_SHARED=0x100,	/**< Object is shared (not swept by GC). */
-	X_OBJ_FLAG_HEAP=0x200,		/**< Object was allocated on the tracked heap. */
+	X_OBJ_FLAG_SHARED=0x100,		/**< Object is shared (not swept by GC). */
+	X_OBJ_FLAG_HEAP=0x200,			/**< Object was allocated on the tracked heap. */
 
-	X_OBJ_FLAG_MASK=0x3FF		/**< Mask covering all valid flags (with heap). */
+	X_OBJ_FLAG_MASK=0x3FF			/**< Mask covering all valid flags (with heap). */
 #endif /* X_HEAP */
 } x_obj_flag_t;
 
@@ -243,7 +243,6 @@ typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
  */
 extern x_satom_t x_type_atom_obj;			/**< Type descriptor for atoms. */
 extern x_satom_t x_type_pair_obj;			/**< Type descriptor for pairs. */
-extern x_satom_t x_type_base_obj;			/**< Type descriptor for the base object. */
 extern x_satom_t x_type_units_atom_obj;		/**< Units constant for atoms (1). */
 extern x_satom_t x_type_units_pair_obj;		/**< Units constant for pairs (2). */
 extern x_satom_t x_type_length_atom_obj;	/**< Length constant for atoms (1). */
@@ -382,33 +381,33 @@ extern x_satom_t x_false_obj;				/**< The canonical false object (\#f). */
 /** Alias for x_second(). */
 #define x_rest(X)					x_second((X))
 
-#define x_firstptr(X)				x_ptr(x_first((X)))	/**< First as void pointer. */
-#define x_firstobj(X)				x_obj(x_first((X)))	/**< First as object pointer. */
-#define x_firstint(X)				x_int(x_first((X)))	/**< First as integer. */
+#define x_firstptr(X)				x_ptr(x_first((X)))		/**< First as void pointer. */
+#define x_firstobj(X)				x_obj(x_first((X)))		/**< First as object pointer. */
+#define x_firstint(X)				x_int(x_first((X)))		/**< First as integer. */
 #define x_firstchar(X)				x_char(x_first((X)))	/**< First as character. */
-#define x_firststr(X)				x_str(x_first((X)))	/**< First as string pointer. */
+#define x_firststr(X)				x_str(x_first((X)))		/**< First as string pointer. */
 #define x_firstfn(X)				x_fn(x_first((X)))		/**< First as function pointer. */
 
 #define x_secondptr(X)				x_ptr(x_rest((X)))		/**< Rest as void pointer. */
 #define x_secondobj(X)				x_obj(x_rest((X)))		/**< Rest as object pointer. */
 #define x_secondint(X)				x_int(x_rest((X)))		/**< Rest as integer. */
-#define x_secondchar(X)				x_char(x_rest((X)))	/**< Rest as character. */
+#define x_secondchar(X)				x_char(x_rest((X)))		/**< Rest as character. */
 #define x_secondstr(X)				x_str(x_rest((X)))		/**< Rest as string pointer. */
 #define x_secondfn(X)				x_fn(x_rest((X)))		/**< Rest as function pointer. */
 
-#define x_atomptr(X)				x_firstptr((X))		/**< Atom data as void pointer. */
-#define x_atomobj(X)				x_firstobj((X))		/**< Atom data as object pointer. */
-#define x_atomint(X)				x_firstint((X))		/**< Atom data as integer. */
-#define x_atomchar(X)				x_firstchar((X))	/**< Atom data as character. */
-#define x_atomstr(X)				x_firststr((X))		/**< Atom data as string pointer. */
-#define x_atomfn(X)					x_firstfn((X))		/**< Atom data as function pointer. */
+#define x_atomptr(X)				x_firstptr((X))			/**< Atom data as void pointer. */
+#define x_atomobj(X)				x_firstobj((X))			/**< Atom data as object pointer. */
+#define x_atomint(X)				x_firstint((X))			/**< Atom data as integer. */
+#define x_atomchar(X)				x_firstchar((X))		/**< Atom data as character. */
+#define x_atomstr(X)				x_firststr((X))			/**< Atom data as string pointer. */
+#define x_atomfn(X)					x_firstfn((X))			/**< Atom data as function pointer. */
 
-#define x_restptr(X)				x_secondptr((X))	/**< Rest data as void pointer. */
-#define x_restobj(X)				x_secondobj((X))	/**< Rest data as object pointer. */
-#define x_restint(X)				x_secondint((X))	/**< Rest data as integer. */
-#define x_restchar(X)				x_secondchar((X))	/**< Rest data as character. */
-#define x_reststr(X)				x_secondstr((X))	/**< Rest data as string pointer. */
-#define x_restfn(X)					x_secondfn((X))		/**< Rest data as function pointer. */
+#define x_restptr(X)				x_secondptr((X))		/**< Rest data as void pointer. */
+#define x_restobj(X)				x_secondobj((X))		/**< Rest data as object pointer. */
+#define x_restint(X)				x_secondint((X))		/**< Rest data as integer. */
+#define x_restchar(X)				x_secondchar((X))		/**< Rest data as character. */
+#define x_reststr(X)				x_secondstr((X))		/**< Rest data as string pointer. */
+#define x_restfn(X)					x_secondfn((X))			/**< Rest data as function pointer. */
 
 /** @} */
 
@@ -428,10 +427,10 @@ extern x_satom_t x_false_obj;				/**< The canonical false object (\#f). */
  */
 #define x_0(X)						x_firstobj(X)	/**< first(X) */
 #define x_1(X)						x_restobj(X)	/**< rest(X) */
-#define x_00(X)						x_0(x_0(X))	/**< first(first(X)) */
-#define x_01(X)						x_0(x_1(X))	/**< first(rest(X)) */
-#define x_10(X)						x_1(x_0(X))	/**< rest(first(X)) */
-#define x_11(X)						x_1(x_1(X))	/**< rest(rest(X)) */
+#define x_00(X)						x_0(x_0(X))		/**< first(first(X)) */
+#define x_01(X)						x_0(x_1(X))		/**< first(rest(X)) */
+#define x_10(X)						x_1(x_0(X))		/**< rest(first(X)) */
+#define x_11(X)						x_1(x_1(X))		/**< rest(rest(X)) */
 #define x_000(X)					x_0(x_00(X))	/**< 3-deep: first(first(first(X))) */
 #define x_001(X)					x_0(x_01(X))	/**< 3-deep: first(first(rest(X))) */
 #define x_010(X)					x_0(x_10(X))	/**< 3-deep: first(rest(first(X))) */

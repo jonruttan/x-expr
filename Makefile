@@ -40,8 +40,7 @@ endif
 
 endif
 
-# If there are no LDFLAGS, use the CFLAGS
-LDFLAGS?=$(CFLAGS)
+LDFLAGS?=
 
 # Customise the settings for the compiler
 ifeq ("$(CCOMPILER)", "c89")
@@ -83,21 +82,40 @@ HEADERS=$(wildcard $(INCDIR)/*.h $(INCDIR)/**/*.h)
 SOURCES=$(wildcard $(SRCDIR)/*.c $(SRCDIR)/**/*.c)
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=x
+LIBRARY=libx-expr.a
+
+PREFIX?=/usr/local
+DESTDIR?=
 
 # Options to be added to $(DEFS)
 DEFS?=$(OSDEF) -DX_MACHINE="$(X_MACHINE)"
 
-default: all strip ## Build and strip
+default: lib ## Build static library
 
-all: $(SOURCES) $(EXECUTABLE) ## Build all
+all: $(SOURCES) $(EXECUTABLE) ## Build executable (requires a main())
 
 debug: $(EXECUTABLE)-debug ## Build debug target
+
+lib: $(OBJECTS) ## Build static library
+	ar rcs $(LIBRARY) $(OBJECTS)
 
 strip: $(EXECUTABLE) ## Strip symbols from target
 	strip $(EXECUTABLE)
 
+install: lib ## Install headers and library
+	mkdir -p $(DESTDIR)$(PREFIX)/include/x-expr
+	mkdir -p $(DESTDIR)$(PREFIX)/lib
+	cp $(INCDIR)/*.h $(DESTDIR)$(PREFIX)/include/x-expr/
+	cp $(LIBRARY) $(DESTDIR)$(PREFIX)/lib/
+.PHONY: install
+
+uninstall: ## Remove installed headers and library
+	rm -rf $(DESTDIR)$(PREFIX)/include/x-expr
+	rm -f $(DESTDIR)$(PREFIX)/lib/$(LIBRARY)
+.PHONY: uninstall
+
 $(EXECUTABLE): $(OBJECTS) $(EXTRA_OBJS)
-	$(CC) $(LDFLAGS) $(OBJECTS) $(EXTRA_OBJS) $(EXTRA_LIBS) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(EXTRA_OBJS) $(EXTRA_LIBS) -o $@
 
 $(EXECUTABLE)-debug: CFLAGS += -g -Og -DDEBUG
 $(EXECUTABLE)-debug: LDFLAGS += -g
@@ -144,12 +162,18 @@ watch: ## Watch source for changes
 .PHONY: watch
 
 doc: ## Generate C reference documentation (HTML + man pages)
-	/opt/homebrew/bin/doxygen Doxyfile
+	doxygen Doxyfile
 .PHONY: doc
 
 clean: ## Clean compiled files
 	rm -f $(EXECUTABLE) $(EXECUTABLE)-debug *.out $(SRCDIR)/*.o $(SRCDIR)/**/*.o *.core core
+	rm -f $(LIBRARY)
+	rm -f $(SRCDIR)/*.gcda $(SRCDIR)/*.gcno *.gcda *.gcno
 .PHONY: clean
+
+distclean: clean ## Clean compiled files and generated docs
+	rm -rf docs/ref
+.PHONY: distclean
 
 help: ## Display this help section
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[32m%-38s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

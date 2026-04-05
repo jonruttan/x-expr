@@ -17,7 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## [0.0.1] - 2021-09-26
 ### Added
   - Initial object system (atoms, pairs).
-  - Garbage collection support (`-DX_GC`).
+  - Garbage collection support (`-DX_HEAP`).
   - System abstraction layer (`x-sys`).
   - Standard library abstractions (`x-lib`).
   - Unit tests and test-runner submodule.
