@@ -8,40 +8,30 @@
  * Provides fundamental types, architecture detection, debug utilities,
  * and error handling for the x-expr library.
  *
+ * **Compile-time toggles** (disabled by default, define on the compiler
+ * command line or uncomment below):
+ * - **X_USE_STDLIB** -- Delegate x-lib functions to their stdlib
+ *   equivalents (memcpy, strlen, strcmp, etc.).
+ * - **X_USE_STDLIB_NONSTD** -- Use non-standard library extensions
+ *   (e.g. ltoa). Requires X_USE_STDLIB.
+ * - **X_HEAP** -- Enable heap management and garbage collection.
+ *   Required by x-heap.h.
+ *
  * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
  * @license MIT No Attribution (MIT-0)
- */
-
-/*
- *     ., .,
- *     {O,O}
- *     (   )
- *      " "
+ *
+ *         ., .,
+ *         {O,O}
+ *         (   )
+ *          " "
  */
 
 #include <stdarg.h>		/* va_list */
 
-/**
- * @name Compile-Time Toggles
- *
- * These are disabled by default. Define them on the compiler command
- * line (e.g. `-DX_HEAP`) or uncomment them here to enable.
- *
- * - **X_USE_STDLIB** -- Use standard library implementations for
- *   x-lib functions (e.g. memcpy, strlen, strcmp) instead of the
- *   built-in versions.
- * - **X_USE_STDLIB_NONSTD** -- Use non-standard library extensions
- *   (e.g. ltoa). Requires X_USE_STDLIB.
- * - **X_HEAP** -- Enable heap management and garbage collection.
- *   Objects are allocated on a tracked heap chain with additional
- *   metadata (heap pointer, shared/heap flags). Required by x-heap.h.
- * @{
- */
 /*#define X_USE_STDLIB*/
 /*#define X_USE_STDLIB_NONSTD*/
 /*#define X_HEAP*/
-/** @} */
 
 /**
  * @name Constants
