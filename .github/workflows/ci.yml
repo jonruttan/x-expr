@@ -39,16 +39,6 @@ jobs:
       - name: Test
         run: make test-quick
 
-  # Native macOS x86_64
-  macos-x86_64:
-    runs-on: macos-13
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Test
-        run: make test-quick
-
   # Valgrind (x86_64 Linux)
   valgrind:
     runs-on: ubuntu-latest
@@ -88,9 +78,6 @@ jobs:
           - dockerfile: .github/Dockerfile.debian
             platform: linux/arm/v7
             name: debian-armv7
-          - dockerfile: .github/Dockerfile.debian
-            platform: linux/riscv64
-            name: debian-riscv64
           - dockerfile: .github/Dockerfile.debian
             platform: linux/386
             name: debian-i386

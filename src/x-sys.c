@@ -124,7 +124,7 @@ int x_sys_close(int fd)
  * @return The character read, or X_SYS_EOF on error or end-of-file.
  */
 /* NOTE: Compositional, move to library? */
-x_char_t x_sys_read_char(int fd)
+int x_sys_read_char(int fd)
 {
 	x_char_t c;
 
