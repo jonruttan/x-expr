@@ -1,0 +1,5 @@
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential make git && rm -rf /var/lib/apt/lists/*
+WORKDIR /work
+COPY . .
+RUN make test-quick
