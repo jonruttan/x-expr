@@ -6,6 +6,19 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # Heap callstack tests use conservative stack scanning which is
+  # platform-sensitive. Run them separately as non-blocking.
+  CORE_TESTS: >-
+    tests/src/0.x.spec.c
+    tests/src/1.x-sys.spec.c
+    tests/src/2.0.x-lib.spec.c
+    tests/src/2.1.x-lib.use-stdlib.spec.c
+    tests/src/3.0.x-obj.spec.c
+    tests/src/3.1.x-obj.no-heap.spec.c
+    tests/src/3.2.x-lisp.spec.c
+    tests/src/4.0.x-base.spec.c
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,7 +40,7 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
           CFLAGS: ${{ matrix.extra_cflags }}
-        run: make test-quick
+        run: make test-quick TESTS="${CORE_TESTS}"
 
   valgrind:
     runs-on: ubuntu-latest
@@ -39,6 +52,6 @@ jobs:
       - name: Install Valgrind
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
-      - name: Test with Valgrind (excluding heap callstack tests)
+      - name: Test with Valgrind
         run: |
-          make test TESTS="tests/src/0.x.spec.c tests/src/1.x-sys.spec.c tests/src/2.0.x-lib.spec.c tests/src/2.1.x-lib.use-stdlib.spec.c tests/src/3.0.x-obj.spec.c tests/src/3.1.x-obj.no-heap.spec.c tests/src/3.2.x-lisp.spec.c tests/src/4.0.x-base.spec.c"
+          make test TESTS="${CORE_TESTS}"
