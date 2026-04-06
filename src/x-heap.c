@@ -133,6 +133,10 @@ X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags
 		hi = tmp;
 	}
 
+	if (lo == hi) {
+		return NULL;
+	}
+
 	return x_heap_vector_mark(p_base, lo, (size_t)((char *)hi - (char *)lo), flags);
 }
 

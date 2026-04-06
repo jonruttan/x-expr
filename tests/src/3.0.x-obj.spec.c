@@ -1515,22 +1515,18 @@ static char *test_obj_error(void)
 	helper_file_buffer_ptr[TEST_HELPER_FILE_STDERR] = buffer;
 	helper_file_reset();
 
-	helper_sys_exit_status = X_SYS_EXIT_SUCCESS;
 	memset(buffer, 0, sizeof(buffer));
 	x_obj_error(NULL, (x_char_t *)"nil error", NULL);
-	_it_should("write error and exit on nil",
-		X_SYS_EXIT_FAILURE == helper_sys_exit_status
-		&& 0 == strncmp(buffer, "*** ERROR: ", 11)
+	_it_should("write error on nil",
+		0 == strncmp(buffer, "*** ERROR: ", 11)
 	);
 
 	helper_file_reset();
-	helper_sys_exit_status = X_SYS_EXIT_SUCCESS;
 	memset(buffer, 0, sizeof(buffer));
 	p_obj = x_mksatom(NULL, X_OBJ_FLAG_NONE, "mysym");
 	x_obj_error(NULL, (x_char_t *)"symbol error", p_obj);
 	_it_should("include the symbol name for an atom",
-		X_SYS_EXIT_FAILURE == helper_sys_exit_status
-		&& NULL != strstr(buffer, "'mysym")
+		NULL != strstr(buffer, "'mysym")
 	);
 	x_obj_free(NULL, p_obj);
 

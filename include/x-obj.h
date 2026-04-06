@@ -459,6 +459,10 @@ extern x_satom_t x_false_obj;				/**< The canonical false object (\#f). */
 
 /**
  * @name Object Functions
+ *
+ * @warning x-expr is not thread-safe. All functions that allocate objects,
+ * mutate the heap chain, or modify field stacks assume single-threaded
+ * execution. External synchronization is required for multi-threaded use.
  * @{
  */
 
@@ -513,7 +517,7 @@ x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args);
 /** Pop a value from a field stack: returns first of field, advances to rest. */
 x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args);
 
-/** Output an error message to stderr and exit. */
+/** Output an error message to stderr. */
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj);
 
 /** @} */

@@ -439,13 +439,13 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
 }
 
 /**
- * Output an error message to stderr and exit.
+ * Output an error message to stderr.
  *
  * If the error hook is set in the base, delegates to it via a cast
  * to `void (*)(x_obj_t *, x_char_t *, x_obj_t *)` -- this differs from
- * x_fn_t because error handlers take raw arguments (not a pair list)
- * and may not return (they typically exit). Otherwise, extracts a string symbol
- * from the object (if it is a static atom) and calls x_error().
+ * x_fn_t because error handlers take raw arguments (not a pair list).
+ * Otherwise, extracts a string symbol from the object (if it is a
+ * static atom) and calls x_error().
  *
  * @param p_base  The base environment.
  * @param message Error message string.

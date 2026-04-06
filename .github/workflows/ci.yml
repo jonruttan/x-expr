@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - cc: gcc
+            cflags: ""
+          - cc: clang
+            cflags: ""
+          - cc: gcc
+            cflags: "-DX_USE_STDLIB"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build and test
+        env:
+          CC: ${{ matrix.cc }}
+        run: make test-quick CFLAGS+="${{ matrix.cflags }}"
+
+  valgrind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      - name: Test with Valgrind
+        run: make test

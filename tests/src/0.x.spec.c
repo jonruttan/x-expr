@@ -57,11 +57,9 @@ static char *test_error(void)
 	helper_file_buffer_ptr[TEST_HELPER_FILE_STDERR] = buffer;
 	helper_file_reset();
 
-	helper_sys_exit_status = X_SYS_EXIT_SUCCESS;
 	memset(buffer, 0, sizeof(buffer));
 
 	x_error(TEST_HELPER_FILE_STDERR, (x_char_t *)"test error", NULL);
-	_it_should("have set exit status to failure", X_SYS_EXIT_FAILURE == helper_sys_exit_status);
 	_it_should("have written error prefix", 0 == strncmp(buffer, "*** ERROR: ", 11));
 	_it_should("have written the message", NULL != strstr(buffer, "test error"));
 
@@ -69,7 +67,6 @@ static char *test_error(void)
 	memset(buffer, 0, sizeof(buffer));
 
 	x_error(TEST_HELPER_FILE_STDERR, (x_char_t *)"bad value", (x_char_t *)"foo");
-	_it_should("have set exit status to failure", X_SYS_EXIT_FAILURE == helper_sys_exit_status);
 	_it_should("have written the symbol", NULL != strstr(buffer, "'foo"));
 
 	return NULL;
