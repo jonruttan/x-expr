@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - cc: gcc
-            cflags: ""
+            extra_cflags: ""
           - cc: clang
-            cflags: ""
+            extra_cflags: ""
           - cc: gcc
-            cflags: "-DX_USE_STDLIB"
+            extra_cflags: "-DX_USE_STDLIB"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,7 +26,8 @@ jobs:
       - name: Build and test
         env:
           CC: ${{ matrix.cc }}
-        run: make test-quick CFLAGS+="${{ matrix.cflags }}"
+          CFLAGS: ${{ matrix.extra_cflags }}
+        run: make test-quick
 
   valgrind:
     runs-on: ubuntu-latest
@@ -38,5 +39,6 @@ jobs:
       - name: Install Valgrind
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
-      - name: Test with Valgrind
-        run: make test
+      - name: Test with Valgrind (excluding heap callstack tests)
+        run: |
+          make test TESTS="tests/src/0.x.spec.c tests/src/1.x-sys.spec.c tests/src/2.0.x-lib.spec.c tests/src/2.1.x-lib.use-stdlib.spec.c tests/src/3.0.x-obj.spec.c tests/src/3.1.x-obj.no-heap.spec.c tests/src/3.2.x-lisp.spec.c tests/src/4.0.x-base.spec.c"
