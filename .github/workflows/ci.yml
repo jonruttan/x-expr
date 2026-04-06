@@ -6,19 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  # 5.0.x-heap.spec.c excluded: its callstack scanning test is
-  # platform-sensitive and fails on Linux CI (pre-existing issue).
-  TESTS: >-
-    tests/src/0.x.spec.c
-    tests/src/1.x-sys.spec.c
-    tests/src/2.0.x-lib.spec.c
-    tests/src/2.1.x-lib.use-stdlib.spec.c
-    tests/src/3.0.x-obj.spec.c
-    tests/src/3.1.x-obj.no-heap.spec.c
-    tests/src/3.2.x-lisp.spec.c
-    tests/src/4.0.x-base.spec.c
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -40,7 +27,7 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
           CFLAGS: ${{ matrix.extra_cflags }}
-        run: make test-quick TESTS="${TESTS}"
+        run: make test-quick
 
   valgrind:
     runs-on: ubuntu-latest
@@ -53,5 +40,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
       - name: Test with Valgrind
-        run: |
-          make test TESTS="${TESTS}"
+        run: make test
