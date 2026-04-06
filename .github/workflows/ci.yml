@@ -7,9 +7,9 @@ on:
     branches: [main]
 
 env:
-  # Heap callstack tests use conservative stack scanning which is
-  # platform-sensitive. Run them separately as non-blocking.
-  CORE_TESTS: >-
+  # 5.0.x-heap.spec.c excluded: its callstack scanning test is
+  # platform-sensitive and fails on Linux CI (pre-existing issue).
+  TESTS: >-
     tests/src/0.x.spec.c
     tests/src/1.x-sys.spec.c
     tests/src/2.0.x-lib.spec.c
@@ -40,7 +40,7 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
           CFLAGS: ${{ matrix.extra_cflags }}
-        run: make test-quick TESTS="${CORE_TESTS}"
+        run: make test-quick TESTS="${TESTS}"
 
   valgrind:
     runs-on: ubuntu-latest
@@ -54,4 +54,4 @@ jobs:
 
       - name: Test with Valgrind
         run: |
-          make test TESTS="${CORE_TESTS}"
+          make test TESTS="${TESTS}"
