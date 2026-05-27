@@ -94,6 +94,36 @@ x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags);
 
 /** @} */
 
+/**
+ * @name Hook & Root Registration
+ *
+ * The base's heap-group carries three extensible lists used by callers
+ * to extend GC behavior at runtime:
+ * - **mark-hooks** -- callables invoked once per mark phase (subscribers
+ *   that want to mark additional reachable objects).
+ * - **free-hooks** -- callables invoked once per sweep phase, before
+ *   reclamation (subscribers that need to react to a collection).
+ * - **mark-roots** -- objects to mark on every collection, ensuring they
+ *   survive GC regardless of reachability.
+ *
+ * x-expr stores the lists and provides these registration helpers; the
+ * consuming layer walks the lists during its mark/sweep primitives and
+ * dispatches the callables per its own conventions (x-expr has no
+ * callable-dispatch).
+ * @{
+ */
+
+/** Push a callable onto the mark-hooks list. */
+void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook);
+
+/** Push a callable onto the free-hooks list. */
+void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook);
+
+/** Push an object onto the mark-roots list. */
+void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root);
+
+/** @} */
+
 #endif /* X_HEAP */
 
 #endif /* X_HEAP_H */

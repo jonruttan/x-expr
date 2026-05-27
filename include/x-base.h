@@ -190,6 +190,30 @@
  */
 #define x_base_field_stack_base(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))
 
+/**
+ * Get the mark-hooks list field. Value: a list of callables, each
+ * invoked once per garbage collection mark phase (fan-out subscribers).
+ * Extended at runtime via x_heap_mark_hook_add() rather than reserved
+ * as a single fixed slot. The collector itself does not invoke the
+ * hooks (it has no callable-dispatch); the consuming layer walks the
+ * list and dispatches per its own conventions.
+ */
+#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))
+
+/**
+ * Get the free-hooks list field. Value: a list of callables, each
+ * invoked once per sweep phase before objects are reclaimed.
+ * Extended at runtime via x_heap_free_hook_add().
+ */
+#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))))
+
+/**
+ * Get the mark-roots list field. Value: a list of objects to mark on
+ * every collection (so they survive GC even when not reachable from the
+ * base tree or the C stack). Extended at runtime via x_heap_mark_root_add().
+ */
+#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))))
+
 /** @} */
 
 /**

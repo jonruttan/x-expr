@@ -72,12 +72,17 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 					pair(pair(base.p_hook_error, nil),
 					nil))))),
 				pair(
-					/* heap: obj-meta-extra, mark, free, stack-base */
+					/* heap: obj-meta-extra, mark, free, stack-base
+					 * + mark-hooks, free-hooks, mark-roots (extensible
+					 *   lists, grown at runtime via x_heap_*_add). */
 					pair(pair(atom(base.obj_meta_extra), nil),
 					pair(pair(base.p_heap_mark, nil),
 					pair(pair(base.p_heap_free, nil),
 					pair(pair(atom(base.p_stack_base), nil),
-					nil)))),
+					pair(pair(nil, nil),
+					pair(pair(nil, nil),
+					pair(pair(nil, nil),
+					nil))))))),
 				nil))));
 
 	return p_base;
