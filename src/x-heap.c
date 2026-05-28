@@ -187,28 +187,36 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 /*
  * # Hook & Root Registration
  *
- * Push onto one of the heap-group's extensible lists.  The cell
- * holding each list is the (current . saved) stack-wrapped slot at the
- * field accessor; we prepend by replacing its first with (value . old).
+ * Each of these slots is the (current . saved) stack-wrapped pair at
+ * its field accessor.  We prepend onto the *current* list -- the first
+ * of the cell -- so the saved slot stays available for future masking
+ * use, and the collector walk (which reads `x_firstobj(field)` to get
+ * the list) sees a proper list head.  Passing &field directly to
+ * x_obj_push_field would replace the whole cell with (value . cell),
+ * which the walk would then mis-interpret as a one-element list whose
+ * first IS value (rather than a list containing value).
  */
 void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 {
-	x_obj_push_field(p_base,
-		&x_base_field_heap_mark_hooks(p_base), p_hook,
+	x_obj_t *p_cell = x_base_field_heap_mark_hooks(p_base);
+
+	x_obj_push_field(p_base, &x_firstobj(p_cell), p_hook,
 		X_OBJ_FLAG_NONE);
 }
 
 void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 {
-	x_obj_push_field(p_base,
-		&x_base_field_heap_free_hooks(p_base), p_hook,
+	x_obj_t *p_cell = x_base_field_heap_free_hooks(p_base);
+
+	x_obj_push_field(p_base, &x_firstobj(p_cell), p_hook,
 		X_OBJ_FLAG_NONE);
 }
 
 void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root)
 {
-	x_obj_push_field(p_base,
-		&x_base_field_heap_mark_roots(p_base), p_root,
+	x_obj_t *p_cell = x_base_field_heap_mark_roots(p_base);
+
+	x_obj_push_field(p_base, &x_firstobj(p_cell), p_root,
 		X_OBJ_FLAG_NONE);
 }
 
