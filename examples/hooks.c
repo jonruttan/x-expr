@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 #include "x-base.h"
-#include "x-lisp.h"
 
 /* A custom type descriptor (just a static atom) */
 static x_satom_t vec2_type_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {0});

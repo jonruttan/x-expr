@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 #include "x-heap.h"
-#include "x-lisp.h"
 
 int main(int argc, char **argv)
 {
@@ -26,7 +25,7 @@ int main(int argc, char **argv)
 	p_base = x_base_make(NULL, base);
 
 	/* Allocate objects -- all land on the heap chain */
-	p_root = x_cons(p_base, X_OBJ_FLAG_NONE,
+	p_root = x_mkspair(p_base, X_OBJ_FLAG_NONE,
 		x_mksatom(p_base, X_OBJ_FLAG_NONE, (x_obj_t *)100),
 		x_mksatom(p_base, X_OBJ_FLAG_NONE, (x_obj_t *)200));
 
@@ -34,8 +33,8 @@ int main(int argc, char **argv)
 	(void)p_garbage; /* intentionally unreachable */
 
 	printf("before GC: root=(%ld . %ld), garbage=%ld\n",
-		x_atomint(x_car(p_root)),
-		x_atomint(x_cdr(p_root)),
+		x_atomint(x_firstobj(p_root)),
+		x_atomint(x_restobj(p_root)),
 		(long)999);
 
 	/* Mark phase: only mark the root tree */
@@ -46,8 +45,8 @@ int main(int argc, char **argv)
 	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_1);
 
 	printf("after GC:  root=(%ld . %ld), garbage collected\n",
-		x_atomint(x_car(p_root)),
-		x_atomint(x_cdr(p_root)));
+		x_atomint(x_firstobj(p_root)),
+		x_atomint(x_restobj(p_root)));
 
 	return 0;
 }

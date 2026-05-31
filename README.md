@@ -15,7 +15,6 @@ A minimal C library providing a foundation object system with atoms, pairs, garb
 
 ```c
 #include "x-base.h"
-#include "x-lisp.h"
 
 /* Create a base environment */
 struct x_base_t conf = { STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO };
@@ -23,11 +22,11 @@ x_obj_t *base = x_base_make(NULL, conf);
 
 /* Make atoms and pairs */
 x_obj_t *a = x_mksatom(base, X_OBJ_FLAG_NONE, (x_obj_t *)42);
-x_obj_t *p = x_cons(base, X_OBJ_FLAG_NONE, a, NULL);
+x_obj_t *p = x_mkspair(base, X_OBJ_FLAG_NONE, a, NULL);
 
 /* Access data */
-printf("%ld\n", x_atomint(a));        /* 42 */
-printf("%ld\n", x_atomint(x_car(p))); /* 42 */
+printf("%ld\n", x_atomint(a));             /* 42 */
+printf("%ld\n", x_atomint(x_firstobj(p))); /* 42 */
 ```
 
 See [examples/hello.c](examples/hello.c) for a complete working program.
