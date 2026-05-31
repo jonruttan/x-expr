@@ -77,6 +77,10 @@ typedef void (*x_heap_free_fn_t)(x_obj_t *, x_obj_t *);
 
 /**
  * @name Heap Management Functions
+ *
+ * @warning These functions assume single-threaded execution. The heap
+ * chain, mark flags, and call stack scanning are not synchronized.
+ * x_heap_callstack_mark() only scans the calling thread's stack.
  * @{
  */
 
@@ -89,7 +93,13 @@ x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size, x_obj_f
 /** Sweep the heap, freeing unmarked objects. */
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
 
-/** Mark objects referenced from the C call stack. */
+/**
+ * Mark objects referenced from the C call stack.
+ *
+ * @warning Requires X_NO_OPTIMIZE to be effective for the target
+ * compiler. On unsupported compilers, stack scanning may miss
+ * references if the optimizer eliminates the stack frame anchor.
+ */
 x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags);
 
 /** @} */

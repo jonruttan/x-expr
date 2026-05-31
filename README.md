@@ -45,14 +45,28 @@ Run `make help` for the full list of targets.
 
 ## Compile-Time Flags
 
+**Supported** -- tested in CI:
+
 | Flag | Default | Description |
 |------|---------|-------------|
 | `X_HEAP` | on | Enable heap management and mark-sweep garbage collection |
 | `X_USE_STDLIB` | off | Delegate x-lib functions to standard library equivalents |
-| `X_USE_STDLIB_NONSTD` | off | Use non-standard library extensions (requires `X_USE_STDLIB`) |
 | `DEBUG` | off | Enable debug output macros (x_debug, x_obj_dump) |
-| `X_CLOCK` | off | Enable CPU clock measurement (x_sys_clock) |
+
+**Experimental** -- functional but not CI-tested:
+
+| Flag | Default | Description |
+|------|---------|-------------|
 | `X_PROFILE` | off | Enable allocation profiling counters |
+| `X_CLOCK` | off | Enable CPU clock measurement (x_sys_clock) |
+| `X_USE_STDLIB_NONSTD` | off | Use non-standard library extensions (requires `X_USE_STDLIB`) |
+
+**Internal** -- for x-expr development:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `X_OPT_MEMZERO` | off | Zero allocated memory in x_lib_memdup |
+| `X_SYS_FUNC` | identity | Macro to redirect system calls at compile time |
 
 Pass flags to the compiler: `make CFLAGS+="-DX_HEAP -DDEBUG"`
 
@@ -67,6 +81,14 @@ Pass flags to the compiler: `make CFLAGS+="-DX_HEAP -DDEBUG"`
 | [x-base.h](include/x-base.h) | Base environment: I/O, hooks, heap config, field accessors |
 | [x-heap.h](include/x-heap.h) | Mark-sweep garbage collection (requires `X_HEAP`) |
 | [x-lisp.h](include/x-lisp.h) | Lisp-style aliases: cons, car, cdr, setcar, setcdr |
+
+## Base Tree Layout
+
+The base environment is a nested pair tree whose field positions are accessed via macros in `x-base.h`. The tree layout documented there is stable API -- field positions will not change within a major version.
+
+## Thread Safety
+
+x-expr assumes single-threaded execution. The heap chain, garbage collector, and field stack operations are not synchronized. If you need to use x-expr from multiple threads, you must provide your own external synchronization around all object allocation, GC, and base environment mutation.
 
 ## Usage as a Submodule
 

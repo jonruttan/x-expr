@@ -15,11 +15,10 @@
 #include "x-lib.h"
 
 /**
- * Output an error message to a file descriptor, then exit.
+ * Output an error message to a file descriptor.
  *
  * Writes `"*** ERROR: "` followed by @p message. If @p symbol is
- * non-NULL, appends `" '"` and the symbol string. Then terminates
- * the process with X_SYS_EXIT_FAILURE.
+ * non-NULL, appends `" '"` and the symbol string.
  *
  * @param fd      File descriptor to write the error to.
  * @param message A C string error message to output.
@@ -34,8 +33,6 @@ void x_error(int fd, x_char_t *message, x_char_t *symbol)
 		x_sys_write(fd, X_STR_LITERAL(" '"));
 		x_sys_write(fd, symbol, x_lib_strlen(symbol));
 	}
-
-	x_sys_exit(X_SYS_EXIT_FAILURE);
 }
 
 

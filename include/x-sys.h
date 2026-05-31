@@ -65,8 +65,8 @@ int x_sys_open(const char *path, int flags);
 /** Close a file descriptor. */
 int x_sys_close(int fd);
 
-/** Read a single character from a file descriptor. */
-x_char_t x_sys_read_char(int fd);
+/** Read a single character from a file descriptor, or X_SYS_EOF. */
+int x_sys_read_char(int fd);
 
 #ifdef X_CLOCK
 /** Read the CPU clock in microseconds. */

@@ -111,7 +111,7 @@ x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
  */
 X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags)
 {
-	volatile int stack_top;
+	volatile void *stack_top;
 	void *lo, *hi, *tmp, *stack_base;
 
 	if ( ! x_base_isset(p_base)) {
@@ -131,6 +131,10 @@ X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags
 		tmp = lo;
 		lo = hi;
 		hi = tmp;
+	}
+
+	if (lo == hi) {
+		return NULL;
 	}
 
 	return x_heap_vector_mark(p_base, lo, (size_t)((char *)hi - (char *)lo), flags);

@@ -18,6 +18,10 @@
  * temporarily override a field (e.g. redirect I/O for a nested scope),
  * push a new value before entering the scope and pop it on exit.
  *
+ * @note The tree layout below is stable API. Field positions will not
+ * change within a major version. Extension points (env+ctrl, type-alist,
+ * io-state) are reserved for downstream use.
+ *
  * The tree has three extension points (marked below) where downstream
  * projects can attach additional state: `env+ctrl` for environment
  * bindings, `type-alist` for type dispatch tables, and `io-state`

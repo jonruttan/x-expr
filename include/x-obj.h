@@ -238,6 +238,11 @@ extern x_satom_t x_false_obj;
 #define x_1110(X)					x_1(x_110(X))
 #define x_1111(X)					x_1(x_111(X))
 
+/**
+ * @warning x-expr is not thread-safe. All functions that allocate objects,
+ * mutate the heap chain, or modify field stacks assume single-threaded
+ * execution. External synchronization is required for multi-threaded use.
+ */
 int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj);
 
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t size);
@@ -263,6 +268,7 @@ x_obj_t *x_obj_pop_field(x_obj_t *p_base, x_obj_t **p_field);
 x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args);
 x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args);
 
+/** Output an error message to stderr. */
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj);
 
 #ifdef DEBUG

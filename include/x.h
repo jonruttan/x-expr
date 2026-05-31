@@ -64,6 +64,10 @@
  * Applied to functions that depend on stack layout (e.g. call-stack
  * scanning in the garbage collector). Expands to the appropriate
  * compiler-specific attribute, or nothing if unsupported.
+ *
+ * @warning On compilers where this expands to nothing, functions
+ * that depend on stack layout (such as x_heap_callstack_mark) may
+ * produce incorrect results at higher optimization levels.
  */
 #if defined(__clang__)
 #define X_NO_OPTIMIZE __attribute__((optnone))
@@ -215,7 +219,7 @@ void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...);
 
 /** @} */
 
-/** Output an error message and terminate the process. */
+/** Output an error message to a file descriptor. */
 void x_error(int fd, x_char_t *message, x_char_t *symbol);
 
 #endif /* X_H */
