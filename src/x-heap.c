@@ -200,6 +200,16 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  * which the walk would then mis-interpret as a one-element list whose
  * first IS value (rather than a list containing value).
  */
+/**
+ * Register a mark hook on the base.
+ *
+ * Prepends @p p_hook to the base's mark-hooks list (see
+ * x_base_field_heap_mark_hooks()). Each registered callable is intended to be
+ * invoked once per garbage-collection mark phase by the consuming layer.
+ *
+ * @param p_base The base environment.
+ * @param p_hook The callable to register.
+ */
 void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 {
 	x_obj_t *p_cell = x_base_field_heap_mark_hooks(p_base);
@@ -208,6 +218,16 @@ void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 		X_OBJ_FLAG_NONE);
 }
 
+/**
+ * Register a free hook on the base.
+ *
+ * Prepends @p p_hook to the base's free-hooks list (see
+ * x_base_field_heap_free_hooks()). Each registered callable is intended to be
+ * invoked once per sweep phase, before objects are reclaimed.
+ *
+ * @param p_base The base environment.
+ * @param p_hook The callable to register.
+ */
 void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 {
 	x_obj_t *p_cell = x_base_field_heap_free_hooks(p_base);
@@ -216,6 +236,16 @@ void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 		X_OBJ_FLAG_NONE);
 }
 
+/**
+ * Register a mark root on the base.
+ *
+ * Prepends @p p_root to the base's mark-roots list (see
+ * x_base_field_heap_mark_roots()), so it is marked on every collection and
+ * survives GC regardless of other reachability.
+ *
+ * @param p_base The base environment.
+ * @param p_root The object to keep reachable.
+ */
 void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root)
 {
 	x_obj_t *p_cell = x_base_field_heap_mark_roots(p_base);
