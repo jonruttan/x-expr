@@ -1,5 +1,5 @@
 Title:    Git Commit Guidelines  
-Keywords: [#Git, #Commit, #Guidelines]  
+Keywords: `[#Git, #Commit, #Guidelines]`  
 Authors:  ["[Jon Ruttan](jonruttan@gmail.com)", "[ajoslin](https://github.com/ajoslin)"  ]
 Original: <https://github.com/ajoslin/conventional-changelog/blob/master/CONVENTIONS.md>  
 Date:     2014-01-23  
@@ -99,7 +99,7 @@ The subject contains a succinct description of the change:
 
 ### Body
 
-  - just as in the <subject>, use the imperative, present tense: "change" not "changed" nor "changes"
+  - just as in the `<subject>`, use the imperative, present tense: "change" not "changed" nor "changes"
   - include the motivation for the change, and the contrasts with previous behavior
 
 
