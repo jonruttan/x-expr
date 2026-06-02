@@ -272,8 +272,6 @@ typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
 extern x_satom_t x_type_atom_obj;
 /** Built-in static pair type; its value is the "PAIR" type-name string. */
 extern x_satom_t x_type_pair_obj;
-/** Reserved base type object (declared for symmetry; not currently defined). */
-extern x_satom_t x_type_base_obj;
 /** Static atom holding the atom data-unit count, returned by x_atom_prim_units(). */
 extern x_satom_t x_type_units_atom_obj;
 /** Static atom holding the pair data-unit count, returned by x_pair_prim_units(). */
