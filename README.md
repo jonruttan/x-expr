@@ -121,7 +121,7 @@ Generate the API reference with `make doc`. Output is written to `docs/ref/html/
 
 ## Contributing
 
-See [docs/contributing.md](docs/contributing.md) for development setup, code style, and pull request guidelines.
+See [docs/contributing.md](https://github.com/jonruttan/x-expr/blob/main/docs/contributing.md) for development setup, code style, and pull request guidelines.
 
 ## License
 
