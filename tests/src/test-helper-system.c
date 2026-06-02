@@ -1,3 +1,11 @@
+/*
+ * test-helper-system.c -- Mock system-call layer for unit tests
+ *
+ * Redefines X_SYS_FUNC so x-sys routes through helper_sys_* wrappers, and
+ * provides mock_* implementations (exit, malloc, free, read, write, open,
+ * close, and clock under X_CLOCK) dispatched through a swappable function
+ * table. Lets tests intercept system calls without touching the real OS.
+ */
 #ifndef HELPER_SYSTEM_FUNCTIONS
 #define HELPER_SYSTEM_FUNCTIONS
 
