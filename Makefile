@@ -162,7 +162,7 @@ watch: ## Watch source for changes
 .PHONY: watch
 
 doc: ## Generate C reference documentation (HTML + man pages)
-	doxygen Doxyfile
+	X_VERSION="$(shell sed -n 's/.*X_VERSION[[:space:]]*"\([^"]*\)".*/\1/p' $(INCDIR)/x.h)" doxygen Doxyfile
 .PHONY: doc
 
 clean: ## Clean compiled files
