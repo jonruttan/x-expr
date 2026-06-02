@@ -5,7 +5,7 @@
  * user-defined types beyond the built-in atom and pair.
  *
  * Build:  make hooks
- * Run:    ./hooks
+ * Run:    ./build/hooks
  */
 
 #include <stdio.h>

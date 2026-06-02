@@ -7,19 +7,28 @@ X_EXPR_DIR=..
 CFLAGS+=-I$(X_EXPR_DIR)/include
 SOURCES=$(wildcard $(X_EXPR_DIR)/src/*.c)
 
-EXAMPLES=hello gc hooks
+BUILD=build
+EXAMPLES=$(BUILD)/hello $(BUILD)/gc $(BUILD)/hooks
 
 all: $(EXAMPLES)
 
-hello: hello.c $(SOURCES)
+# Short-name aliases: `make hello`, `make gc`, `make hooks`.
+hello: $(BUILD)/hello
+gc: $(BUILD)/gc
+hooks: $(BUILD)/hooks
+
+$(BUILD)/hello: hello.c $(SOURCES)
+	mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ hello.c $(SOURCES)
 
-gc: gc.c $(SOURCES)
+$(BUILD)/gc: gc.c $(SOURCES)
+	mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ gc.c $(SOURCES)
 
-hooks: hooks.c $(SOURCES)
+$(BUILD)/hooks: hooks.c $(SOURCES)
+	mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ hooks.c $(SOURCES)
 
 clean:
-	rm -f $(EXAMPLES)
-.PHONY: all clean
+	rm -rf $(BUILD)
+.PHONY: all clean hello gc hooks

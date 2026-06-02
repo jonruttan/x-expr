@@ -5,7 +5,7 @@
  * and sweeping unreachable objects.
  *
  * Build:  make gc
- * Run:    ./gc
+ * Run:    ./build/gc
  */
 
 #include <stdio.h>

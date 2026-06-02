@@ -5,7 +5,7 @@
  * accessing data with first/rest, and querying type names.
  *
  * Build:  make
- * Run:    ./hello
+ * Run:    ./build/hello
  */
 
 #include <stdio.h>
