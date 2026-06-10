@@ -60,7 +60,8 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 				/* io-state (x project extends) */
 				nil),
 			pair(
-				/* meta: (profile . hooks), (heap . ()) */
+				/* meta: (profile . hooks), heap, alloc
+				 * -- tail past alloc extended by the embedding layer */
 				pair(
 					/* profile: allocs */
 					pair(pair(atom(0), nil),
@@ -83,7 +84,21 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 					pair(pair(nil, nil),
 					pair(pair(nil, nil),
 					nil))))))),
-				nil))));
+				/* alloc group: count, limit, error -- objects currently
+				 * allocated (x_obj_alloc increments, x_obj_free decrements),
+				 * the ceiling x_obj_alloc enforces (0 = unlimited), and the
+				 * embedder-supplied message atom reported when the ceiling
+				 * trips (nil = stop without reporting; x-expr holds no
+				 * message text).  Allocation accounting, independent of
+				 * X_HEAP garbage collection.  The tail past this group is
+				 * the embedding layer's extension point (x-eval builds its
+				 * state group there). */
+				pair(
+					pair(pair(atom(0), nil),
+					pair(pair(atom(0), nil),
+					pair(pair(nil, nil),
+					nil))),
+				nil)))));
 
 	return p_base;
 }

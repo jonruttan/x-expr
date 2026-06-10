@@ -72,24 +72,75 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * @param p_type The type object to assign, or NULL.
  * @param flags  Initial object flags.
  * @param units  Number of data units to allocate.
- * @return The new object, or NULL on allocation failure (after reporting
- *         #X_OBJ_ERROR_OOM via x_obj_error() when @p p_base is non-NULL).
+ * @return The new object, or NULL on allocation failure (signalled by the
+ *         NULL return alone -- x-expr carries no message text of its own).
+ * @note When the base arms an allocation ceiling (see
+ *       x_base_field_alloc_limit()), reaching it makes this function report
+ *       through the base error path and stop the process rather than
+ *       allocate past it -- the runaway-memory guard.
  */
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
 	x_obj_t *p_obj;
-	size_t extra = (p_base != NULL
+	/* Chasing base fields below requires a full, TYPED base -- the same
+	 * predicate the obj-meta-extra fetch has always used.  x_base_isset
+	 * alone is too weak: minimal/partial bases (x-expr test fixtures,
+	 * embedder scratch objects) pass it and the field chase derefs
+	 * garbage. */
+	int base_full = (p_base != NULL
 		&& ! x_obj_isnil(p_base, x_obj_type(p_base))
-		&& x_base_isset(p_base))
+		&& x_base_isset(p_base));
+	size_t extra = base_full
 		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
+	/* Allocation ceiling (0 = disarmed, < 0 = already tripped) and the
+	 * embedder-supplied trip message (nil = stop without reporting; x-expr
+	 * holds no message text of its own). */
+	x_int_t limit = base_full
+		? x_atomint(x_firstobj(x_base_field_alloc_limit(p_base))) : 0;
+	x_obj_t *p_msg = base_full
+		? x_firstobj(x_base_field_alloc_error(p_base)) : NULL;
+
+	if (limit < 0) {
+		/* Ceiling already tripped once and the report was intercepted
+		 * by an error handler (longjmp): an in-language handler cannot
+		 * run without allocating, so re-reporting would longjmp forever
+		 * (a zero-progress livelock).  Print directly and stop. */
+		if ( ! x_obj_isnil(p_base, p_msg)) {
+			x_error(STDERR_FILENO, x_atomstr(p_msg), NULL);
+		}
+
+		x_sys_exit(2);
+	}
+
+	/* Allocation ceiling (runaway-memory guard): report through the
+	 * standard error path and stop rather than allocate past it.  Exit
+	 * rather than return NULL: the runtime does not null-check
+	 * allocations, so a NULL here segfaults (the allocation-failure
+	 * path below has the same latent crash, just rarely reached).
+	 * Latch (-1) BEFORE reporting: x_obj_error may longjmp to a guard
+	 * handler and never return. */
+	if (limit > 0 && x_atomint(x_firstobj(x_base_field_alloc_count(p_base))) >= limit) {
+		x_atomint(x_firstobj(x_base_field_alloc_limit(p_base))) = -1;
+
+		if ( ! x_obj_isnil(p_base, p_msg)) {
+			x_obj_error(p_base, x_atomstr(p_msg), NULL);
+		}
+
+		x_sys_exit(2);
+	}
 
 	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (extra + X_OBJ_META_LEN + units));
 
 	if (p_obj == NULL) {
-		if (p_base != NULL) {
-			x_obj_error(p_base, (x_char_t *)X_OBJ_ERROR_OOM, NULL);
-		}
+		/* Allocation failure is signalled by the NULL return alone --
+		 * x-expr holds no message text (the embedding layer owns all
+		 * prose). */
 		return NULL;
+	}
+
+	/* Objects currently allocated; x_obj_free decrements. */
+	if (base_full) {
+		x_atomint(x_firstobj(x_base_field_alloc_count(p_base)))++;
 	}
 
 #ifdef X_HEAP
@@ -187,6 +238,22 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
 void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_alloc = p_obj;
+	/* Full, typed base -- the only kind whose fields may be chased (see
+	 * x_obj_alloc: x_base_isset alone admits minimal test/embedder bases
+	 * whose "fields" are garbage). */
+	int base_full = (p_base != NULL
+		&& ! x_obj_isnil(p_base, x_obj_type(p_base))
+		&& x_base_isset(p_base));
+#ifdef X_HEAP
+	size_t extra = base_full
+		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
+#endif /* X_HEAP */
+
+	/* Mirror the x_obj_alloc increment: every freed object (including GC
+	 * sweeps, which free through here) decrements the allocated count. */
+	if (base_full) {
+		x_atomint(x_firstobj(x_base_field_alloc_count(p_base)))--;
+	}
 
 	if (x_obj_flags(p_obj) & X_OBJ_FLAG_OWN) {
 		x_sys_free(x_firstobj(p_obj));
@@ -194,10 +261,6 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 
 #ifdef X_HEAP
 	if (x_obj_flags(p_obj) & X_OBJ_FLAG_META) {
-		size_t extra = (p_base != NULL
-			&& !x_obj_isnil(p_base, x_obj_type(p_base))
-			&& x_base_isset(p_base))
-			? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
 		p_alloc = p_obj - extra;
 	}
 #endif /* X_HEAP */

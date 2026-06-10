@@ -83,7 +83,7 @@
 #include "x-lib.h"
 
 /**
- * @name Type Symbols and Messages
+ * @name Type Symbols
  * @{
  */
 
@@ -98,9 +98,6 @@
 #define X_OBJ_TRUE_SYMBOL			"#t"
 /** Symbol naming the canonical false atom (#x_false_obj). */
 #define X_OBJ_FALSE_SYMBOL			"#f"
-
-/** Error message reported by x_obj_alloc() when allocation fails. */
-#define X_OBJ_ERROR_OOM				"out of memory"
 
 /** @} */
 

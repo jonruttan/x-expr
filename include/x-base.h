@@ -111,7 +111,8 @@
  * @{
  */
 
-/** Get the meta group pair (profile+hooks, heap). */
+/** Get the meta group list (profile+hooks, heap, alloc; the tail past alloc
+ *  is the embedding layer's extension point). */
 #define x_base_field_meta_group(X)			x_restobj(x_restobj(x_base(X)))
 
 /** Get the profile pair (counters). */
@@ -217,6 +218,44 @@
  * base tree or the C stack). Extended at runtime via x_heap_mark_root_add().
  */
 #define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))))
+
+/** @} */
+
+/**
+ * @defgroup base_alloc Base Allocation Field Accessors
+ * @brief Object-allocation accounting (the meta group's alloc element).
+ *
+ * Maintained by x_obj_alloc / x_obj_free in every build: allocation-layer
+ * state, not part of X_HEAP garbage collection.
+ * @{
+ */
+
+/** Get the alloc group list (count, limit, error). */
+#define x_base_field_alloc_group(X)			x_firstobj(x_restobj(x_restobj(x_base_field_meta_group(X))))
+
+/**
+ * Get the allocated object-count field. Value: integer atom. Incremented
+ * by x_obj_alloc and decremented by x_obj_free: the number of objects
+ * currently allocated (counted once the base is set, so the base tree
+ * itself is excluded).
+ */
+#define x_base_field_alloc_count(X)			x_firstobj(x_base_field_alloc_group(X))
+
+/**
+ * Get the allocation ceiling field. Value: integer atom. 0 = unlimited (the
+ * default). When > 0, x_obj_alloc stops the process rather than allocate
+ * past it -- the runaway-memory guard.  Negative values are reserved: the
+ * allocator latches the cell to -1 once tripped.
+ */
+#define x_base_field_alloc_limit(X)			x_firstobj(x_restobj(x_base_field_alloc_group(X)))
+
+/**
+ * Get the allocation trip-message field. Value: an atom whose string is
+ * reported (via the error hook, or stderr once latched) when the ceiling
+ * trips, or nil to stop without reporting.  Supplied by the embedding layer
+ * when it arms the limit -- x-expr itself holds no message text.
+ */
+#define x_base_field_alloc_error(X)			x_firstobj(x_restobj(x_restobj(x_base_field_alloc_group(X))))
 
 /** @} */
 

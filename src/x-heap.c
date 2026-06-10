@@ -164,6 +164,7 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_heap_free(p_base))))
 		? (x_heap_free_fn_t)x_firstptr(x_firstobj(x_base_field_heap_free(p_base)))
 		: NULL;
+	x_obj_t *p_ret = p_base;
 	x_obj_t *gc = p_obj, *tmp,
 		*prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
 
@@ -181,11 +182,21 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 
 			tmp = x_obj_heap(prev) = x_obj_heap(gc);
 			x_obj_free(p_base, gc);
+
+			/* The teardown idiom -- x_heap_sweep(base, base, NONE) -- frees
+			 * the base itself partway through the walk.  From then on the
+			 * base is dead memory: stop handing it to x_obj_free (which
+			 * chases base fields for the allocation accounting) and to the
+			 * free hook.  The caller still gets the original pointer back. */
+			if (gc == p_base) {
+				p_base = NULL;
+			}
+
 			gc = tmp;
 		}
 	}
 
-	return p_base;
+	return p_ret;
 }
 
 /*
