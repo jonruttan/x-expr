@@ -64,6 +64,15 @@ static char *test_root_chain_push_pop(void)
 
 	helper_alloc_reset();
 
+	/* Unset base: no chain, no collector -- registration must degrade
+	 * to a no-op so NULL-base callers (e.g. x_eval(NULL, ...)) work. */
+	p_cell = x_heap_root_cell(NULL);
+	_it_should("yield a nil cell without a base", NULL == p_cell);
+	x_heap_root_push(p_cell, root_a);
+	x_heap_root_pop(p_cell);
+	_it_should("leave a nil-cell push/pop inert",
+		NULL == x_obj_heap((x_obj_t *)root_a));
+
 	p_base = test_make_heap_base();
 	p_cell = x_heap_root_cell(p_base);
 

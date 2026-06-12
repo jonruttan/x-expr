@@ -158,26 +158,39 @@ void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root);
  * Address of the root-chain head slot of @p B, for hoisting into a
  * frame local (`x_obj_t **`) so pushes and pops skip the base-tree
  * field chase.
+ *
+ * Yields nil when the base is not set: an unset base has no chain to
+ * register on -- and no collector to need it -- so x_heap_root_push()
+ * and x_heap_root_pop() degrade to no-ops and frames keep working for
+ * NULL/partial-base callers (unit specs, embedder scratch), the same
+ * x_base_isset() contract the mark/sweep walkers follow.
  */
-#define x_heap_root_cell(B)			(&x_heap_root_chain(B))
+#define x_heap_root_cell(B) \
+	(x_base_isset(B) ? &x_heap_root_chain(B) : (x_obj_t **)NULL)
 
 /**
- * Register off-chain object @p node as a GC root (two stores).
+ * Register off-chain object @p node as a GC root (two stores; no-op
+ * when @p p_cell is nil).
  *
  * @param p_cell `x_obj_t **` -- the head slot (see x_heap_root_cell()).
  * @param node   The off-chain object; evaluated twice.
  */
 #define x_heap_root_push(p_cell, node) \
-	(x_obj_heap((x_obj_t *)(node)) = *(p_cell), \
-		*(p_cell) = (x_obj_t *)(node))
+	((p_cell) != NULL \
+		? (void)(x_obj_heap((x_obj_t *)(node)) = *(p_cell), \
+			*(p_cell) = (x_obj_t *)(node)) \
+		: (void)0)
 
 /**
- * Unregister the most recently pushed root (one store).
+ * Unregister the most recently pushed root (one store; no-op when
+ * @p p_cell is nil).
  *
  * @param p_cell `x_obj_t **` -- the head slot (see x_heap_root_cell()).
  */
 #define x_heap_root_pop(p_cell) \
-	(*(p_cell) = x_obj_heap(*(p_cell)))
+	((p_cell) != NULL \
+		? (void)(*(p_cell) = x_obj_heap(*(p_cell))) \
+		: (void)0)
 
 /** Mark every object registered on the root chain (two passes). */
 x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags);
