@@ -39,7 +39,8 @@
  *             (allocs)
  *             . (type-name units length error))
  *           . ((; heap
- *               (obj-meta-extra mark free stack-base)
+ *               (obj-meta-extra mark free
+ *                mark-hooks free-hooks mark-roots root-chain)
  *               . ())
  *             . ()))
  *         . ()))))
@@ -188,14 +189,6 @@
 #define x_base_field_heap_free(X)			x_firstobj(x_restobj(x_restobj(x_base_field_heap_group(X))))
 
 /**
- * Get the C call stack base pointer field. Value: atom with void pointer.
- * Should be captured near program entry (e.g. `&argc` in main) and
- * passed via x_base_t.p_stack_base. Used by x_heap_callstack_mark()
- * to determine the stack region to scan for object references.
- */
-#define x_base_field_stack_base(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))
-
-/**
  * Get the mark-hooks list field. Value: a list of callables, each
  * invoked once per garbage collection mark phase (fan-out subscribers).
  * Extended at runtime via x_heap_mark_hook_add() rather than reserved
@@ -203,21 +196,32 @@
  * hooks (it has no callable-dispatch); the consuming layer walks the
  * list and dispatches per its own conventions.
  */
-#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))
+#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))
 
 /**
  * Get the free-hooks list field. Value: a list of callables, each
  * invoked once per sweep phase before objects are reclaimed.
  * Extended at runtime via x_heap_free_hook_add().
  */
-#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))))
+#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))
 
 /**
  * Get the mark-roots list field. Value: a list of objects to mark on
  * every collection (so they survive GC even when not reachable from the
- * base tree or the C stack). Extended at runtime via x_heap_mark_root_add().
+ * base tree or the root chain). Extended at runtime via x_heap_mark_root_add().
  */
-#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))))
+#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))))
+
+/**
+ * Get the root-chain head field. Value: the most recently registered
+ * off-chain (stack- or static-storage) object, or nil. Registered objects
+ * link LIFO through the same x_obj_heap() header slot the allocation
+ * chain uses -- with a different head, so any object is on exactly one
+ * of the two chains. The chain is marked on every collection
+ * (x_heap_root_chain_mark()) but never swept: x_heap_sweep() walks only
+ * the allocation chain. See x_heap_root_push() / x_heap_root_pop().
+ */
+#define x_base_field_heap_root_chain(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))))
 
 /** @} */
 
@@ -279,7 +283,6 @@ struct x_base_t
 	x_int_t obj_meta_extra;		/**< Extra metadata units per object (0 for none). */
 	x_obj_t *p_heap_mark;		/**< Mark hook (x_heap_mark_fn_t atom), or NULL. */
 	x_obj_t *p_heap_free;		/**< Free hook (x_heap_free_fn_t atom), or NULL. */
-	void *p_stack_base;			/**< C stack base address for GC scanning (e.g. `&main_local`). */
 };
 
 /**

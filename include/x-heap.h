@@ -10,8 +10,8 @@
  *
  * Objects are linked into a singly-linked heap chain via x_obj_heap().
  * The GC lifecycle is:
- * -# **Mark**: call x_heap_tree_mark() on known roots and/or
- *    x_heap_callstack_mark() to scan the C stack for references.
+ * -# **Mark**: call x_heap_tree_mark() on known roots and
+ *    x_heap_root_chain_mark() for the registered stack roots.
  * -# **Sweep**: call x_heap_sweep() to free all unmarked objects.
  *    Objects with X_OBJ_FLAG_SHARED are always retained. Mark flags
  *    are cleared during sweep, preparing for the next cycle.
@@ -19,11 +19,14 @@
  * **Rooting rules** -- an object survives GC if any of these apply:
  * - It has X_OBJ_FLAG_SHARED set (permanent; used for base tree nodes).
  * - It is reachable from a pair tree passed to x_heap_tree_mark().
- * - It is referenced by a C local variable on the stack (found by
- *   x_heap_callstack_mark() scanning between the current frame and
- *   the stored stack base).
+ * - It is reachable from an off-chain object registered on the root
+ *   chain (x_heap_root_push()), marked each collection by
+ *   x_heap_root_chain_mark().
  * - It is stored in a base environment field (reachable when the
  *   base tree is marked).
+ *
+ * A C local holding the only reference to a heap object is NOT a root
+ * by itself: the frame must register it (see the root chain below).
  *
  * Objects not reachable by any of the above are collected during sweep.
  *
@@ -79,28 +82,15 @@ typedef void (*x_heap_free_fn_t)(x_obj_t *, x_obj_t *);
  * @name Heap Management Functions
  *
  * @warning These functions assume single-threaded execution. The heap
- * chain, mark flags, and call stack scanning are not synchronized.
- * x_heap_callstack_mark() only scans the calling thread's stack.
+ * chain and mark flags are not synchronized.
  * @{
  */
 
 /** Walk a pair tree, setting mark flags on each reachable object. */
 x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
 
-/** Scan a memory region for heap object pointers and mark them. */
-x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size, x_obj_flag_t flags);
-
 /** Sweep the heap, freeing unmarked objects. */
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
-
-/**
- * Mark objects referenced from the C call stack.
- *
- * @warning Requires X_NO_OPTIMIZE to be effective for the target
- * compiler. On unsupported compilers, stack scanning may miss
- * references if the optimizer eliminates the stack frame anchor.
- */
-x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags);
 
 /** @} */
 
@@ -131,6 +121,66 @@ void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook);
 
 /** Push an object onto the mark-roots list. */
 void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root);
+
+/** @} */
+
+/**
+ * @name Root Chain (precise stack roots)
+ *
+ * Track-on-push registration for off-chain objects: C frames push the
+ * stack-storage objects they create (x_satom_t / x_spair_t locals,
+ * x_obj_set-initialized) as GC roots and pop them on exit, LIFO,
+ * mirroring the call structure. Registered objects link through the
+ * same x_obj_heap() header slot the allocation chain uses -- dormant
+ * (NULL) in every off-chain object -- but from a different head
+ * (x_base_field_heap_root_chain()), so any object is on exactly one
+ * chain: the allocation chain is swept, the root chain is marked.
+ *
+ * Rules the registering frame must keep:
+ * - Only off-chain objects may be pushed. Pushing a heap-allocated
+ *   object overwrites its allocation-chain link and truncates the
+ *   sweep chain.
+ * - Registered pairs must carry the built-in pair type
+ *   (#x_type_pair_obj): the mark walk traverses payloads through
+ *   x_heap_tree_mark(), which descends only spair-typed pairs.
+ * - Pops must run on every exit path. Nonlocal exits (longjmp) must
+ *   restore the head from a snapshot taken at the setjmp point --
+ *   the cut-away frames' nodes are dead stack memory.
+ * - Push each node at most once: the chain has no cycle guard.
+ * @{
+ */
+
+/** Head of the root chain on @p B (lvalue; nil when empty). */
+#define x_heap_root_chain(B) \
+	x_firstobj(x_base_field_heap_root_chain(B))
+
+/**
+ * Address of the root-chain head slot of @p B, for hoisting into a
+ * frame local (`x_obj_t **`) so pushes and pops skip the base-tree
+ * field chase.
+ */
+#define x_heap_root_cell(B)			(&x_heap_root_chain(B))
+
+/**
+ * Register off-chain object @p node as a GC root (two stores).
+ *
+ * @param p_cell `x_obj_t **` -- the head slot (see x_heap_root_cell()).
+ * @param node   The off-chain object; evaluated twice.
+ */
+#define x_heap_root_push(p_cell, node) \
+	(x_obj_heap((x_obj_t *)(node)) = *(p_cell), \
+		*(p_cell) = (x_obj_t *)(node))
+
+/**
+ * Unregister the most recently pushed root (one store).
+ *
+ * @param p_cell `x_obj_t **` -- the head slot (see x_heap_root_cell()).
+ */
+#define x_heap_root_pop(p_cell) \
+	(*(p_cell) = x_obj_heap(*(p_cell)))
+
+/** Mark every object registered on the root chain (two passes). */
+x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags);
 
 /** @} */
 

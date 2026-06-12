@@ -58,25 +58,6 @@
 #define X_MACHINE "undefined"
 #endif /* X_MACHINE */
 
-/**
- * Compiler attribute to disable optimization for a function.
- *
- * Applied to functions that depend on stack layout (e.g. call-stack
- * scanning in the garbage collector). Expands to the appropriate
- * compiler-specific attribute, or nothing if unsupported.
- *
- * @warning On compilers where this expands to nothing, functions
- * that depend on stack layout (such as x_heap_callstack_mark) may
- * produce incorrect results at higher optimization levels.
- */
-#if defined(__clang__)
-#define X_NO_OPTIMIZE __attribute__((optnone))
-#elif defined(__GNUC__)
-#define X_NO_OPTIMIZE __attribute__((optimize("O0")))
-#else
-#define X_NO_OPTIMIZE
-#endif
-
 #ifdef DEBUG
 /** Size in bytes of the debug output buffer. */
 #define X_DEBUG_BUFFER_SIZE	65536

@@ -63,84 +63,6 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 }
 
 /**
- * Scan a memory region for heap object pointers and mark them.
- *
- * Iterates through each pointer-sized value in the region from
- * @p p_start to @p p_start + @p size, comparing against all objects
- * in the heap chain. Any match is marked via x_heap_tree_mark().
- *
- * @param p_base  The base environment.
- * @param p_start Start of the memory region to scan.
- * @param size    Size of the region in bytes.
- * @param flags   Flags to set on each marked object.
- * @return NULL.
- */
-x_obj_t *x_heap_vector_mark(x_obj_t *p_base, void *p_start, size_t size,
-	x_obj_flag_t flags)
-{
-	void **p = (void **)p_start;
-	void **p_end = (void **)((char *)p_start + size);
-	x_obj_t *gc;
-
-	for (; p < p_end; p++) {
-		for (gc = x_obj_heap(p_base); gc != NULL; gc = x_obj_heap(gc)) {
-			if ((void *)gc == *p) {
-				x_heap_tree_mark(p_base, gc, flags);
-
-				break;
-			}
-		}
-	}
-
-	return NULL;
-}
-
-/**
- * Mark objects referenced from the C call stack.
- *
- * Determines the stack bounds between a volatile local variable
- * (current frame) and the stack base captured at base creation time,
- * then scans that region with x_heap_vector_mark(). The lo/hi swap
- * handles both upward- and downward-growing stacks. X_NO_OPTIMIZE
- * prevents the compiler from optimizing away the local whose address
- * anchors the current stack position.
- *
- * @param p_base The base environment.
- * @param flags  Flags to set on each marked object.
- * @return Result of x_heap_vector_mark() on the stack region.
- */
-X_NO_OPTIMIZE x_obj_t *x_heap_callstack_mark(x_obj_t *p_base, x_obj_flag_t flags)
-{
-	volatile void *stack_top;
-	void *lo, *hi, *tmp, *stack_base;
-
-	if ( ! x_base_isset(p_base)) {
-		return NULL;
-	}
-
-	stack_base = x_atomptr(x_firstobj(x_base_field_stack_base(p_base)));
-
-	if (stack_base == NULL) {
-		return NULL;
-	}
-
-	lo = (void *)&stack_top;
-	hi = stack_base;
-
-	if (lo > hi) {
-		tmp = lo;
-		lo = hi;
-		hi = tmp;
-	}
-
-	if (lo == hi) {
-		return NULL;
-	}
-
-	return x_heap_vector_mark(p_base, lo, (size_t)((char *)hi - (char *)lo), flags);
-}
-
-/**
  * Sweep the heap, freeing unmarked objects.
  *
  * Walks the heap chain starting from @p p_obj. For each object:
@@ -170,8 +92,8 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 
 	while (gc) {
 		if ((flags && x_obj_flags(gc) & flags)
-			|| (x_obj_flags(gc) & X_OBJ_FLAG_SHARED)
-		) {
+			|| (x_obj_flags(gc) & X_OBJ_FLAG_SHARED))
+		{
 			x_obj_flags(gc) &= ~flags;
 			prev = gc;
 			gc = x_obj_heap(gc);
@@ -197,6 +119,48 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 	}
 
 	return p_ret;
+}
+
+/**
+ * Mark every object registered on the root chain.
+ *
+ * The root chain is the precise mirror of the C call stack: frames push
+ * the off-chain (stack-storage) objects they create and pop them on
+ * exit (x_heap_root_push() / x_heap_root_pop()), linked LIFO through
+ * the same x_obj_heap() header slot the allocation chain uses, from a
+ * different head -- so the chains never share a node, and registered
+ * objects are marked here but never reached by x_heap_sweep().
+ *
+ * Two passes. Pass 1 clears the mark flags of every registered node:
+ * x_heap_sweep() clears flags on the allocation chain only, so a node
+ * that stays registered across two collections would otherwise keep a
+ * stale mark and be skipped -- its referents missed -- by the second
+ * one. The pre-clear also makes pass 2 order-independent when one
+ * registered pair's payload references a node further along the chain
+ * (stack-built argument lists), and when the base-tree mark has already
+ * visited a node through a field that stores it.
+ *
+ * @param p_base The base environment.
+ * @param flags  Flags to set on each marked object.
+ * @return NULL.
+ */
+x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
+{
+	x_obj_t *p_node;
+
+	if ( ! x_base_isset(p_base)) {
+		return NULL;
+	}
+
+	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
+		x_obj_flags(p_node) &= ~flags;
+	}
+
+	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
+		x_heap_tree_mark(p_base, p_node, flags);
+	}
+
+	return NULL;
 }
 
 /*
@@ -225,8 +189,7 @@ void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 {
 	x_obj_t *p_cell = x_base_field_heap_mark_hooks(p_base);
 
-	x_obj_push_field(p_base, &x_firstobj(p_cell), p_hook,
-		X_OBJ_FLAG_NONE);
+	x_obj_push_field(p_base, &x_firstobj(p_cell), p_hook, X_OBJ_FLAG_NONE);
 }
 
 /**
@@ -243,8 +206,7 @@ void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
 {
 	x_obj_t *p_cell = x_base_field_heap_free_hooks(p_base);
 
-	x_obj_push_field(p_base, &x_firstobj(p_cell), p_hook,
-		X_OBJ_FLAG_NONE);
+	x_obj_push_field(p_base, &x_firstobj(p_cell), p_hook, X_OBJ_FLAG_NONE);
 }
 
 /**
@@ -261,8 +223,7 @@ void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root)
 {
 	x_obj_t *p_cell = x_base_field_heap_mark_roots(p_base);
 
-	x_obj_push_field(p_base, &x_firstobj(p_cell), p_root,
-		X_OBJ_FLAG_NONE);
+	x_obj_push_field(p_base, &x_firstobj(p_cell), p_root, X_OBJ_FLAG_NONE);
 }
 
 #endif /* X_HEAP */

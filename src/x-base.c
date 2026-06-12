@@ -73,13 +73,15 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 					pair(pair(base.p_hook_error, nil),
 					nil))))),
 				pair(
-					/* heap: obj-meta-extra, mark, free, stack-base
+					/* heap: obj-meta-extra, mark, free
 					 * + mark-hooks, free-hooks, mark-roots (extensible
-					 *   lists, grown at runtime via x_heap_*_add). */
+					 *   lists, grown at runtime via x_heap_*_add)
+					 * + root-chain (head of the precise stack-root chain,
+					 *   pushed/popped by frames via x_heap_root_push/pop). */
 					pair(pair(atom(base.obj_meta_extra), nil),
 					pair(pair(base.p_heap_mark, nil),
 					pair(pair(base.p_heap_free, nil),
-					pair(pair(atom(base.p_stack_base), nil),
+					pair(pair(nil, nil),
 					pair(pair(nil, nil),
 					pair(pair(nil, nil),
 					pair(pair(nil, nil),

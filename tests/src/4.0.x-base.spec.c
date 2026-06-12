@@ -44,8 +44,7 @@ static struct x_base_t test_base_defaults(void)
 		0, 0, 0,
 		NULL, NULL, NULL, NULL,
 		0,
-		NULL, NULL,
-		NULL
+		NULL, NULL
 	};
 	return base;
 }
@@ -93,15 +92,12 @@ static char *test_base_isset(void)
 
 static char *test_base_make(void)
 {
-	int stack_anchor;
 	struct x_base_t base = test_base_defaults();
 	x_obj_t *p_base, *p_hook;
 	x_int_t filein = rand(), fileout = rand(), fileerr = rand(),
 		obj_meta_extra = rand();
 
 	helper_alloc_reset();
-
-	base.p_stack_base = &stack_anchor;
 
 	base.filein = filein;
 	base.fileout = fileout;
@@ -124,10 +120,6 @@ static char *test_base_make(void)
 
 	_it_should("set obj_meta_extra",
 		obj_meta_extra == x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base)))
-	);
-
-	_it_should("capture stack_base",
-		NULL != x_atomptr(x_firstobj(x_base_field_stack_base(p_base)))
 	);
 
 	_it_should("set hooks to nil",

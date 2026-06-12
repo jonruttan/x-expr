@@ -58,15 +58,13 @@ static void _free_fn(x_obj_t *p_base, x_obj_t *p_obj)
 	_free_fn_count++;
 }
 
-static x_obj_t *test_make_heap_base(x_obj_t *p_heap_mark, x_obj_t *p_heap_free,
-	void *p_stack_base)
+static x_obj_t *test_make_heap_base(x_obj_t *p_heap_mark, x_obj_t *p_heap_free)
 {
 	struct x_base_t base = {
 		0, 0, 0,
 		NULL, NULL, NULL, NULL,
 		0,
-		p_heap_mark, p_heap_free,
-		p_stack_base
+		p_heap_mark, p_heap_free
 	};
 	return x_base_make(NULL, base);
 }
@@ -135,7 +133,7 @@ static char *test_heap_tree_mark(void)
 	/* Mark hook: continue path */
 	helper_alloc_reset();
 
-	p_base = test_make_heap_base((x_obj_t *)mark_fn, NULL, NULL);
+	p_base = test_make_heap_base((x_obj_t *)mark_fn, NULL);
 	p_obj[0] = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	p_ret = x_heap_tree_mark(p_base, p_obj[0], X_OBJ_FLAG_HEAP);
 	_it_should("mark the object via mark_fn continue path",
@@ -150,63 +148,6 @@ static char *test_heap_tree_mark(void)
 	_it_should("mark the object via mark_fn stop path",
 		X_OBJ_FLAG_HEAP == (x_obj_flags(p_obj[0]) & X_OBJ_FLAG_HEAP));
 	_it_should("return NULL when mark_fn stops", p_ret == NULL);
-
-	return NULL;
-}
-
-static char *test_heap_vector_mark(void)
-{
-	x_obj_t *p_base, *p_obj[3];
-	void *vector[4];
-
-	helper_alloc_reset();
-
-	/* Create a base with objects on the heap chain */
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
-	p_obj[0] = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
-	p_obj[1] = x_mksatom(p_base, X_OBJ_FLAG_NONE, 1);
-	p_obj[2] = x_mksatom(p_base, X_OBJ_FLAG_NONE, 2);
-
-	/* Put some object addresses into a vector, with a non-match */
-	vector[0] = (void *)p_obj[0];
-	vector[1] = (void *)0xDEADBEEF;
-	vector[2] = (void *)p_obj[2];
-	vector[3] = NULL;
-
-	x_heap_vector_mark(p_base, vector, sizeof(vector), X_OBJ_FLAG_HEAP);
-
-	_it_should("mark object found in vector",
-		X_OBJ_FLAG_HEAP == (x_obj_flags(p_obj[0]) & X_OBJ_FLAG_HEAP)
-	);
-
-	_it_should("not mark object not in vector",
-		0 == (x_obj_flags(p_obj[1]) & X_OBJ_FLAG_HEAP)
-	);
-
-	_it_should("mark second object found in vector",
-		X_OBJ_FLAG_HEAP == (x_obj_flags(p_obj[2]) & X_OBJ_FLAG_HEAP)
-	);
-
-	return NULL;
-}
-
-X_NO_OPTIMIZE static char *test_heap_callstack_mark(void)
-{
-	x_obj_t *p_base, *p_obj[2];
-
-	helper_alloc_reset();
-
-	p_base = test_make_heap_base(NULL, NULL, _stack_base);
-	p_obj[0] = x_mksatom(p_base, X_OBJ_FLAG_NONE, rand());
-	p_obj[1] = NULL;
-
-	/* locals[0] is on the C stack.
-	 * callstack_mark should find it and mark it. */
-	x_heap_callstack_mark(p_base, X_OBJ_FLAG_HEAP);
-
-	_it_should("mark object referenced from C stack",
-		X_OBJ_FLAG_HEAP == (x_obj_flags(p_obj[0]) & X_OBJ_FLAG_HEAP)
-	);
 
 	return NULL;
 }
@@ -503,7 +444,7 @@ static char *test_heap_sweep(void)
 	helper_alloc_reset();
 	_free_fn_count = 0;
 
-	p_base = test_make_heap_base(NULL, (x_obj_t *)free_fn, NULL);
+	p_base = test_make_heap_base(NULL, (x_obj_t *)free_fn);
 	x_obj_alloc(p_base, NULL, X_OBJ_FLAG_NONE, 0);
 
 	n = helper_free_count();
@@ -518,8 +459,6 @@ static char *test_heap_sweep(void)
 static char *run_tests()
 {
 	_run_test(test_heap_tree_mark);
-	_run_test(test_heap_vector_mark);
-	_run_test(test_heap_callstack_mark);
 	_run_test(test_heap_sweep);
 
 	return NULL;
