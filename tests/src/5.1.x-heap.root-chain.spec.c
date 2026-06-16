@@ -65,8 +65,13 @@ static char *test_root_chain_push_pop(void)
 	helper_alloc_reset();
 
 	/* Unset base: no chain, no collector -- registration must degrade
-	 * to a no-op so NULL-base callers (e.g. x_eval(NULL, ...)) work. */
-	p_cell = x_heap_root_cell(NULL);
+	 * to a no-op so NULL-base callers (e.g. x_eval(NULL, ...)) work.
+	 * Pass a TYPED null base (what x_eval(NULL, ...) holds internally),
+	 * not the bare NULL token: x_base_isset() is a runtime test, so the
+	 * compiler still type-checks the macro's dead &x_heap_root_chain(B)
+	 * branch -- and that field chase on a void* literal will not compile. */
+	p_base = NULL;
+	p_cell = x_heap_root_cell(p_base);
 	_it_should("yield a nil cell without a base", NULL == p_cell);
 	x_heap_root_push(p_cell, root_a);
 	x_heap_root_pop(p_cell);
