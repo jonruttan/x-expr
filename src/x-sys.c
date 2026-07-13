@@ -16,9 +16,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 #include <time.h>			/* clock() */
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */
 
 #include "x-sys.h"
 #include "x-lib.h"
@@ -135,7 +135,7 @@ int x_sys_read_char(int fd)
 	return c;
 }
 
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 /**
  * Read the CPU clock in microseconds.
  *
@@ -147,4 +147,4 @@ x_int_t x_sys_clock(void)
 {
 	return (x_int_t)(X_SYS_FUNC(clock)() * 1000000 / CLOCKS_PER_SEC);
 }
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */

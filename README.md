@@ -57,7 +57,7 @@ Run `make help` for the full list of targets.
 | Flag | Default | Description |
 |------|---------|-------------|
 | `X_PROFILE` | off | Enable allocation profiling counters |
-| `X_CLOCK` | off | Enable CPU clock measurement (x_sys_clock) |
+| `X_SYS_CLOCK` | off | Enable CPU clock measurement (x_sys_clock) |
 | `X_USE_STDLIB_NONSTD` | off | Use non-standard library extensions (requires `X_USE_STDLIB`) |
 
 **Internal** -- for x-expr development:

@@ -68,10 +68,10 @@ int x_sys_close(int fd);
 /** Read a single character from a file descriptor, or X_SYS_EOF. */
 int x_sys_read_char(int fd);
 
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 /** Read the CPU clock in microseconds. */
 x_int_t x_sys_clock(void);
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */
 
 /** @} */
 

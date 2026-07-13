@@ -3,7 +3,7 @@
  *
  * Redefines X_SYS_FUNC so x-sys routes through helper_sys_* wrappers, and
  * provides mock_* implementations (exit, malloc, free, read, write, open,
- * close, and clock under X_CLOCK) dispatched through a swappable function
+ * close, and clock under X_SYS_CLOCK) dispatched through a swappable function
  * table. Lets tests intercept system calls without touching the real OS.
  */
 #ifndef HELPER_SYSTEM_FUNCTIONS
@@ -28,9 +28,9 @@ ssize_t mock_write(int fd, const void *p_buf, size_t size);
 int mock_open(const char *path, int flags, ...);
 int mock_close(int fd);
 
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 clock_t mock_clock(void);
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */
 
 
 struct
@@ -45,9 +45,9 @@ struct
 	int (*open)(const char *path, int flags, ...);
 	int (*close)(int fd);
 
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 	clock_t (*clock)(void);
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */
 } helper_sys_funcs = {
 	exit,
 
@@ -58,9 +58,9 @@ struct
 	write,
 	open,
 	close
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 	,mock_clock
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */
 };
 
 
@@ -189,7 +189,7 @@ int helper_sys_close(int fd)
 }
 
 
-#ifdef X_CLOCK
+#ifdef X_SYS_CLOCK
 int mock_clock_value = 0;
 
 clock_t mock_clock(void)
@@ -201,6 +201,6 @@ clock_t helper_sys_clock(void)
 {
 	return helper_sys_funcs.clock();
 }
-#endif /* X_CLOCK */
+#endif /* X_SYS_CLOCK */
 
 #endif /* HELPER_SYSTEM_FUNCTIONS */

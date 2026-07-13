@@ -2,7 +2,7 @@
  * # Unit Tests: *x-sys*
  */
 
-#define X_CLOCK
+#define X_SYS_CLOCK
 
 #define TEST_RUNNER_OVERHEAD
 #include "test-runner.h"
