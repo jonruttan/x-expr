@@ -86,6 +86,4 @@ void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...)
 	va_end(ap);
 }
 
-#else /* DEBUG */
-
 #endif /* DEBUG */

@@ -20,8 +20,8 @@
  * There are two fundamental shapes:
  * - **atom** -- one data unit (#X_OBJ_UNITS_ATOM): a single datum such as an
  *   integer, character, string, pointer, or function pointer.
- * - **pair** -- two data units (#X_OBJ_UNITS_PAIR): a @e first (car) and a
- *   @e rest (cdr). Pairs are the building block for lists and trees.
+ * - **pair** -- two data units (#X_OBJ_UNITS_PAIR): a @e first and a @e rest.
+ *   Pairs are the building block for lists and trees.
  *
  * `nil` is represented by a `NULL` object pointer (see x_obj_isnil()).
  *
@@ -32,8 +32,8 @@
  *   | type    |                   | type    |
  *   | flags   |                   | flags   |
  *   +---------+ <- data start     +---------+ <- data start
- *   | datum   | first / car       | first   | car
- *   +---------+                   | rest    | cdr
+ *   | datum   | first             | first   |
+ *   +---------+                   | rest    |
  *                                 +---------+
  * @endcode
  *
@@ -373,7 +373,7 @@ extern x_satom_t x_false_obj;
  * `second`/`rest` are data unit 1 -- and the suffix selects the union member
  * (`ptr`, `obj`, `int`, `char`, `str`, `fn`). The `atom*` names are aliases
  * of the `first*` names (an atom's single value); the `rest*` names are
- * aliases of the `second*` names (a pair's cdr).
+ * aliases of the `second*` names.
  * @{
  */
 
@@ -402,12 +402,12 @@ extern x_satom_t x_false_obj;
 #define x_atomstr(X)				x_firststr((X))		/**< Atom value as a string. */
 #define x_atomfn(X)					x_firstfn((X))		/**< Atom value as a function. */
 
-#define x_restptr(X)				x_secondptr((X))	/**< cdr as a pointer. */
-#define x_restobj(X)				x_secondobj((X))	/**< cdr as an object. */
-#define x_restint(X)				x_secondint((X))	/**< cdr as an integer. */
-#define x_restchar(X)				x_secondchar((X))	/**< cdr as a character. */
-#define x_reststr(X)				x_secondstr((X))	/**< cdr as a string. */
-#define x_restfn(X)					x_secondfn((X))		/**< cdr as a function. */
+#define x_restptr(X)				x_secondptr((X))	/**< Rest value as a pointer. */
+#define x_restobj(X)				x_secondobj((X))	/**< Rest value as an object. */
+#define x_restint(X)				x_secondint((X))	/**< Rest value as an integer. */
+#define x_restchar(X)				x_secondchar((X))	/**< Rest value as a character. */
+#define x_reststr(X)				x_secondstr((X))	/**< Rest value as a string. */
+#define x_restfn(X)					x_secondfn((X))		/**< Rest value as a function. */
 
 /** @} */
 
@@ -415,16 +415,16 @@ extern x_satom_t x_false_obj;
  * @defgroup obj_bit_accessors Bit-Path Pair Accessors
  * @brief Navigate nested pairs by a binary path.
  *
- * Each bit selects a branch -- `0` = first (car), `1` = rest (cdr) -- read
- * left to right as a chain of accessors. For example x_011() is "first of
- * rest of rest", expanding to `x_0(x_1(x_1(X)))`. The leftmost bit is the
- * outermost (last applied) accessor. All results are object pointers.
+ * Each bit selects a branch -- `0` = first, `1` = rest -- read left to right
+ * as a chain of accessors. For example x_011() is "first of rest of rest",
+ * expanding to `x_0(x_1(x_1(X)))`. The leftmost bit is the outermost (last
+ * applied) accessor. All results are object pointers.
  * Provided up to four levels deep.
  * @{
  */
 
-#define x_0(X)						x_firstobj(X)		/**< first (car) */
-#define x_1(X)						x_restobj(X)		/**< rest (cdr) */
+#define x_0(X)						x_firstobj(X)		/**< first */
+#define x_1(X)						x_restobj(X)		/**< rest */
 #define x_00(X)						x_0(x_0(X))			/**< first of first */
 #define x_01(X)						x_0(x_1(X))			/**< first of rest */
 #define x_10(X)						x_1(x_0(X))			/**< rest of first */
