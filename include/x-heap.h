@@ -165,31 +165,31 @@ void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root);
  * NULL/partial-base callers (unit specs, embedder scratch), the same
  * x_base_isset() contract the mark/sweep walkers follow.
  */
-#define x_heap_root_cell(B) \
+#define x_heap_root_slot(B) \
 	(x_base_isset(B) ? &x_heap_root_chain(B) : (x_obj_t **)NULL)
 
 /**
  * Register off-chain object @p node as a GC root (two stores; no-op
- * when @p p_cell is nil).
+ * when @p p_slot is nil).
  *
- * @param p_cell `x_obj_t **` -- the head slot (see x_heap_root_cell()).
+ * @param p_slot `x_obj_t **` -- the head slot (see x_heap_root_slot()).
  * @param node   The off-chain object; evaluated twice.
  */
-#define x_heap_root_push(p_cell, node) \
-	((p_cell) != NULL \
-		? (void)(x_obj_heap((x_obj_t *)(node)) = *(p_cell), \
-			*(p_cell) = (x_obj_t *)(node)) \
+#define x_heap_root_push(p_slot, node) \
+	((p_slot) != NULL \
+		? (void)(x_obj_heap((x_obj_t *)(node)) = *(p_slot), \
+			*(p_slot) = (x_obj_t *)(node)) \
 		: (void)0)
 
 /**
  * Unregister the most recently pushed root (one store; no-op when
- * @p p_cell is nil).
+ * @p p_slot is nil).
  *
- * @param p_cell `x_obj_t **` -- the head slot (see x_heap_root_cell()).
+ * @param p_slot `x_obj_t **` -- the head slot (see x_heap_root_slot()).
  */
-#define x_heap_root_pop(p_cell) \
-	((p_cell) != NULL \
-		? (void)(*(p_cell) = x_obj_heap(*(p_cell))) \
+#define x_heap_root_pop(p_slot) \
+	((p_slot) != NULL \
+		? (void)(*(p_slot) = x_obj_heap(*(p_slot))) \
 		: (void)0)
 
 /** Mark every object registered on the root chain (two passes). */

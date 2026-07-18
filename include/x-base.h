@@ -10,9 +10,12 @@
  * Field accessor macros navigate this tree without hard-coding offsets.
  *
  * @details
- * Every leaf field is stored as a pair: `(current-value . saved-values)`.
- * Fields are initialized with `(value . nil)`. Any field can be used as
+ * Every leaf field is stored as a pair -- its @e field @e cell:
+ * `(current-value . saved-values)`. Fields are initialized with
+ * `(value . nil)`. Any field can be used as
  * a stack via x_obj_push() / x_obj_pop() to save and restore values.
+ * ("Field cell" always means this slot; a plain "cell" is a cons cell,
+ * see @ref x-lisp.h.)
  * To read a field's current value, use `x_firstobj(field)` then extract
  * the appropriate datum (e.g. `x_atomint()` for integers). To
  * temporarily override a field (e.g. redirect I/O for a nested scope),
