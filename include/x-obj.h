@@ -202,6 +202,11 @@ typedef x_obj_t * (*x_fn_t)(x_obj_t *p_base, x_obj_t *p_args);
  * A datum is reinterpreted through the member matching its content; the
  * x_obj(), x_fn(), x_int(), x_char(), x_str() and x_ptr() macros select the
  * appropriate member.
+ *
+ * @note @e Datum and @e unit name this same cell from two angles, not two
+ * granularities: "unit" is the layout/count sense (#X_OBJ_UNITS_ATOM,
+ * x_obj_units(), sizing in x_obj_alloc()), "datum" the content sense (the
+ * tagged-union interpretation read through the accessors above).
  */
 union x_datum_union
 {

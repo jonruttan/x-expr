@@ -87,34 +87,34 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 		? (x_heap_free_fn_t)x_firstptr(x_firstobj(x_base_field_heap_free(p_base)))
 		: NULL;
 	x_obj_t *p_ret = p_base;
-	x_obj_t *gc = p_obj, *tmp,
-		*prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
+	x_obj_t *p_node = p_obj, *p_next,
+		*p_prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
 
-	while (gc) {
-		if ((flags && x_obj_flags(gc) & flags)
-			|| (x_obj_flags(gc) & X_OBJ_FLAG_SHARED))
+	while (p_node) {
+		if ((flags && x_obj_flags(p_node) & flags)
+			|| (x_obj_flags(p_node) & X_OBJ_FLAG_SHARED))
 		{
-			x_obj_flags(gc) &= ~flags;
-			prev = gc;
-			gc = x_obj_heap(gc);
+			x_obj_flags(p_node) &= ~flags;
+			p_prev = p_node;
+			p_node = x_obj_heap(p_node);
 		} else {
 			if (p_free_fn != NULL) {
-				p_free_fn(p_base, gc);
+				p_free_fn(p_base, p_node);
 			}
 
-			tmp = x_obj_heap(prev) = x_obj_heap(gc);
-			x_obj_free(p_base, gc);
+			p_next = x_obj_heap(p_prev) = x_obj_heap(p_node);
+			x_obj_free(p_base, p_node);
 
 			/* The teardown idiom -- x_heap_sweep(base, base, NONE) -- frees
 			 * the base itself partway through the walk.  From then on the
 			 * base is dead memory: stop handing it to x_obj_free (which
 			 * chases base fields for the allocation accounting) and to the
 			 * free hook.  The caller still gets the original pointer back. */
-			if (gc == p_base) {
+			if (p_node == p_base) {
 				p_base = NULL;
 			}
 
-			gc = tmp;
+			p_node = p_next;
 		}
 	}
 
