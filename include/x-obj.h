@@ -116,7 +116,7 @@
  * and the attribute bits share the low-order bits, so they are alternative
  * interpretations rather than independently combinable. The storage bits
  * #X_OBJ_FLAG_OWN, #X_OBJ_FLAG_RO and #X_OBJ_FLAG_META -- and, when X_HEAP
- * is enabled, #X_OBJ_FLAG_SHARED and #X_OBJ_FLAG_HEAP -- are independent
+ * is enabled, #X_OBJ_FLAG_SHARED and #X_OBJ_FLAG_MARK -- are independent
  * and may be OR-combined.
  */
 typedef enum x_obj_flag_enum
@@ -173,7 +173,7 @@ typedef enum x_obj_flag_enum
 	/** Permanently retained across garbage collection (e.g. base-tree nodes). */
 	X_OBJ_FLAG_SHARED=0x100,
 	/** Conventional mark bit used by the mark-sweep collector. */
-	X_OBJ_FLAG_HEAP=0x200,
+	X_OBJ_FLAG_MARK=0x200,
 
 	/** Mask of all defined flag bits. */
 	X_OBJ_FLAG_MASK=0x3FF

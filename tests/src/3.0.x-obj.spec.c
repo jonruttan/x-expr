@@ -110,7 +110,7 @@ static char *test_flag_constants(void)
 	_it_should("define X_OBJ_FLAG_RO",         0x40 == X_OBJ_FLAG_RO);
 	_it_should("define X_OBJ_FLAG_META",       0x80 == X_OBJ_FLAG_META);
 	_it_should("define X_OBJ_FLAG_SHARED",     0x100 == X_OBJ_FLAG_SHARED);
-	_it_should("define X_OBJ_FLAG_HEAP",       0x200 == X_OBJ_FLAG_HEAP);
+	_it_should("define X_OBJ_FLAG_MARK",       0x200 == X_OBJ_FLAG_MARK);
 	_it_should("define X_OBJ_FLAG_MASK",       0x3FF == X_OBJ_FLAG_MASK);
 
 	return NULL;

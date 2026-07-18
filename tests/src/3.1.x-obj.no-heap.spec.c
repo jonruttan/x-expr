@@ -60,7 +60,7 @@ static char *test_meta_layout(void)
 
 static char *test_flag_constants(void)
 {
-	_it_should("not define X_OBJ_FLAG_SHARED or X_OBJ_FLAG_HEAP",
+	_it_should("not define X_OBJ_FLAG_SHARED or X_OBJ_FLAG_MARK",
 		0xFF == X_OBJ_FLAG_MASK
 	);
 
