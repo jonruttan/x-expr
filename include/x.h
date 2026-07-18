@@ -201,6 +201,6 @@ void _x_debug(char *file, long unsigned line, int fd, char *fmt, ...);
 /** @} */
 
 /** Output an error message to a file descriptor. */
-void x_error(int fd, x_char_t *message, x_char_t *symbol);
+void x_error(int fd, x_char_t *message, x_char_t *p_text);
 
 #endif /* X_H */

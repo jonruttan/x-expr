@@ -67,7 +67,7 @@ static char *test_error(void)
 	memset(buffer, 0, sizeof(buffer));
 
 	x_error(TEST_HELPER_FILE_STDERR, (x_char_t *)"bad value", (x_char_t *)"foo");
-	_it_should("have written the symbol", NULL != strstr(buffer, "'foo"));
+	_it_should("have written the context text", NULL != strstr(buffer, "'foo"));
 
 	return NULL;
 }

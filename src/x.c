@@ -17,21 +17,21 @@
 /**
  * Output an error message to a file descriptor.
  *
- * Writes `"*** ERROR: "` followed by @p message. If @p symbol is
- * non-NULL, appends `" '"` and the symbol string.
+ * Writes `"*** ERROR: "` followed by @p message. If @p p_text is
+ * non-NULL, appends `" '"` and the context text.
  *
  * @param fd      File descriptor to write the error to.
  * @param message A C string error message to output.
- * @param symbol  A C string with additional context, or NULL.
+ * @param p_text  A C string with additional context, or NULL.
  */
-void x_error(int fd, x_char_t *message, x_char_t *symbol)
+void x_error(int fd, x_char_t *message, x_char_t *p_text)
 {
 	x_sys_write(fd, X_STR_LITERAL("*** ERROR: "));
 	x_sys_write(fd, message, x_lib_strlen(message));
 
-	if (symbol) {
+	if (p_text) {
 		x_sys_write(fd, X_STR_LITERAL(" '"));
-		x_sys_write(fd, symbol, x_lib_strlen(symbol));
+		x_sys_write(fd, p_text, x_lib_strlen(p_text));
 	}
 }
 

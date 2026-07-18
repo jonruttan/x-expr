@@ -28,14 +28,14 @@
  *     primitives;
  *   - the canonical #t / #f boolean atoms.
  */
-x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_SYMBOL}),
-	x_type_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_PAIR_SYMBOL}),
+x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_ATOM_NAME}),
+	x_type_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_TYPE_PAIR_NAME}),
 	x_type_units_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_ATOM}),
 	x_type_units_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_UNITS_PAIR}),
 	x_type_length_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_ATOM}),
 	x_type_length_pair_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = X_OBJ_LENGTH_PAIR}),
-	x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_TRUE_SYMBOL}),
-	x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_FALSE_SYMBOL});
+	x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_TRUE_TEXT}),
+	x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_FALSE_TEXT});
 
 
 /*
@@ -310,7 +310,7 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
  *
  * @param p_base The base environment.
  * @param p_obj  The object to inspect.
- * @return The type-name string, or #X_TYPE_NIL_SYMBOL if the object has no
+ * @return The type-name string, or #X_TYPE_NIL_NAME if the object has no
  *         resolvable type.
  */
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
@@ -321,7 +321,7 @@ x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 	p_name = x_obj_prim_type_name(p_base, (x_obj_t *)args);
 
 	if (x_obj_isnil(p_base, p_name)) {
-		return X_TYPE_NIL_SYMBOL;
+		return X_TYPE_NIL_NAME;
 	}
 
 	return x_atomstr(p_name);
@@ -577,8 +577,8 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  * If the error hook is set in the base, delegates to it via a cast
  * to `void (*)(x_obj_t *, x_char_t *, x_obj_t *)` -- this differs from
  * x_fn_t because error handlers take raw arguments (not a pair list).
- * Otherwise, extracts a string symbol from the object (if it is a
- * static atom) and calls x_error().
+ * Otherwise, extracts the object's string text (if it is a static
+ * atom) and calls x_error().
  *
  * @param p_base  The base environment.
  * @param message Error message string.
@@ -586,7 +586,7 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  */
 void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 {
-	x_char_t *symbol = NULL;
+	x_char_t *p_text = NULL;
 
 	if (x_base_isset(p_base)
 		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_error(p_base)))) {
@@ -596,10 +596,10 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 	}
 
 	if (p_obj != NULL && x_obj_type_issatom(p_obj)) {
-		symbol = x_atomstr(p_obj);
+		p_text = x_atomstr(p_obj);
 	}
 
-	x_error(STDERR_FILENO, message, symbol);
+	x_error(STDERR_FILENO, message, p_text);
 }
 
 
@@ -681,13 +681,13 @@ void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj
 
 		if (x_obj_type_isspair(p_obj)) {
 			if (x_obj_isnil(p_base, x_firstobj(p_obj))) {
-				s += sprintf(s, X_TYPE_NIL_SYMBOL);
+				s += sprintf(s, X_TYPE_NIL_NAME);
 			} else {
 				s += sprintf(s, "0x%"X_INT_STR_PRINTF_CONV"x", x_atomint(x_firstobj(p_obj)));
 			}
 
 			if (x_obj_isnil(p_base, x_restobj(p_obj))) {
-				s += sprintf(s, ", "X_TYPE_NIL_SYMBOL);
+				s += sprintf(s, ", "X_TYPE_NIL_NAME);
 			} else {
 				s += sprintf(s, ", 0x%"X_INT_STR_PRINTF_CONV"x", x_atomint(x_restobj(p_obj)));
 			}

@@ -83,21 +83,25 @@
 #include "x-lib.h"
 
 /**
- * @name Type Symbols
+ * @name Type Names and Literal Text
+ *
+ * All of these are plain C strings; x-expr has no interned-symbol type
+ * (that concept lives in the embedding layer), so nothing here is a
+ * "symbol".
  * @{
  */
 
-/** Type-name symbol returned for nil (untyped) objects. */
-#define X_TYPE_NIL_SYMBOL			"NIL"
-/** Type-name symbol for the built-in atom type (#x_type_atom_obj). */
-#define X_TYPE_ATOM_SYMBOL			"ATOM"
-/** Type-name symbol for the built-in pair type (#x_type_pair_obj). */
-#define X_TYPE_PAIR_SYMBOL			"PAIR"
+/** Type-name string returned for nil (untyped) objects. */
+#define X_TYPE_NIL_NAME				"NIL"
+/** Type-name string for the built-in atom type (#x_type_atom_obj). */
+#define X_TYPE_ATOM_NAME			"ATOM"
+/** Type-name string for the built-in pair type (#x_type_pair_obj). */
+#define X_TYPE_PAIR_NAME			"PAIR"
 
-/** Symbol naming the canonical true atom (#x_true_obj). */
-#define X_OBJ_TRUE_SYMBOL			"#t"
-/** Symbol naming the canonical false atom (#x_false_obj). */
-#define X_OBJ_FALSE_SYMBOL			"#f"
+/** Literal text of the canonical true atom (#x_true_obj). */
+#define X_OBJ_TRUE_TEXT				"#t"
+/** Literal text of the canonical false atom (#x_false_obj). */
+#define X_OBJ_FALSE_TEXT			"#f"
 
 /** @} */
 
@@ -278,9 +282,9 @@ extern x_satom_t x_type_length_atom_obj;
 /** Static atom holding the pair length, returned by x_pair_prim_length(). */
 extern x_satom_t x_type_length_pair_obj;
 
-/** Canonical true atom (value #X_OBJ_TRUE_SYMBOL). */
+/** Canonical true atom (value #X_OBJ_TRUE_TEXT). */
 extern x_satom_t x_true_obj;
-/** Canonical false atom (value #X_OBJ_FALSE_SYMBOL). */
+/** Canonical false atom (value #X_OBJ_FALSE_TEXT). */
 extern x_satom_t x_false_obj;
 
 /** @} */
@@ -479,7 +483,7 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj);
 
 /** Primitive: resolve an object's type object (#x_fn_t convention). */
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args);
-/** Get an object's type name as a C string (#X_TYPE_NIL_SYMBOL if nil). */
+/** Get an object's type name as a C string (#X_TYPE_NIL_NAME if nil). */
 x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj);
 
 /** Primitive: data-unit count of an atom (#x_fn_t convention). */
