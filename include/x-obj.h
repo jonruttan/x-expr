@@ -264,9 +264,20 @@ enum {
 #define X_OBJ_LENGTH_PAIR			X_OBJ_UNITS_PAIR
 
 
-/** Fixed-size storage for a statically allocated atom (metadata + 1 unit). */
+/**
+ * Fixed-size storage for a statically allocated atom (metadata + 1 unit).
+ *
+ * @note The `s` prefix carries two senses in this header. Here (and in
+ * #x_spair_t) it is @e storage: room for an object in static or stack
+ * storage instead of the heap. In x_obj_type_issatom() /
+ * x_obj_type_isspair() and in the x_mksatom() / x_mkspair() constructor
+ * family it is the built-in @e static @e type (#x_type_atom_obj /
+ * #x_type_pair_obj) -- a property of the type slot, independent of where
+ * the object lives.
+ */
 typedef x_obj_t x_satom_t[X_OBJ_META_LEN + X_OBJ_UNITS_ATOM];
-/** Fixed-size storage for a statically allocated pair (metadata + 2 units). */
+/** Fixed-size storage for a statically allocated pair (metadata + 2 units;
+ *  see the `s`-prefix note at #x_satom_t). */
 typedef x_obj_t x_spair_t[X_OBJ_META_LEN + X_OBJ_UNITS_PAIR];
 
 /** Built-in static atom type; its value is the "ATOM" type-name string. */
@@ -330,6 +341,12 @@ extern x_satom_t x_false_obj;
 
 /**
  * @name Type Predicates and Constructors
+ *
+ * The `s` in `issatom`/`isspair` and `x_mks*` is the built-in @e static
+ * @e type sense (see the note at #x_satom_t): the predicates match
+ * #x_type_atom_obj / #x_type_pair_obj by pointer identity, and the
+ * constructors heap-allocate objects carrying those types -- `s` says
+ * nothing about where the object is stored.
  * @{
  */
 
@@ -343,11 +360,14 @@ extern x_satom_t x_false_obj;
 /** True if @p X is typed as the built-in pair type (by pointer identity). */
 #define x_obj_type_isspair(X)		(x_obj_type((X)) == x_type_pair_obj)
 
-/** Allocate an atom with flags @p F holding datum @p X. */
+/** Heap-allocate an atom of the built-in atom type with flags @p F holding
+ *  datum @p X. */
 #define x_mksatom(B,F,X)			x_obj_make((B), x_type_atom_obj, (F), X_OBJ_LENGTH_ATOM, (X))
-/** Allocate an atom that owns its datum @p X (adds #X_OBJ_FLAG_OWN). */
+/** Heap-allocate an atom of the built-in atom type that owns its datum @p X
+ *  (adds #X_OBJ_FLAG_OWN). */
 #define x_mksatomown(B,F,X)			x_obj_make((B), x_type_atom_obj, (F) | X_OBJ_FLAG_OWN, X_OBJ_LENGTH_ATOM, (X))
-/** Allocate a pair with flags @p F holding first @p X and rest @p Y. */
+/** Heap-allocate a pair of the built-in pair type with flags @p F holding
+ *  first @p X and rest @p Y. */
 #define x_mkspair(B,F,X,Y)			x_obj_make((B), x_type_pair_obj, (F), X_OBJ_LENGTH_PAIR, (X), (Y))
 
 /** @} */
