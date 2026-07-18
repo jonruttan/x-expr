@@ -47,7 +47,7 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
  * nil is represented by a NULL object pointer. @p p_base is accepted for
  * calling-convention uniformity but is not used.
  *
- * @param p_base The base environment (unused).
+ * @param p_base Base (execution context; unused).
  * @param p_obj  The object to test.
  * @return Non-zero if @p p_obj is nil (NULL), zero otherwise.
  */
@@ -68,7 +68,7 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * allocation counter is incremented). The type and flags slots are set; the
  * data units are left uninitialized.
  *
- * @param p_base The base environment, or NULL to allocate without a base.
+ * @param p_base Base (execution context), or NULL to allocate without a base.
  * @param p_type The type object to assign, or NULL.
  * @param flags  Initial object flags.
  * @param units  Number of data units to allocate.
@@ -175,7 +175,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
  * Calls x_obj_alloc(), then assigns @p units consecutive data units from
  * @p ap (each consumed as an x_obj_t *).
  *
- * @param p_base The base environment, or NULL.
+ * @param p_base Base (execution context), or NULL.
  * @param p_type The type object to assign, or NULL.
  * @param flags  Initial object flags.
  * @param units  Number of data units to allocate and initialize.
@@ -204,7 +204,7 @@ x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, siz
  * Variadic wrapper around x_obj_make_va(); the x_mksatom() and x_mkspair()
  * macros build on it.
  *
- * @param p_base The base environment, or NULL.
+ * @param p_base Base (execution context), or NULL.
  * @param p_type The type object to assign, or NULL.
  * @param flags  Initial object flags.
  * @param units  Number of data units, followed by that many x_obj_t * args.
@@ -232,7 +232,7 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
  * from the heap chain -- x_heap_sweep() relinks the chain around freed
  * objects.
  *
- * @param p_base The base environment (used to size extra metadata units).
+ * @param p_base Base (execution context; used to size extra metadata units).
  * @param p_obj  The object to free.
  */
 void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
@@ -276,7 +276,7 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
  * type slot, return their type slot directly; for other types the base's
  * type-name hook (x_base_field_hook_type_name()) is consulted.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Pair list whose first element is the subject object.
  * @return The type object, or NULL if the subject is nil or no type is found.
  */
@@ -308,7 +308,7 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
  * Builds the argument pair, calls x_obj_prim_type_name(), and unwraps the
  * resulting type object's string value.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  The object to inspect.
  * @return The type-name string, or #X_TYPE_NIL_NAME if the object has no
  *         resolvable type.
@@ -330,7 +330,7 @@ x_char_t *x_obj_type_name(x_obj_t *p_base, x_obj_t *p_obj)
 /**
  * Primitive: the data-unit count of an atom.
  *
- * @param p_base The base environment (unused).
+ * @param p_base Base (execution context; unused).
  * @param p_args Argument pair (unused).
  * @return The static atom #x_type_units_atom_obj (value #X_OBJ_UNITS_ATOM).
  */
@@ -342,7 +342,7 @@ x_obj_t *x_atom_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 /**
  * Primitive: the data-unit count of a pair.
  *
- * @param p_base The base environment (unused).
+ * @param p_base Base (execution context; unused).
  * @param p_args Argument pair (unused).
  * @return The static atom #x_type_units_pair_obj (value #X_OBJ_UNITS_PAIR).
  */
@@ -358,7 +358,7 @@ x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args)
  * nil-typed objects; for other types the base's units hook
  * (x_base_field_hook_units()) is consulted.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Pair list whose first element is the subject object.
  * @return An integer atom with the unit count, or NULL.
  */
@@ -391,7 +391,7 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
  *
  * Builds the argument pair, calls x_obj_prim_units(), and unwraps the result.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  The object to inspect.
  * @return The data-unit count, defaulting to #X_OBJ_UNITS_ATOM when unknown.
  */
@@ -412,7 +412,7 @@ x_int_t x_obj_units(x_obj_t *p_base, x_obj_t *p_obj)
 /**
  * Primitive: the logical length of an atom.
  *
- * @param p_base The base environment (unused).
+ * @param p_base Base (execution context; unused).
  * @param p_args Argument pair (unused).
  * @return The static atom #x_type_length_atom_obj (value #X_OBJ_LENGTH_ATOM).
  */
@@ -424,7 +424,7 @@ x_obj_t *x_atom_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 /**
  * Primitive: the logical length of a pair.
  *
- * @param p_base The base environment (unused).
+ * @param p_base Base (execution context; unused).
  * @param p_args Argument pair (unused).
  * @return The static atom #x_type_length_pair_obj (value #X_OBJ_LENGTH_PAIR).
  */
@@ -440,7 +440,7 @@ x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args)
  * or nil-typed objects; for other types the base's length hook
  * (x_base_field_hook_length()) is consulted.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Pair list whose first element is the subject object.
  * @return An integer atom with the logical length, or NULL.
  */
@@ -473,7 +473,7 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
  *
  * Builds the argument pair, calls x_obj_prim_length(), and unwraps the result.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  The object to inspect.
  * @return The logical length, defaulting to 0 when unknown.
  */
@@ -498,7 +498,7 @@ x_int_t x_obj_length(x_obj_t *p_base, x_obj_t *p_obj)
  * becomes a stack whose head is @p p_value. Used to save and restore base
  * fields and to grow the heap hook/root lists.
  *
- * @param p_base  The base environment (allocation context).
+ * @param p_base  Base (execution context) for allocation.
  * @param p_field Address of the field to push onto (updated in place).
  * @param p_value The value to push.
  * @param flags   Flags for the new pair.
@@ -518,7 +518,7 @@ x_obj_t *x_obj_push_field(x_obj_t *p_base, x_obj_t **p_field, x_obj_t *p_value, 
  * to its rest. The popped pair is not freed; under X_HEAP the collector
  * reclaims it.
  *
- * @param p_base  The base environment (unused).
+ * @param p_base  Base (execution context; unused).
  * @param p_field Address of the field to pop from (updated in place).
  * @return The former head value.
  */
@@ -539,7 +539,7 @@ x_obj_t *x_obj_pop_field(x_obj_t *p_base, x_obj_t **p_field)
  * is the object to push, and the optional third element is an integer atom
  * of flags (default #X_OBJ_FLAG_NONE).
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Argument pair list as described above.
  * @return The pushed value.
  */
@@ -560,7 +560,7 @@ x_obj_t *x_obj_push(x_obj_t *p_base, x_obj_t *p_args)
  * Follows the #x_fn_t convention. @p p_args is `(field-ptr)` where field-ptr
  * is an atom wrapping the `x_obj_t **` field address.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Argument pair whose first element wraps the field address.
  * @return The popped value.
  */
@@ -580,7 +580,7 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  * Otherwise, extracts the object's string text (if it is a static
  * atom) and calls x_error().
  *
- * @param p_base  The base environment.
+ * @param p_base  Base (execution context).
  * @param message Error message string.
  * @param p_obj   Related object for context, or NULL.
  */
@@ -614,7 +614,7 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
  *
  * @param file   Source file name (__FILE__).
  * @param line   Source line number (__LINE__).
- * @param p_base The base environment (unused).
+ * @param p_base Base (execution context; unused).
  * @param fmt    printf-style format string.
  * @param ap     Variable argument list.
  */
@@ -631,7 +631,7 @@ void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt,
  *
  * @param file   Source file name (__FILE__).
  * @param line   Source line number (__LINE__).
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param fmt    printf-style format string.
  * @param ...    Format arguments.
  */
@@ -655,7 +655,7 @@ void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ..
  *
  * @param file   Source file name (__FILE__).
  * @param line   Source line number (__LINE__).
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  The object to dump.
  * @param msg    A label prefix for the output.
  */

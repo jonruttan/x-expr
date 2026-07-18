@@ -115,7 +115,7 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
  * Uses the filein descriptor from the base environment, or falls back
  * to STDIN_FILENO if the base is not initialized.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Pair list: (destination-atom byte-count).
  * @return The destination atom on success, or NULL on read failure.
  */
@@ -143,7 +143,7 @@ x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
  * to the fileout file descriptor, falling back to STDOUT_FILENO
  * if the base is not initialized.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args Pair list: (source-atom byte-count).
  * @return The source atom on success, or NULL on write failure.
  */

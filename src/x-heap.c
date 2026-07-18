@@ -26,7 +26,7 @@
  * object to continue tail-iteration, or NULL to stop. Already-marked
  * objects (those with @p flags already set) are skipped to avoid cycles.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  Root object to start marking from.
  * @param flags  Flags to set on each marked object.
  * @return The last object visited.
@@ -75,7 +75,7 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  * @note If the top object on the heap is deleted, the heap structure
  *       will fragment.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  Start of the heap chain to sweep.
  * @param flags  Mark flags to check (objects with these flags are retained).
  * @return The base object.
@@ -140,7 +140,7 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  * (stack-built argument lists), and when the base-tree mark has already
  * visited a node through a field that stores it.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param flags  Flags to set on each marked object.
  * @return NULL.
  */
@@ -183,7 +183,7 @@ x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
  * x_base_field_heap_mark_hooks()). Each registered callable is intended to be
  * invoked once per garbage-collection mark phase by the consuming layer.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_hook The callable to register.
  */
 void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
@@ -200,7 +200,7 @@ void x_heap_mark_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
  * x_base_field_heap_free_hooks()). Each registered callable is intended to be
  * invoked once per sweep phase, before objects are reclaimed.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_hook The callable to register.
  */
 void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
@@ -217,7 +217,7 @@ void x_heap_free_hook_add(x_obj_t *p_base, x_obj_t *p_hook)
  * x_base_field_heap_mark_roots()), so it is marked on every collection and
  * survives GC regardless of other reachability.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_root The object to keep reachable.
  */
 void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root)

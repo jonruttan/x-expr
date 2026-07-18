@@ -190,7 +190,7 @@ typedef union x_datum_union x_obj_t;
 /**
  * Calling convention for x-expr primitive functions.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_args A pair list of arguments (nil when there are none).
  * @return The result object, or NULL.
  */
@@ -553,7 +553,7 @@ void _x_obj_debug_va(char *file, long unsigned line, x_obj_t *p_base, char *fmt,
  * Automatically prepends the source file name and line number.
  * Compiles to a no-op when DEBUG is not defined.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param fmt    printf-style format string.
  * @param ap     Variable argument list.
  */
@@ -568,7 +568,7 @@ void _x_obj_debug(char *file, long unsigned line, x_obj_t *p_base, char *fmt, ..
  * Automatically prepends the source file name and line number.
  * Compiles to a no-op when DEBUG is not defined.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param fmt    printf-style format string.
  * @param ...    Format arguments.
  */
@@ -583,7 +583,7 @@ void _x_obj_dump(char *file, long unsigned line, x_obj_t *p_base, x_obj_t *p_obj
  * Automatically prepends the source file name and line number.
  * Compiles to a no-op when DEBUG is not defined.
  *
- * @param p_base The base environment.
+ * @param p_base Base (execution context).
  * @param p_obj  The object to dump.
  * @param msg    A label prefix for the output.
  */
