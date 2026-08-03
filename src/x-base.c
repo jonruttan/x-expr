@@ -118,6 +118,11 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
  * @param p_base Base (execution context).
  * @param p_args Pair list: (destination-atom byte-count).
  * @return The destination atom on success, or NULL on read failure.
+ *         On failure the byte-count atom is overwritten with the raw
+ *         x_sys_read() result so the caller can tell end-of-stream (0)
+ *         from a read error (negative): this layer has no error
+ *         channel, and conflating the two turned transient read errors
+ *         into silent input truncation (x-lang#170).
  */
 x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
 {
@@ -126,10 +131,13 @@ x_obj_t *x_base_read(x_obj_t *p_base, x_obj_t *p_args)
 		: STDIN_FILENO;
 	x_obj_t *p_atom = x_firstobj(p_args);
 	x_int_t size = x_atomint(x_firstobj(x_restobj(p_args)));
+	ssize_t result = x_sys_read(fd, &x_atomchar(p_atom), size);
 
-	if (x_sys_read(fd, &x_atomchar(p_atom), size) == size) {
+	if (result == size) {
 		return p_atom;
 	}
+
+	x_atomint(x_firstobj(x_restobj(p_args))) = result;
 
 	return NULL;
 }
