@@ -78,6 +78,10 @@ void x_sys_free(void *ptr)
  */
 ssize_t x_sys_read(int fd, void *p_buf, size_t size)
 {
+	/* No EINTR retry here: an interrupted read is the ctrl-c cancel
+	 * protocol (SIGINT handler sets a flag, the aborted read surfaces
+	 * it -- see the REPL loop).  The embedding layer separates that
+	 * from real read errors (x-lang#170). */
 	return X_SYS_FUNC(read)(fd, p_buf, size);
 }
 
