@@ -72,8 +72,14 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * @param p_type The type object to assign, or NULL.
  * @param flags  Initial object flags.
  * @param units  Number of data units to allocate.
- * @return The new object, or NULL on allocation failure (signalled by the
- *         NULL return alone -- x-expr carries no message text of its own).
+ * @return The new object, or NULL on allocation failure when no full
+ *         base is attached (scratch/fixture use: the caller owns the
+ *         null-check).  With a full base attached the failure does not
+ *         return -- the runtime does not null-check allocations, so
+ *         this function reports through the embedder-armed message
+ *         (when set) and stops the process instead of handing back a
+ *         NULL that would surface as a SIGSEGV in whatever code was
+ *         running.
  * @note When the base arms an allocation ceiling (see
  *       x_base_field_alloc_limit()), reaching it makes this function report
  *       through the base error path and stop the process rather than
@@ -132,9 +138,29 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (extra + X_OBJ_META_LEN + units));
 
 	if (p_obj == NULL) {
-		/* Allocation failure is signalled by the NULL return alone --
-		 * x-expr holds no message text (the embedding layer owns all
-		 * prose). */
+		/* Real allocation failure, two contracts by context.  With a
+		 * FULL base -- the running language -- the runtime does not
+		 * null-check allocations, so returning NULL surfaced as a
+		 * SIGSEGV wherever the caller happened to be standing (under
+		 * machine-wide memory exhaustion that was deep inside
+		 * JIT-compiled code, x-lang#201): report through the
+		 * embedder-armed message when one exists (x-expr holds no
+		 * prose of its own) and stop cleanly.  No x_obj_error here:
+		 * an in-language guard handler cannot run without allocating,
+		 * and allocation is precisely what just failed -- the same
+		 * zero-progress argument as the tripped ceiling's latched
+		 * branch above.  WITHOUT a full base -- x-expr test fixtures,
+		 * embedder scratch use -- the historic NULL-return contract
+		 * stands: those callers own their null-checks (and the
+		 * allocation-failure spec pins exactly that). */
+		if (base_full) {
+			if ( ! x_obj_isnil(p_base, p_msg)) {
+				x_error(STDERR_FILENO, x_atomstr(p_msg), NULL);
+			}
+
+			x_sys_exit(2);
+		}
+
 		return NULL;
 	}
 
