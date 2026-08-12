@@ -175,6 +175,11 @@ void *x_lib_memset(void *p_dest, int byte, size_t size)
 /**
  * Locate the first occurrence of a character in a string.
  *
+ * @note libc defines the behaviour, not us (x_lib is a drop-in stdlib
+ *       replacement): the terminating NUL is part of the string
+ *       (C99 7.24.5.2), so searching for '\0' returns the terminator,
+ *       never NULL. The freestanding path used to return NULL there.
+ *
  * @param p_str The string to search.
  * @param c     The character to find (as an int).
  * @return Pointer to the first occurrence, or NULL if not found.
@@ -188,7 +193,7 @@ x_char_t *x_lib_strchr(const x_char_t *p_str, int c)
 
 	for (;*ps && *ps != c; ps++) ;
 
-	return *ps ? (x_char_t *)ps : NULL;
+	return *ps == c ? (x_char_t *)ps : NULL;
 #endif /* X_USE_STDLIB */
 }
 
@@ -250,6 +255,12 @@ int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
 	const x_char_t *ps1 = (const x_char_t *)p_str1;
 	const x_char_t *ps2 = (const x_char_t *)p_str2;
 
+	/* n == 0 compares nothing (libc contract); the pre-decrement idiom
+	 * below would wrap the size_t and compare unbounded. */
+	if (n == 0) {
+		return 0;
+	}
+
 	for (;--n && *ps1 && *ps2 && *ps2 == *ps1; ps1++, ps2++) ;
 
 	return *ps1 - *ps2;
@@ -257,10 +268,11 @@ int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
 }
 
 /**
- * Duplicate a string up to a given size.
+ * Duplicate at most @p size characters of a string.
  *
- * Allocates a new buffer via x_lib_memdup(), copies up to @p size
- * bytes from @p p_str, and null-terminates the result.
+ * The copy stops at the first NUL or after @p size characters,
+ * whichever comes first, and is always NUL-terminated; at most
+ * @p size source bytes are read.
  *
  * @param p_str The source string.
  * @param size  Maximum number of characters to copy.
@@ -268,15 +280,29 @@ int x_lib_strncmp(const x_char_t *p_str1, const x_char_t *p_str2, size_t n)
  */
 x_char_t *x_lib_strndup(const x_char_t *p_str, size_t size)
 {
+#ifdef X_USE_STDLIB
+	/* strndup is POSIX.1-2008, not ISO C: under -ansi glibc/musl do
+	 * not declare it (and a feature macro here would be too late --
+	 * string.h is already in by way of earlier includes), so declare
+	 * it directly. */
+	extern char *strndup(const char *, size_t);
+
+	return (x_char_t *)strndup((char *)p_str, size);
+#else
+	size_t len;
 	x_char_t *p_clone;
 
-	if ( ! (p_clone = (x_char_t *)x_lib_memdup((void *)p_str, size + 1))) {
+	for (len = 0; len < size && p_str[len]; len++) ;
+
+	if ( ! (p_clone = (x_char_t *)x_sys_malloc(len + 1))) {
 		return NULL;
 	}
 
-	p_clone[size] = 0;
+	x_lib_memcpy(p_clone, (const void *)p_str, len);
+	p_clone[len] = 0;
 
 	return p_clone;
+#endif /* X_USE_STDLIB */
 }
 
 /**
