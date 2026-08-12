@@ -16,6 +16,7 @@
 #include "test-helper-system.c"
 
 #include "src/x-sys.c"
+#include "src/x-stdlib.c"
 #include "src/x-lib.c"
 #include "src/x.c"
 
@@ -321,6 +322,15 @@ static char *test_lib_strchr(void)
 	p = x_lib_strchr(s, '\0');
 	_it_should("find the terminator like libc", p == s + 3);
 
+	/* x-lang#240: c converts to char before comparing (C99 7.24.5.2),
+	 * so a high byte passed as a positive int is still found. (The
+	 * literal is split: \x80 would greedily consume a following hex
+	 * digit.) */
+	p = x_lib_strchr("a\x80" "b", 0x80);
+	_it_should("find a high byte via char conversion",
+		p != NULL && *p == (char)0x80
+	);
+
 	return NULL;
 }
 
@@ -353,6 +363,11 @@ static char *test_lib_strcmp(void)
 	_it_should("return < 0 when second string is greater", n < 0);
 	/*_it_should("return -2 when second string is greater", n == -2);*/
 
+	/* x-lang#240: bytes compare as unsigned char (C99 7.24.4) -- 0x80
+	 * sorts above 0x01 regardless of plain-char signedness. */
+	n = x_lib_strcmp("\x80", "\x01");
+	_it_should("compare bytes as unsigned char", n > 0);
+
 	n = x_lib_strcmp((x_char_t *)"ab", (x_char_t *)"abc");
 	_it_should("return < 0 when first string is shorter", n < 0);
 
@@ -377,6 +392,10 @@ static char *test_lib_strncmp(void)
 	 * wrapped the size_t and compared unbounded). */
 	n = x_lib_strncmp((x_char_t *)"abc", (x_char_t *)"xyz", 0);
 	_it_should("return 0 at n == 0 without comparing", n == 0);
+
+	/* x-lang#240: bytes compare as unsigned char (C99 7.24.4). */
+	n = x_lib_strncmp("\x80", "\x01", 1);
+	_it_should("compare bytes as unsigned char", n > 0);
 
 	n = x_lib_strncmp((x_char_t *)"abe1", (x_char_t *)"abc2", 3);
 	_it_should("return > 0 when first string is greater", n > 0);

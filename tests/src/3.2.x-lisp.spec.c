@@ -8,6 +8,7 @@
 #include "test-helper-system.c"
 
 #include "src/x-sys.c"
+#include "src/x-stdlib.c"
 #include "src/x-lib.c"
 #include "src/x.c"
 #include "src/x-obj.c"
