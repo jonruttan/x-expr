@@ -98,7 +98,7 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
  * @name Hook & Root Registration
  *
  * The base's heap-group carries three extensible lists used by callers
- * to extend GC behavior at runtime:
+ * to extend GC behaviour at runtime:
  * - **mark-hooks** -- callables invoked once per mark phase (subscribers
  *   that want to mark additional reachable objects).
  * - **free-hooks** -- callables invoked once per sweep phase, before

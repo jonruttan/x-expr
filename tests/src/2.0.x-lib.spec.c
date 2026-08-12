@@ -16,6 +16,7 @@
 #include "test-helper-system.c"
 
 #include "src/x-sys.c"
+#include "src/x-stdlib.c"
 #include "src/x-lib.c"
 #include "src/x.c"
 
@@ -315,6 +316,21 @@ static char *test_lib_strchr(void)
 	p = x_lib_strchr(s, 'c');
 	_it_should("return NULL if the character is not found", p == NULL);
 
+	/* x-lang#240: the terminating NUL is part of the string (libc
+	 * contract, C99 7.24.5.2) -- the freestanding path used to return
+	 * NULL here, diverging from the stdlib configuration. */
+	p = x_lib_strchr(s, '\0');
+	_it_should("find the terminator like libc", p == s + 3);
+
+	/* x-lang#240: c converts to char before comparing (C99 7.24.5.2),
+	 * so a high byte passed as a positive int is still found. (The
+	 * literal is split: \x80 would greedily consume a following hex
+	 * digit.) */
+	p = x_lib_strchr("a\x80" "b", 0x80);
+	_it_should("find a high byte via char conversion",
+		p != NULL && *p == (char)0x80
+	);
+
 	return NULL;
 }
 
@@ -347,6 +363,11 @@ static char *test_lib_strcmp(void)
 	_it_should("return < 0 when second string is greater", n < 0);
 	/*_it_should("return -2 when second string is greater", n == -2);*/
 
+	/* x-lang#240: bytes compare as unsigned char (C99 7.24.4) -- 0x80
+	 * sorts above 0x01 regardless of plain-char signedness. */
+	n = x_lib_strcmp("\x80", "\x01");
+	_it_should("compare bytes as unsigned char", n > 0);
+
 	n = x_lib_strcmp((x_char_t *)"ab", (x_char_t *)"abc");
 	_it_should("return < 0 when first string is shorter", n < 0);
 
@@ -366,6 +387,15 @@ static char *test_lib_strncmp(void)
 	_it_should("return 0 when strings are equal", n == 0);
 	n = x_lib_strncmp((x_char_t *)"abc1", (x_char_t *)"abc2", 1);
 	_it_should("return 0 when strings are equal", n == 0);
+
+	/* n == 0 compares nothing (x-lang#240: the pre-decrement idiom
+	 * wrapped the size_t and compared unbounded). */
+	n = x_lib_strncmp((x_char_t *)"abc", (x_char_t *)"xyz", 0);
+	_it_should("return 0 at n == 0 without comparing", n == 0);
+
+	/* x-lang#240: bytes compare as unsigned char (C99 7.24.4). */
+	n = x_lib_strncmp("\x80", "\x01", 1);
+	_it_should("compare bytes as unsigned char", n > 0);
 
 	n = x_lib_strncmp((x_char_t *)"abe1", (x_char_t *)"abc2", 3);
 	_it_should("return > 0 when first string is greater", n > 0);
@@ -387,29 +417,59 @@ static char *test_lib_strncmp(void)
 static char *test_lib_strndup(void)
 {
 	x_char_t *p_dst;
+	x_char_t *p_view;
 	x_char_t *p_src = (x_char_t *)"test_lib_strndup";
 
 	helper_set_alloc(MEM_GUARANTEED);
 	helper_alloc_reset();
 	p_dst = x_lib_strndup(p_src, strlen((char *)p_src));
+#ifndef X_USE_STDLIB
+	/* The stdlib strndup allocates with the real malloc, invisible to
+	 * the helper allocator -- count and failure-injection assertions
+	 * only hold on the freestanding path. */
 	_it_should("have called alloc", 1 == helper_alloc_count());
+#endif /* X_USE_STDLIB */
 	_it_should("duplicate an entire string",
 		0 == strncmp((char *)p_dst, (char *)p_src, strlen((char *)p_src))
 	);
 	x_sys_free(p_dst);
 
+#ifndef X_USE_STDLIB
 	helper_set_alloc(MEM_ERROR);
 	helper_alloc_reset();
 	p_dst = x_lib_strndup(p_src, strlen((char *)p_src));
 	_it_should("have called alloc", 1 == helper_alloc_count());
 	_it_should("return NULL on alloc failure", p_dst == NULL);
 	x_sys_free(p_dst);
+#endif /* X_USE_STDLIB */
 
 	helper_set_alloc(MEM_GUARANTEED);
 	helper_alloc_reset();
 	p_dst = x_lib_strndup(p_src, strlen((char *)p_src) / 2);
 	_it_should("only duplicate the first n characters of a string",
 		0 == strncmp((char *)p_dst, (char *)p_src, strlen((char *)p_src) / 2)
+	);
+	x_sys_free(p_dst);
+
+	/* x-lang#240: at most size source bytes are read -- an unterminated
+	 * heap view sized to the copy has no byte size+1 to over-read (the
+	 * previous memdup(size + 1) did; ASan/Valgrind catch a regression
+	 * here). */
+	helper_set_alloc(MEM_GUARANTEED);
+	p_view = (x_char_t *)x_sys_malloc(4);
+	p_view[0] = 'a'; p_view[1] = 'b';
+	p_view[2] = 'c'; p_view[3] = 'd';
+	p_dst = x_lib_strndup(p_view, 4);
+	_it_should("copy an unterminated view without over-reading",
+		0 == strncmp((char *)p_dst, "abcd", 4) && p_dst[4] == 0
+	);
+	x_sys_free(p_dst);
+	x_sys_free(p_view);
+
+	/* x-lang#240: stops at the first NUL like the real strndup. */
+	p_dst = x_lib_strndup((x_char_t *)"a\0b", 3);
+	_it_should("stop at an embedded NUL like libc",
+		p_dst[0] == 'a' && p_dst[1] == 0 && 1 == strlen((char *)p_dst)
 	);
 	x_sys_free(p_dst);
 
