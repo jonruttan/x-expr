@@ -170,6 +170,29 @@ typedef enum x_obj_flag_enum
 	/** Object has extra metadata units prepended (see x_obj_meta_i()). */
 	X_OBJ_FLAG_META=0x80,
 
+	/*
+	 * THE META COUNT RIDES IN THE FLAGS WORD, above every flag bit.
+	 *
+	 * x_obj_free() must step back over exactly the units x_obj_alloc()
+	 * stepped forward, and the base's obj-meta-extra is MUTABLE: an
+	 * embedder can change it between the two (x-lang reflects the cell as
+	 * `(obj meta-count!)` and its own specs round-trip it).  Re-reading the
+	 * base at free time therefore freed every object older than the change
+	 * at the wrong address, and the allocator aborts the process on the
+	 * first one.  So the width travels with the object it describes.
+	 *
+	 * Here rather than in a prefix word: the flags slot is already a whole
+	 * x_int_t (x_obj_flags() reads the datum's .i), the defined bits stop
+	 * at X_OBJ_FLAG_MASK, and nothing masks flags with it -- so this space
+	 * is free, where a width unit in the prefix would cost one datum on
+	 * every object the base configures a prefix for.  It also leaves
+	 * x_obj_meta_i()'s indices alone, so no caller moves.
+	 */
+	/** Shift of the meta-unit count carried in the flags word. */
+	X_OBJ_META_COUNT_SHIFT=16,
+	/** Mask of the meta-unit count once shifted down. */
+	X_OBJ_META_COUNT_MASK=0xFFFF,
+
 #ifndef X_HEAP
 	/** Mask of all defined flag bits. */
 	X_OBJ_FLAG_MASK=0xFF
@@ -323,6 +346,18 @@ extern x_satom_t x_false_obj;
 
 /** The object's flags slot (an #x_obj_flag_t bitfield held as an integer). */
 #define x_obj_flags(X)				((X)[X_OBJ_META_FLAGS].i)
+
+/**
+ * The number of extra metadata units prepended to this object.
+ *
+ * Recorded at allocation from the base's obj-meta-extra and carried in the
+ * object's own flags, because that base field is mutable and x_obj_free()
+ * must not consult the current value -- see #X_OBJ_META_COUNT_SHIFT.  Zero
+ * when the object was allocated without a prefix (#X_OBJ_FLAG_META clear).
+ */
+#define x_obj_meta_count(X)			\
+	((size_t)((x_obj_flags(X) >> X_OBJ_META_COUNT_SHIFT) \
+		& X_OBJ_META_COUNT_MASK))
 
 /** Pointer to the first data unit of object @p X. */
 #define x_obj_data_ptr(X)			((X) + X_OBJ_META_LEN)

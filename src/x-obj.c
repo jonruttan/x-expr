@@ -171,8 +171,24 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 
 #ifdef X_HEAP
 	if (extra > 0) {
+		/* Record the width in the object, not just the fact of it: the
+		 * base field this came from is mutable, and x_obj_free() has to
+		 * step back over THIS object's prefix rather than whatever the
+		 * base says later (see X_OBJ_META_COUNT_SHIFT).  A prefix wider
+		 * than the field can carry is refused rather than silently
+		 * truncated -- freeing at a truncated width is the very fault
+		 * this records the width to prevent. */
+		if (extra > (size_t)X_OBJ_META_COUNT_MASK) {
+			x_sys_free(p_obj);
+			if (base_full) {
+				x_atomint(x_firstobj(
+					x_base_field_alloc_count(p_base)))--;
+			}
+			return NULL;
+		}
 		p_obj += extra;
-		flags |= X_OBJ_FLAG_META;
+		flags |= X_OBJ_FLAG_META
+			| (x_obj_flag_t)(extra << X_OBJ_META_COUNT_SHIFT);
 	}
 
 	if (p_base) {
@@ -271,8 +287,11 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 		&& ! x_obj_isnil(p_base, x_obj_type(p_base))
 		&& x_base_isset(p_base));
 #ifdef X_HEAP
-	size_t extra = base_full
-		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
+	/* THIS object's prefix width, recorded when it was allocated.  Read
+	 * from the object and never from the base: obj-meta-extra is mutable,
+	 * so the base's current value describes objects allocated since the
+	 * last change and nothing older (see X_OBJ_META_COUNT_SHIFT). */
+	size_t extra = x_obj_meta_count(p_obj);
 #endif /* X_HEAP */
 
 	/* Mirror the x_obj_alloc increment: every freed object (including GC
