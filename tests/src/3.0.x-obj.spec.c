@@ -229,9 +229,19 @@ static char *test_obj_data(void)
 
 static char *test_obj_meta_i(void)
 {
-	x_obj_t obj[2 + X_OBJ_META_LEN], *p_obj = &obj[2];
+	/* The prefix for a 2-unit payload is 3 units: [payload 1][payload 0]
+	 * [size element][header ...], the object pointer past the size
+	 * element.  The size element is what x_obj_free() steps back over,
+	 * so it sits at the fixed offset and the payload indices skip it. */
+	x_obj_t obj[3 + X_OBJ_META_LEN], *p_obj = &obj[3];
 	x_obj_t *p = &obj[1];
 
+	x_obj_meta_size(p_obj) = 2;
+
+	_it_should("hold the payload count in the prefix's size element",
+		2 == x_obj_meta_size(p_obj));
+	_it_should("keep the size element out of the payload indices",
+		(x_obj_t *)&obj[2] != &x_obj_meta_i(p_obj, 0));
 	_it_should("return an object's meta data at index 0", p == &x_obj_meta_i(p_obj, 0));
 	_it_should("return an object's meta data at index 1", (p - 1) == &x_obj_meta_i(p_obj, 1));
 
