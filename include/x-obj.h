@@ -38,10 +38,17 @@
  * @endcode
  *
  * When the base configures extra metadata units (see
- * x_base_field_obj_meta_extra()), x_obj_alloc() prepends them before the
- * standard header and advances the object pointer past them, so the layout
- * above still holds; the extras sit at negative offsets reached via
- * x_obj_meta_i() and the object is flagged #X_OBJ_FLAG_META.
+ * x_base_field_obj_meta_extra()), x_obj_alloc() prepends them -- plus one
+ * SIZE ELEMENT -- before the standard header and advances the object pointer
+ * past them, so the layout above still holds.  The size element sits
+ * immediately before the header (x_obj_meta_size()) and records how many
+ * payload units follow it; the payload units sit beyond it, reached via
+ * x_obj_meta_i(); the object is flagged #X_OBJ_FLAG_META.  The size element
+ * is what x_obj_free() steps back over: the base's obj-meta-extra is
+ * MUTABLE (an embedder can change it between an object's allocation and its
+ * free), so the prefix must describe its own width -- consulting the base's
+ * current value freed older objects at the wrong address and aborted the
+ * process (x-engine-c#21).
  *
  * **Type system.** An object carries type information two ways:
  * -# The @e type metadata slot (x_obj_type()) points at a type object whose
@@ -167,7 +174,8 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_OWN=0x20,
 	/** Read-only attribute (advisory; not enforced by the core). */
 	X_OBJ_FLAG_RO=0x40,
-	/** Object has extra metadata units prepended (see x_obj_meta_i()). */
+	/** Object has a metadata prefix prepended: one size element
+	 * (x_obj_meta_size()) then that many payload units (x_obj_meta_i()). */
 	X_OBJ_FLAG_META=0x80,
 
 #ifndef X_HEAP
@@ -331,8 +339,15 @@ extern x_satom_t x_false_obj;
 /** The first data unit of object @p X. */
 #define x_obj_data(X)				x_obj_data_i((X), 0)
 
-/** The extra metadata unit at index @p I (negative offset before @p X). */
-#define x_obj_meta_i(X, I)			((X)[-((I) + 1)])
+/** The metadata prefix's size element: the number of payload units that
+ * follow it.  Valid only when #X_OBJ_FLAG_META is set.  Recorded by
+ * x_obj_alloc() and read back by x_obj_free(), so a later change to the
+ * base's obj-meta-extra cannot mis-size the step back over the prefix. */
+#define x_obj_meta_size(X)			((X)[-1].i)
+
+/** The extra metadata PAYLOAD unit at index @p I (negative offset before
+ * @p X, past the size element). */
+#define x_obj_meta_i(X, I)			((X)[-((I) + 2)])
 
 #ifdef X_HEAP
 /** Brace initializer for a static object: type @p T, flags @p F, then data. */

@@ -61,9 +61,12 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  *
  * Allocates space for @p units data units plus the standard metadata header.
  * When the base configures extra metadata units (see
- * x_base_field_obj_meta_extra()), that many leading units are also reserved;
- * the returned pointer is advanced past them and #X_OBJ_FLAG_META is set so
- * x_obj_free() can recover the original allocation. When X_HEAP is enabled
+ * x_base_field_obj_meta_extra()), that many leading units plus one SIZE
+ * ELEMENT are also reserved; the returned pointer is advanced past them,
+ * the size element (x_obj_meta_size()) records the payload count, and
+ * #X_OBJ_FLAG_META is set so x_obj_free() can recover the original
+ * allocation from the object itself -- never from the base, whose
+ * obj-meta-extra may have changed since (x-engine-c#21). When X_HEAP is enabled
  * the object is linked onto the base's heap chain (and, under X_PROFILE, the
  * allocation counter is incremented). The type and flags slots are set; the
  * data units are left uninitialized.
@@ -98,6 +101,10 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 		&& x_base_isset(p_base));
 	size_t extra = base_full
 		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
+	/* The prefix is the payload plus its size element -- the element is
+	 * what lets x_obj_free() step back without consulting the (mutable)
+	 * base field this width came from. */
+	size_t prefix = extra > 0 ? extra + 1 : 0;
 	/* Allocation ceiling (0 = disarmed, < 0 = already tripped) and the
 	 * embedder-supplied trip message (nil = stop without reporting; x-expr
 	 * holds no message text of its own). */
@@ -135,7 +142,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 		x_sys_exit(2);
 	}
 
-	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (extra + X_OBJ_META_LEN + units));
+	p_obj = (x_obj_t *)x_sys_malloc(sizeof(x_obj_t) * (prefix + X_OBJ_META_LEN + units));
 
 	if (p_obj == NULL) {
 		/* Real allocation failure, two contracts by context.  With a
@@ -171,7 +178,10 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 
 #ifdef X_HEAP
 	if (extra > 0) {
-		p_obj += extra;
+		p_obj += prefix;
+		/* Stamp the size element before anything can free this object:
+		 * the prefix describes its own width from birth. */
+		x_obj_meta_size(p_obj) = (x_int_t)extra;
 		flags |= X_OBJ_FLAG_META;
 	}
 
@@ -254,11 +264,13 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
  * If the object has #X_OBJ_FLAG_OWN set, the allocation referenced by its
  * first datum is freed first. When X_HEAP is enabled and #X_OBJ_FLAG_META is
  * set, the original allocation address is recovered by stepping back over
- * the extra metadata units before freeing. This does not unlink the object
+ * the prefix, whose width the object's own size element records
+ * (x_obj_meta_size()) -- the base's obj-meta-extra is mutable, so it is
+ * never consulted here. This does not unlink the object
  * from the heap chain -- x_heap_sweep() relinks the chain around freed
  * objects.
  *
- * @param p_base Base (execution context; used to size extra metadata units).
+ * @param p_base Base (execution context; allocation accounting only).
  * @param p_obj  The object to free.
  */
 void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
@@ -270,10 +282,6 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 	int base_full = (p_base != NULL
 		&& ! x_obj_isnil(p_base, x_obj_type(p_base))
 		&& x_base_isset(p_base));
-#ifdef X_HEAP
-	size_t extra = base_full
-		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
-#endif /* X_HEAP */
 
 	/* Mirror the x_obj_alloc increment: every freed object (including GC
 	 * sweeps, which free through here) decrements the allocated count. */
@@ -287,7 +295,9 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 
 #ifdef X_HEAP
 	if (x_obj_flags(p_obj) & X_OBJ_FLAG_META) {
-		p_alloc = p_obj - extra;
+		/* Step back over THIS object's prefix: its payload units plus
+		 * the size element that counted them. */
+		p_alloc = p_obj - ((size_t)x_obj_meta_size(p_obj) + 1);
 	}
 #endif /* X_HEAP */
 
