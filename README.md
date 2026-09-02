@@ -1,5 +1,7 @@
 # x-expr -- Computational Expressions in C
 
+<p align="center"><img src="docs/bitwise-banner.svg" alt="x-expr, with Bitwise the owl" width="100%"></p>
+
 A minimal C library providing a foundation object system with atoms, pairs, garbage collection, and a light type system. Designed for building interpreters and expression evaluators.
 
 ## Features
@@ -126,3 +128,5 @@ See [docs/contributing.md](docs/contributing.md) for development setup, code sty
 ## License
 
 MIT No Attribution (MIT-0) -- see [LICENSE](LICENSE).
+
+<p align="center"><img src="docs/bitwise-mark.svg" alt="Bitwise" width="96"></p>
