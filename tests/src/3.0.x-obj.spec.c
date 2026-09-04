@@ -118,13 +118,7 @@ static char *test_flag_constants(void)
 	_it_should("define X_OBJ_FLAG_META",       0x80 == X_OBJ_FLAG_META);
 	_it_should("define X_OBJ_FLAG_SHARED",     0x100 == X_OBJ_FLAG_SHARED);
 	_it_should("define X_OBJ_FLAG_MARK",       0x200 == X_OBJ_FLAG_MARK);
-	_it_should("define X_OBJ_FLAG_TRACE",      0x400 == X_OBJ_FLAG_TRACE);
-	_it_should("define X_OBJ_FLAG_MASK",       0x7FF == X_OBJ_FLAG_MASK);
-
-	_it_should("keep TRACE clear of the collector's own bits",
-		0 == (X_OBJ_FLAG_TRACE & (X_OBJ_FLAG_MARK | X_OBJ_FLAG_SHARED)));
-	_it_should("cover TRACE with the flag mask",
-		X_OBJ_FLAG_TRACE == (X_OBJ_FLAG_TRACE & X_OBJ_FLAG_MASK));
+	_it_should("define X_OBJ_FLAG_MASK",       0x3FF == X_OBJ_FLAG_MASK);
 
 	return NULL;
 }

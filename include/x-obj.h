@@ -181,27 +181,9 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_SHARED=0x100,
 	/** Conventional mark bit used by the mark-sweep collector. */
 	X_OBJ_FLAG_MARK=0x200,
-	/**
-	 * A reachability bit for consumers; the collector never reads it.
-	 *
-	 * Mark and sweep are generic over their flag -- x_heap_tree_mark() takes
-	 * the flag to set, x_heap_sweep() the flag to test -- so a consumer can
-	 * borrow the collector's own traversal to ask "what is reachable from
-	 * here", which is the only way to get an answer that accounts for the
-	 * base sentinel, custom mark handlers, the hooks and the root chain.
-	 *
-	 * Neither existing bit can carry that answer. #X_OBJ_FLAG_SHARED is
-	 * already set on base-tree nodes, and since the flag doubles as the
-	 * traversal's visited test, a walk halts at the first one it meets.
-	 * Leaving #X_OBJ_FLAG_MARK set across a collection makes the next mark
-	 * phase stop short and its sweep free the children it therefore missed.
-	 * This bit is written and read by nobody else, so a consumer may set it,
-	 * read it, and clear it with x_heap_chain_clear().
-	 */
-	X_OBJ_FLAG_TRACE=0x400,
 
 	/** Mask of all defined flag bits. */
-	X_OBJ_FLAG_MASK=0x7FF
+	X_OBJ_FLAG_MASK=0x3FF
 #endif /* X_HEAP */
 } x_obj_flag_t;
 
