@@ -95,13 +95,11 @@ static char *test_flag_constants(void)
 	_it_should("define X_OBJ_FLAG_3",          0x04 == X_OBJ_FLAG_3);
 	_it_should("define X_OBJ_FLAG_4",          0x08 == X_OBJ_FLAG_4);
 
-	_it_should("define X_OBJ_FLAG_ATTR_MASK",  0x1F == X_OBJ_FLAG_ATTR_MASK);
+	_it_should("define X_OBJ_FLAG_ATTR_MASK",  0x0F == X_OBJ_FLAG_ATTR_MASK);
 
 	_it_should("cover every attribute bit with the attribute mask",
 		X_OBJ_FLAG_ATTR_MASK == (X_OBJ_FLAG_1 | X_OBJ_FLAG_2 | X_OBJ_FLAG_3
-			| X_OBJ_FLAG_4 | X_OBJ_FLAG_5));
-
-	_it_should("define X_OBJ_FLAG_5",          0x10 == X_OBJ_FLAG_5);
+			| X_OBJ_FLAG_4));
 
 	_it_should("define X_OBJ_FLAG_SIMPLE_TYPE", 0x10 == X_OBJ_FLAG_SIMPLE_TYPE);
 	_it_should("define X_OBJ_FLAG_PRIM",       0x10 == X_OBJ_FLAG_PRIM);

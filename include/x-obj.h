@@ -132,7 +132,6 @@ typedef enum x_obj_flag_enum
 	/** Full object typed via the type pointer; the default kind. */
 	X_OBJ_FLAG_OBJ=0x0,
 
-	/* General-purpose flags, cannot be used with the object type system. */
 	/** General-purpose attribute bit 1 (application defined). */
 	X_OBJ_FLAG_1=0x1,
 	/** General-purpose attribute bit 2 (application defined). */
@@ -141,11 +140,9 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_3=0x4,
 	/** General-purpose attribute bit 4 (application defined). */
 	X_OBJ_FLAG_4=0x8,
-	/** General-purpose attribute bit 5 (application defined). */
-	X_OBJ_FLAG_5=0x10,
 
-	/** Mask selecting the five attribute bits. */
-	X_OBJ_FLAG_ATTR_MASK=0x1F,
+	/** Mask selecting the four attribute bits. */
+	X_OBJ_FLAG_ATTR_MASK=0xF,
 
 	/* Simple type system enumeration 0x10 - 0x1F. */
 	/** Base value of the simple-type enumeration. */
