@@ -122,6 +122,32 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 }
 
 /**
+ * Clear @p flags on every object of a chain, freeing nothing.
+ *
+ * The counterpart to a consumer's own reachability pass: having borrowed
+ * x_heap_tree_mark() to set a flag of its own choosing, a
+ * consumer takes it back with this. Sweeping would clear the flag too, but
+ * sweeping also frees, which is not what a reader of the heap wants.
+ *
+ * A CHAIN clear rather than a tree one, deliberately: a tree walk only
+ * reaches what is still reachable, so anything that became garbage between
+ * the mark and the clear would keep the flag for good. The chain reaches
+ * every object either way.
+ *
+ * @param p_node Chain head; NULL is a no-op.
+ * @param flags  Flags to clear.
+ * @return NULL.
+ */
+x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags)
+{
+	for (; p_node != NULL; p_node = x_obj_heap(p_node)) {
+		x_obj_flags(p_node) &= ~flags;
+	}
+
+	return NULL;
+}
+
+/**
  * Mark every object registered on the root chain.
  *
  * The root chain is the precise mirror of the C call stack: frames push
@@ -152,9 +178,7 @@ x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
 		return NULL;
 	}
 
-	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
-		x_obj_flags(p_node) &= ~flags;
-	}
+	x_heap_chain_clear(x_heap_root_chain(p_base), flags);
 
 	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
 		x_heap_tree_mark(p_base, p_node, flags);

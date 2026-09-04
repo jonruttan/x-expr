@@ -92,6 +92,9 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
 /** Sweep the heap, freeing unmarked objects. */
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
 
+/** Clear @p flags on every object of a chain, freeing nothing. */
+x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags);
+
 /** @} */
 
 /**
