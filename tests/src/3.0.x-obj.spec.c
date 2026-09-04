@@ -95,7 +95,13 @@ static char *test_flag_constants(void)
 	_it_should("define X_OBJ_FLAG_3",          0x04 == X_OBJ_FLAG_3);
 	_it_should("define X_OBJ_FLAG_4",          0x08 == X_OBJ_FLAG_4);
 
-	_it_should("define X_OBJ_FLAG_ATTR_MASK",  0x0F == X_OBJ_FLAG_ATTR_MASK);
+	_it_should("define X_OBJ_FLAG_ATTR_MASK",  0x1F == X_OBJ_FLAG_ATTR_MASK);
+
+	_it_should("cover every attribute bit with the attribute mask",
+		X_OBJ_FLAG_ATTR_MASK == (X_OBJ_FLAG_1 | X_OBJ_FLAG_2 | X_OBJ_FLAG_3
+			| X_OBJ_FLAG_4 | X_OBJ_FLAG_5));
+
+	_it_should("define X_OBJ_FLAG_5",          0x10 == X_OBJ_FLAG_5);
 
 	_it_should("define X_OBJ_FLAG_SIMPLE_TYPE", 0x10 == X_OBJ_FLAG_SIMPLE_TYPE);
 	_it_should("define X_OBJ_FLAG_PRIM",       0x10 == X_OBJ_FLAG_PRIM);
@@ -112,7 +118,13 @@ static char *test_flag_constants(void)
 	_it_should("define X_OBJ_FLAG_META",       0x80 == X_OBJ_FLAG_META);
 	_it_should("define X_OBJ_FLAG_SHARED",     0x100 == X_OBJ_FLAG_SHARED);
 	_it_should("define X_OBJ_FLAG_MARK",       0x200 == X_OBJ_FLAG_MARK);
-	_it_should("define X_OBJ_FLAG_MASK",       0x3FF == X_OBJ_FLAG_MASK);
+	_it_should("define X_OBJ_FLAG_TRACE",      0x400 == X_OBJ_FLAG_TRACE);
+	_it_should("define X_OBJ_FLAG_MASK",       0x7FF == X_OBJ_FLAG_MASK);
+
+	_it_should("keep TRACE clear of the collector's own bits",
+		0 == (X_OBJ_FLAG_TRACE & (X_OBJ_FLAG_MARK | X_OBJ_FLAG_SHARED)));
+	_it_should("cover TRACE with the flag mask",
+		X_OBJ_FLAG_TRACE == (X_OBJ_FLAG_TRACE & X_OBJ_FLAG_MASK));
 
 	return NULL;
 }
