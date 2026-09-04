@@ -112,9 +112,18 @@
 /**
  * Object flags -- a bitfield stored in each object's flags metadata slot.
  *
- * The low nibble (#X_OBJ_FLAG_ATTR_MASK) holds general-purpose attribute
- * bits. The high nibble (#X_OBJ_FLAG_TYPE_MASK) encodes an optional
- * "simple type" tag. The remaining bits are storage- and GC-related.
+ * The low bits (#X_OBJ_FLAG_ATTR_MASK) hold general-purpose attribute bits.
+ * The high nibble (#X_OBJ_FLAG_TYPE_MASK) encodes an optional "simple type"
+ * tag. The remaining bits are storage- and GC-related.
+ *
+ * @warning #X_OBJ_FLAG_ATTR_MASK and #X_OBJ_FLAG_TYPE_MASK OVERLAP. The
+ * attribute mask reaches 0x1F to cover #X_OBJ_FLAG_5, and the simple-type
+ * enumeration begins at that same 0x10, so the two masks share a bit and
+ * must be combined with `|` and never with `+` -- adding them carries, and
+ * the result silently drops #X_OBJ_FLAG_OWN while picking up
+ * #X_OBJ_FLAG_SHARED. Which is fine, because they are alternative readings
+ * of an object rather than independent fields, and no object is described
+ * by both.
  *
  * @note The simple-type enumeration (#X_OBJ_FLAG_PRIM ... #X_OBJ_FLAG_PTR)
  * and the attribute bits share the low-order bits, so they are alternative
