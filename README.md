@@ -60,6 +60,7 @@ Run `make help` for the full list of targets.
 |------|---------|-------------|
 | `X_PROFILE` | off | Enable allocation profiling counters |
 | `X_SYS_CLOCK` | off | Enable CPU clock measurement (x_sys_clock) |
+| `X_SYS_SIGNAL` | off | Build the signal wrappers (x_sys_signal_install, x_sys_signal_restore) |
 | `X_USE_STDLIB_NONSTD` | off | Use non-standard library extensions (requires `X_USE_STDLIB`) |
 
 **Internal** -- for x-expr development:
@@ -76,7 +77,7 @@ Pass flags to the compiler: `make CFLAGS+="-DX_HEAP -DDEBUG"`
 | Header | Purpose |
 |--------|---------|
 | [x.h](include/x.h) | Core types (`x_int_t`, `x_char_t`), architecture detection, error handling |
-| [x-sys.h](include/x-sys.h) | System-level wrappers (malloc, free, read, write, exit) |
+| [x-sys.h](include/x-sys.h) | System-level wrappers (malloc, free, read, write, exit; opt-in clock, signal). Where libc is called; `make check-libc` refuses a raw call anywhere else, ctype, setjmp, the freestanding headers and DEBUG-only code excepted |
 | [x-lib.h](include/x-lib.h) | Portable string, memory, and math utilities |
 | [x-obj.h](include/x-obj.h) | Object system: atoms, pairs, flags, type checking, allocation |
 | [x-base.h](include/x-base.h) | Base environment: I/O, hooks, heap config, field accessors |

@@ -3,14 +3,18 @@
  *
  * Redefines X_SYS_FUNC so x-sys routes through helper_sys_* wrappers, and
  * provides mock_* implementations (exit, malloc, free, read, write, open,
- * close, and clock under X_SYS_CLOCK) dispatched through a swappable function
- * table. Lets tests intercept system calls without touching the real OS.
+ * close; clock under X_SYS_CLOCK, sigaction/sigemptyset/signal under
+ * X_SYS_SIGNAL) dispatched through a swappable function table. Lets tests
+ * intercept system calls without touching the real OS.
  */
 #ifndef HELPER_SYSTEM_FUNCTIONS
 #define HELPER_SYSTEM_FUNCTIONS
 
 #include <fcntl.h>			/* open() */
 #include <unistd.h>			/* read(), write() */
+#ifdef X_SYS_SIGNAL
+#include <signal.h>			/* sigaction(), signal() */
+#endif /* X_SYS_SIGNAL */
 
 #include "test-helper-mem.h"
 #include "test-helper-file.h"
@@ -32,7 +36,15 @@ int mock_close(int fd);
 clock_t mock_clock(void);
 #endif /* X_SYS_CLOCK */
 
+#ifdef X_SYS_SIGNAL
+int mock_sigaction(int sig, const struct sigaction *p_act, struct sigaction *p_old);
+void (*mock_signal(int sig, void (*handler)(int)))(int);
+#endif /* X_SYS_SIGNAL */
 
+
+/* Field names avoid the libc names that a fortified <signal.h> defines as
+ * function-like macros (sigemptyset on Darwin): a member access
+ * `funcs.sigemptyset(...)` would be macro-expanded. */
 struct
 {
 	void (*exit)(int status);
@@ -48,6 +60,12 @@ struct
 #ifdef X_SYS_CLOCK
 	clock_t (*clock)(void);
 #endif /* X_SYS_CLOCK */
+
+#ifdef X_SYS_SIGNAL
+	int (*sigaction)(int sig, const struct sigaction *p_act, struct sigaction *p_old);
+	int (*sigempty)(sigset_t *p_set);
+	void (*(*signal)(int sig, void (*handler)(int)))(int);
+#endif /* X_SYS_SIGNAL */
 } helper_sys_funcs = {
 	exit,
 
@@ -61,6 +79,11 @@ struct
 #ifdef X_SYS_CLOCK
 	,mock_clock
 #endif /* X_SYS_CLOCK */
+#ifdef X_SYS_SIGNAL
+	,sigaction
+	,sigemptyset
+	,signal
+#endif /* X_SYS_SIGNAL */
 };
 
 
@@ -202,5 +225,47 @@ clock_t helper_sys_clock(void)
 	return helper_sys_funcs.clock();
 }
 #endif /* X_SYS_CLOCK */
+
+
+#ifdef X_SYS_SIGNAL
+int mock_sigaction_status = 0;
+int mock_sigaction_sig = 0;
+struct sigaction mock_sigaction_act;
+
+int mock_sigaction(int sig, const struct sigaction *p_act, struct sigaction *p_old)
+{
+	mock_sigaction_sig = sig;
+	mock_sigaction_act = *p_act;
+
+	return mock_sigaction_status;
+}
+
+int helper_sys_sigaction(int sig, const struct sigaction *p_act, struct sigaction *p_old)
+{
+	return helper_sys_funcs.sigaction(sig, p_act, p_old);
+}
+
+int helper_sys_sigemptyset(sigset_t *p_set)
+{
+	return helper_sys_funcs.sigempty(p_set);
+}
+
+
+int mock_signal_sig = 0;
+void (*mock_signal_handler)(int) = NULL;
+
+void (*mock_signal(int sig, void (*handler)(int)))(int)
+{
+	mock_signal_sig = sig;
+	mock_signal_handler = handler;
+
+	return NULL;
+}
+
+void (*helper_sys_signal(int sig, void (*handler)(int)))(int)
+{
+	return helper_sys_funcs.signal(sig, handler);
+}
+#endif /* X_SYS_SIGNAL */
 
 #endif /* HELPER_SYSTEM_FUNCTIONS */

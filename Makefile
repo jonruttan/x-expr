@@ -140,16 +140,28 @@ ifndef TESTS
 TESTS=$(PATH_TESTS)/src/*.spec.c
 endif
 
-test: ## Run tests
-	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
+# -D_GNU_SOURCE: the specs #include src/x-sys.c AFTER the runner's own
+# headers, so the feature-test macro x-sys.c sets for itself lands too
+# late there -- glibc under -ansi would have hidden sigaction already.
+# The test build asks up front instead.
+TEST_CFLAGS=$(CFLAGS) -fno-common -g -Og -I. -DTESTS -D_GNU_SOURCE
+
+# Libc stays behind x-sys and x-stdlib.  Runs first in both test targets:
+# a raw call is a defect whether or not the specs pass.
+check-libc: ## Refuse a raw libc call outside x-sys/x-stdlib
+	sh tools/check/libc.sh
+.PHONY: check-libc
+
+test: check-libc ## Run tests
+	CFLAGS="$(TEST_CFLAGS)" sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
 .PHONY: test
 
-test-quick: ## Run fast tests (no Valgrind)
-	CFLAGS="$(CFLAGS) -fno-common -g -Og -I. -DTESTS" RUNNER=command sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
-.PHONY: test
+test-quick: check-libc ## Run fast tests (no Valgrind)
+	CFLAGS="$(TEST_CFLAGS)" RUNNER=command sh $(PATH_TESTS)/test-runner/test-runner.sh $(TESTS)
+.PHONY: test-quick
 
 coverage: ## Run tests with coverage report
-	CFLAGS="$(CFLAGS) -fno-common -O0 -g --coverage -I. -DTESTS" \
+	CFLAGS="$(CFLAGS) -fno-common -O0 -g --coverage -I. -DTESTS -D_GNU_SOURCE" \
 		ANALYZER_FLAGS="--print-summary --txt" \
 		sh $(PATH_TESTS)/test-runner/test-runner-coverage.sh $(TESTS)
 .PHONY: coverage

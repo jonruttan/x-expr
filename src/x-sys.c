@@ -12,6 +12,15 @@
  *          " "
  */
 
+/* sigaction is POSIX; under -ansi glibc's <features.h> hides it unless a
+ * feature-test macro asks.  This file is the one place libc is spoken to,
+ * so it asks -- before the first header, which is the only place a
+ * feature-test macro works.  (No effect on macOS or musl, whose headers do
+ * not gate on it.) */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif /* _GNU_SOURCE */
+
 #include <stdio.h>			/* vsprintf() */
 #include <fcntl.h>
 #include <stdlib.h>
@@ -19,6 +28,9 @@
 #ifdef X_SYS_CLOCK
 #include <time.h>			/* clock() */
 #endif /* X_SYS_CLOCK */
+#ifdef X_SYS_SIGNAL
+#include <signal.h>			/* sigaction(), signal() */
+#endif /* X_SYS_SIGNAL */
 
 #include "x-sys.h"
 #include "x-lib.h"
@@ -152,3 +164,37 @@ x_int_t x_sys_clock(void)
 	return (x_int_t)(X_SYS_FUNC(clock)() * 1000000 / CLOCKS_PER_SEC);
 }
 #endif /* X_SYS_CLOCK */
+
+#ifdef X_SYS_SIGNAL
+/**
+ * Install a signal handler.
+ *
+ * No flags, deliberately no SA_RESTART: a handler installed this way
+ * interrupts a blocked read, which is how ctrl-c reaches an idle REPL.
+ *
+ * @param sig     The signal number, e.g. X_SYS_SIGINT.
+ * @param handler The function to run when @p sig arrives.
+ * @return 0 on success, -1 on error.
+ */
+int x_sys_signal_install(int sig, void (*handler)(int))
+{
+	struct sigaction sa;
+
+	sa.sa_handler = handler;
+	sa.sa_flags = 0;
+	X_SYS_FUNC(sigemptyset)(&sa.sa_mask);
+
+	return X_SYS_FUNC(sigaction)(sig, &sa, NULL);
+}
+
+/**
+ * Restore a signal's default disposition.
+ *
+ * @param sig The signal number.
+ * @return 0 on success, -1 on error.
+ */
+int x_sys_signal_restore(int sig)
+{
+	return X_SYS_FUNC(signal)(sig, SIG_DFL) == SIG_ERR ? -1 : 0;
+}
+#endif /* X_SYS_SIGNAL */

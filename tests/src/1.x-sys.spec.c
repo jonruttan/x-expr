@@ -3,6 +3,7 @@
  */
 
 #define X_SYS_CLOCK
+#define X_SYS_SIGNAL
 
 #define TEST_RUNNER_OVERHEAD
 #include "test-runner.h"
@@ -177,6 +178,46 @@ static char *test_sys_clock(void)
 	return NULL;
 }
 
+static void test_sys_signal_handler(int sig)
+{
+	(void)sig;
+}
+
+static char *test_sys_signal_install(void)
+{
+	int status;
+
+	helper_sys_funcs.sigaction = mock_sigaction;
+	mock_sigaction_status = 0;
+
+	status = x_sys_signal_install(X_SYS_SIGINT, test_sys_signal_handler);
+	_it_should("return sigaction's status", 0 == status);
+	_it_should("define X_SYS_SIGINT", SIGINT == X_SYS_SIGINT);
+	_it_should("install for the signal", SIGINT == mock_sigaction_sig);
+	_it_should("install the handler", test_sys_signal_handler == mock_sigaction_act.sa_handler);
+	_it_should("set no flags (no SA_RESTART)", 0 == mock_sigaction_act.sa_flags);
+
+	mock_sigaction_status = -1;
+	status = x_sys_signal_install(X_SYS_SIGINT, test_sys_signal_handler);
+	_it_should("report sigaction's failure", -1 == status);
+
+	return NULL;
+}
+
+static char *test_sys_signal_restore(void)
+{
+	int status;
+
+	helper_sys_funcs.signal = mock_signal;
+
+	status = x_sys_signal_restore(X_SYS_SIGINT);
+	_it_should("return success", 0 == status);
+	_it_should("restore the signal", SIGINT == mock_signal_sig);
+	_it_should("restore the default disposition", SIG_DFL == mock_signal_handler);
+
+	return NULL;
+}
+
 static char *run_tests() {
 	_run_test(test_sys_exit);
 
@@ -191,6 +232,9 @@ static char *run_tests() {
 
 	_run_test(test_sys_read_char);
 	_run_test(test_sys_clock);
+
+	_run_test(test_sys_signal_install);
+	_run_test(test_sys_signal_restore);
 
 	return NULL;
 }

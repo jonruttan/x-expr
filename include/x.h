@@ -16,6 +16,9 @@
  *   (e.g. ltoa). Requires X_USE_STDLIB.
  * - **X_HEAP** -- Enable heap management and garbage collection.
  *   Required by x-heap.h.
+ * - **X_SYS_CLOCK**, **X_SYS_SIGNAL** -- Build the POSIX-only x-sys
+ *   wrappers (clock; sigaction/signal).
+ *   Off by default: not every target has them.
  *
  * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2021 Jon Ruttan
