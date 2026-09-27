@@ -158,8 +158,8 @@ static char *test_root_chain_mark_survives_sweep(void)
 static char *test_root_chain_mark_walks_all_nodes(void)
 {
 	x_obj_t *p_base, *p_a, *p_b, **p_slot;
-	/* root_b's payload rest links root_a -- the stack-built argument
-	 * list shape (stack pair chaining to stack pair). */
+	/* root_b's payload rest links root_a -- the layout of a stack-built
+	 * argument list (stack pair chaining to stack pair). */
 	x_spair_t root_a = x_obj_set((x_obj_t *)x_type_pair_obj,
 		X_OBJ_FLAG_NONE, { NULL }, { NULL });
 	x_spair_t root_b = x_obj_set((x_obj_t *)x_type_pair_obj,

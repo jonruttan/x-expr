@@ -264,7 +264,7 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
 void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 {
 	x_obj_t *p_alloc = p_obj;
-	/* Full, typed base -- the only kind whose fields may be chased (see
+	/* Full, typed base -- the only base whose fields may be chased (see
 	 * x_obj_alloc: x_base_isset alone admits minimal test/embedder bases
 	 * whose "fields" are garbage). */
 	int base_full = (p_base != NULL

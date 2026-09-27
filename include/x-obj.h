@@ -10,14 +10,14 @@
  * objects.
  *
  * @details
- * Every value is an @b object: a contiguous array of @ref x_obj_t units (a
- * tagged-union datum, see @ref x_datum_union) laid out as a small metadata
- * header followed by one or more data units. A pointer to an object
- * addresses the start of its metadata; the data units begin at offset
- * #X_OBJ_META_LEN, reached via the accessor macros x_obj_type(),
- * x_obj_flags() and x_obj_data_ptr().
+ * Every value is represented by an @b object: a contiguous array of
+ * @ref x_obj_t units (a labelled-union datum, see @ref x_datum_union) laid
+ * out as a small metadata header followed by one or more data units. A
+ * pointer to an object addresses the start of its metadata; the data units
+ * begin at offset #X_OBJ_META_LEN, reached via the accessor macros
+ * x_obj_type(), x_obj_flags() and x_obj_data_ptr().
  *
- * There are two fundamental shapes:
+ * There are two fundamental layouts:
  * - **atom** -- one data unit (#X_OBJ_UNITS_ATOM): a single datum such as an
  *   integer, character, string, pointer, or function pointer.
  * - **pair** -- two data units (#X_OBJ_UNITS_PAIR): a @e first and a @e rest.
@@ -49,9 +49,10 @@
  *    #x_type_atom_obj and #x_type_pair_obj are matched by pointer identity
  *    (x_obj_type_issatom(), x_obj_type_isspair()); for any other type the
  *    base environment's hooks are consulted (see x_obj_prim_type_name()).
- * -# A lightweight @e simple type tag may be carried in the type nibble of
- *    the object flags (#X_OBJ_FLAG_PRIM ... #X_OBJ_FLAG_PTR) for consumers
- *    that want a cheap datum-kind tag without allocating a type object.
+ * -# A lightweight @e simple type label may be carried in the type nibble
+ *    of the object flags (#X_OBJ_FLAG_PRIM ... #X_OBJ_FLAG_PTR) for
+ *    consumers that want a cheap datum label without allocating a type
+ *    object.
  *    The x-expr core does not dispatch on it; it is provided for downstream
  *    use.
  *
@@ -114,7 +115,7 @@
  *
  * The low nibble (#X_OBJ_FLAG_ATTR_MASK) holds general-purpose attribute
  * bits. The high nibble (#X_OBJ_FLAG_TYPE_MASK) encodes an optional
- * "simple type" tag. The remaining bits are storage- and GC-related.
+ * "simple type" label. The remaining bits are storage- and GC-related.
  *
  * @note The simple-type enumeration (#X_OBJ_FLAG_PRIM ... #X_OBJ_FLAG_PTR)
  * and the attribute bits share the low-order bits, so they are alternative
@@ -129,7 +130,7 @@ typedef enum x_obj_flag_enum
 	X_OBJ_FLAG_NONE=0x0,
 
 	/* Object type system flags. */
-	/** Full object typed via the type pointer; the default kind. */
+	/** Full object typed via the type pointer; the default label. */
 	X_OBJ_FLAG_OBJ=0x0,
 
 	/** General-purpose attribute bit 1 (application defined). */
@@ -206,7 +207,7 @@ typedef x_obj_t * (*x_fn_t)(x_obj_t *p_base, x_obj_t *p_args);
  * @note @e Datum and @e unit name this same cell from two angles, not two
  * granularities: "unit" is the layout/count sense (#X_OBJ_UNITS_ATOM,
  * x_obj_units(), sizing in x_obj_alloc()), "datum" the content sense (the
- * tagged-union interpretation read through the accessors above).
+ * labelled-union interpretation read through the accessors above).
  */
 union x_datum_union
 {
@@ -275,8 +276,8 @@ enum {
  * @note The `s` prefix carries two senses in this header. Here (and in
  * #x_spair_t) it is @e storage: room for an object in static or stack
  * storage instead of the heap. In x_obj_type_issatom() /
- * x_obj_type_isspair() and in the x_mksatom() / x_mkspair() constructor
- * family it is the built-in @e static @e type (#x_type_atom_obj /
+ * x_obj_type_isspair() and in the constructors x_mksatom() / x_mkspair()
+ * it is the built-in @e static @e type (#x_type_atom_obj /
  * #x_type_pair_obj) -- a property of the type slot, independent of where
  * the object lives.
  */
