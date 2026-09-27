@@ -100,7 +100,7 @@ x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags);
 /**
  * @name Hook & Root Registration
  *
- * The base's heap-group carries three extensible lists used by callers
+ * The base's heap fields carry three extensible lists used by callers
  * to extend GC behaviour at runtime:
  * - **mark-hooks** -- callables invoked once per mark phase (subscribers
  *   that want to mark additional reachable objects).

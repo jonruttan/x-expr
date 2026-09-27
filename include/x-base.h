@@ -82,11 +82,11 @@
  * @{
  */
 
-/** Get the IO group pair (type-alist . files, io-state). */
-#define x_base_field_io_group(X)			x_firstobj(x_restobj(x_base(X)))
+/** Get the IO fields pair (type-alist . files, io-state). */
+#define x_base_field_io_fields(X)			x_firstobj(x_restobj(x_base(X)))
 
 /** Get the files list (filein, fileout, fileerr, write-buf, buffer). */
-#define x_base_field_files(X)				x_restobj(x_firstobj(x_base_field_io_group(X)))
+#define x_base_field_files(X)				x_restobj(x_firstobj(x_base_field_io_fields(X)))
 
 /** Get the filein field. Value: integer atom (file descriptor). */
 #define x_base_field_filein(X)				x_firstobj(x_base_field_files(X))
@@ -115,12 +115,12 @@
  * @{
  */
 
-/** Get the meta group list (profile+hooks, heap, alloc; the tail past alloc
+/** Get the meta fields list (profile+hooks, heap, alloc; the tail past alloc
  *  is the embedding layer's extension point). */
-#define x_base_field_meta_group(X)			x_restobj(x_restobj(x_base(X)))
+#define x_base_field_meta_fields(X)			x_restobj(x_restobj(x_base(X)))
 
 /** Get the profile pair (counters). */
-#define x_base_field_profile(X)				x_firstobj(x_firstobj(x_base_field_meta_group(X)))
+#define x_base_field_profile(X)				x_firstobj(x_firstobj(x_base_field_meta_fields(X)))
 
 /** Get the allocation counter field. Value: integer atom, incremented by x_obj_alloc(). */
 #define x_base_field_profile_allocs(X)		x_firstobj(x_base_field_profile(X))
@@ -133,7 +133,7 @@
  * Dispatch priority: check static type (pointer identity, O(1)),
  * then call the hook if set, then fall back to NULL.
  */
-#define x_base_field_hooks(X)				x_restobj(x_firstobj(x_base_field_meta_group(X)))
+#define x_base_field_hooks(X)				x_restobj(x_firstobj(x_base_field_meta_fields(X)))
 
 /**
  * Get the type_name hook field. Value: atom with x_fn_t function pointer.
@@ -175,21 +175,21 @@
  * @{
  */
 
-/** Get the heap group pair. */
-#define x_base_field_heap_group(X)			x_firstobj(x_restobj(x_base_field_meta_group(X)))
+/** Get the heap fields pair. */
+#define x_base_field_heap_fields(X)			x_firstobj(x_restobj(x_base_field_meta_fields(X)))
 
 /**
  * Get the extra metadata units count field. Value: integer atom.
  * When > 0, x_obj_alloc() prepends this many extra units before each
  * object's standard metadata, accessible via x_obj_meta_i().
  */
-#define x_base_field_obj_meta_extra(X)		x_firstobj(x_base_field_heap_group(X))
+#define x_base_field_obj_meta_extra(X)		x_firstobj(x_base_field_heap_fields(X))
 
 /** Get the heap mark hook field. Value: atom with x_heap_mark_fn_t pointer. */
-#define x_base_field_heap_mark(X)			x_firstobj(x_restobj(x_base_field_heap_group(X)))
+#define x_base_field_heap_mark(X)			x_firstobj(x_restobj(x_base_field_heap_fields(X)))
 
 /** Get the heap free hook field. Value: atom with x_heap_free_fn_t pointer. */
-#define x_base_field_heap_free(X)			x_firstobj(x_restobj(x_restobj(x_base_field_heap_group(X))))
+#define x_base_field_heap_free(X)			x_firstobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))
 
 /**
  * Get the mark-hooks list field. Value: a list of callables, each
@@ -199,21 +199,21 @@
  * hooks (it has no callable-dispatch); the consuming layer walks the
  * list and dispatches per its own conventions.
  */
-#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))
+#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X)))))
 
 /**
  * Get the free-hooks list field. Value: a list of callables, each
  * invoked once per sweep phase before objects are reclaimed.
  * Extended at runtime via x_heap_free_hook_add().
  */
-#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))
+#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))))
 
 /**
  * Get the mark-roots list field. Value: a list of objects to mark on
  * every collection (so they survive GC even when not reachable from the
  * base tree or the root chain). Extended at runtime via x_heap_mark_root_add().
  */
-#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X)))))))
+#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X)))))))
 
 /**
  * Get the root-chain head field. Value: the most recently registered
@@ -224,21 +224,21 @@
  * (x_heap_root_chain_mark()) but never swept: x_heap_sweep() walks only
  * the allocation chain. See x_heap_root_push() / x_heap_root_pop().
  */
-#define x_base_field_heap_root_chain(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_group(X))))))))
+#define x_base_field_heap_root_chain(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))))))
 
 /** @} */
 
 /**
  * @defgroup base_alloc Base Allocation Field Accessors
- * @brief Object-allocation accounting (the meta group's alloc element).
+ * @brief Object-allocation accounting (the meta fields' alloc element).
  *
  * Maintained by x_obj_alloc / x_obj_free in every build: allocation-layer
  * state, not part of X_HEAP garbage collection.
  * @{
  */
 
-/** Get the alloc group list (count, limit, error). */
-#define x_base_field_alloc_group(X)			x_firstobj(x_restobj(x_restobj(x_base_field_meta_group(X))))
+/** Get the alloc fields list (count, limit, error). */
+#define x_base_field_alloc_fields(X)		x_firstobj(x_restobj(x_restobj(x_base_field_meta_fields(X))))
 
 /**
  * Get the allocated object-count field. Value: integer atom. Incremented
@@ -246,7 +246,7 @@
  * currently allocated (counted once the base is set, so the base tree
  * itself is excluded).
  */
-#define x_base_field_alloc_count(X)			x_firstobj(x_base_field_alloc_group(X))
+#define x_base_field_alloc_count(X)			x_firstobj(x_base_field_alloc_fields(X))
 
 /**
  * Get the allocation ceiling field. Value: integer atom. 0 = unlimited (the
@@ -254,7 +254,7 @@
  * past it -- the runaway-memory guard.  Negative values are reserved: the
  * allocator latches the cell to -1 once tripped.
  */
-#define x_base_field_alloc_limit(X)			x_firstobj(x_restobj(x_base_field_alloc_group(X)))
+#define x_base_field_alloc_limit(X)			x_firstobj(x_restobj(x_base_field_alloc_fields(X)))
 
 /**
  * Get the allocation trip-message field. Value: an atom whose string is
@@ -262,7 +262,7 @@
  * trips, or nil to stop without reporting.  Supplied by the embedding layer
  * when it arms the limit -- x-expr itself holds no message text.
  */
-#define x_base_field_alloc_error(X)			x_firstobj(x_restobj(x_restobj(x_base_field_alloc_group(X))))
+#define x_base_field_alloc_error(X)			x_firstobj(x_restobj(x_restobj(x_base_field_alloc_fields(X))))
 
 /** @} */
 
