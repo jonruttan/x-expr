@@ -200,20 +200,23 @@ x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags)
  */
 x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args)
 {
-	x_obj_flag_t flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 0));
-	x_obj_t mark_args[x_vector_storage(2)] = x_vector_set(
-		x_base_vector_type(p_base), 2,
-		{ NULL }, { x_vectorobj(p_args, 0) });
+	x_obj_flag_t flags;
 	x_obj_t *p_node;
 
 	if ( ! x_base_isset(p_base)) {
 		return NULL;
 	}
 
+	flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 0));
 	x_heap_chain_clear(x_heap_root_chain(p_base), flags);
 
 	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
-		x_vectorobj(mark_args, 0) = p_node;
+		/* The tree mark's arguments, around the flags atom this routine
+		 * was handed. */
+		x_obj_t mark_args[x_vector_storage(2)] = x_vector_set(
+			x_base_vector_type(p_base), 2,
+			{ p_node }, { x_vectorobj(p_args, 0) });
+
 		x_base_call_or(p_base, X_SLOT_HEAP_TREE_MARK, x_heap_tree_mark, mark_args);
 	}
 
