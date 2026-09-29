@@ -101,6 +101,12 @@
 #define x_base_slot(B,I)					x_slot(x_base_slots((B)), (I))
 
 /**
+ * Call the function in slot @p I of base @p B with argument vector @p A.
+ * The base must be set and the slot must hold a function.
+ */
+#define x_base_call(B,I,A)					(x_base_slot((B), (I))((B), (A)))
+
+/**
  * Test whether slot @p I of base @p B holds a function: the base is
  * set, it has a slot vector, and the slot is not empty.
  */
