@@ -19,7 +19,7 @@ static x_satom_t vec2_type_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {0});
 /* Hook: return type name for custom types */
 static x_obj_t *my_type_name(x_obj_t *p_base, x_obj_t *p_args)
 {
-	x_obj_t *p_obj = x_slot_argobj(p_args, 0);
+	x_obj_t *p_obj = x_vectorobj(p_args, 0);
 
 	if (x_obj_type(p_obj) == (x_obj_t *)&vec2_type_obj) {
 		return x_mksatom(p_base, X_OBJ_FLAG_NONE, "VEC2");

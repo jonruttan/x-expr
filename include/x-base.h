@@ -101,6 +101,13 @@
 #define x_base_slot(B,I)					x_slot(x_base_slots((B)), (I))
 
 /**
+ * The type a vector made for base @p B carries: the type of its slot
+ * vector, which the embedding layer sets when it has a vector type to
+ * give. One load, from a vector a call through a slot loads in any case.
+ */
+#define x_base_vector_type(B)				x_obj_type(x_base_slots((B)))
+
+/**
  * Call the function in slot @p I of base @p B with argument vector @p A.
  * The base must be set and the slot must hold a function.
  */

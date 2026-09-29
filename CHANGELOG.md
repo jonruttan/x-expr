@@ -4,12 +4,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-  - The base's slot vector (`x-slots.h`): the routines the engine calls
-    through, each at a fixed position. A slot holds a function pointer with
-    the signature `x_fn_t`, and its arguments arrive as an argument vector
-    built in stack storage.
-  - Slot functions for `x_obj_alloc`, `x_obj_free`, `x_heap_tree_mark`,
-    `x_heap_sweep` and `x_heap_root_chain_mark`.
+  - The vector layout (`x-vector.h`): an object whose first data unit holds
+    its length and whose other data units are its elements, with accessors,
+    static length atoms for the lengths 0 to 8, an initializer for a vector
+    in static or stack storage, and the constructor `x_vector_make`.
+  - The base's slot vector (`x-slots.h`): a vector of function pointers, one
+    per slot, the routines the engine calls through. A slot function has the
+    signature `x_fn_t`, and its arguments arrive as an argument vector: a
+    vector of objects, built in stack storage.
+  - `x_base_call`, a call through a slot, and `x_base_vector_type`, the type
+    a vector made for a base carries.
 
 ### Changed
   - The base object has two data units: the slot vector, then the tree.
@@ -20,7 +24,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   - `struct x_base_t` takes a table of slot functions in place of six hook
     atoms.
   - The error, mark and free hooks have the signature `x_fn_t`; the types
-    `x_heap_mark_fn_t` and `x_heap_free_fn_t` are removed.
+    `x_heap_mark_fn_t` and `x_heap_free_fn_t` are removed. An integer or a
+    string among a hook's arguments travels in an atom.
 
 ## [0.1.0] - 2026-03-06
 ### Added

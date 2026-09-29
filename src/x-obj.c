@@ -37,6 +37,20 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
 	x_true_obj  = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_TRUE_TEXT}),
 	x_false_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X_OBJ_FALSE_TEXT});
 
+/* The static length atoms of x-vector.h, one for each of the lengths 0 to
+ * X_VECTOR_LENGTH_STATIC_LEN - 1. */
+x_satom_t x_vector_length_objs[X_VECTOR_LENGTH_STATIC_LEN] = {
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 0}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 1}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 2}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 3}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 4}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 5}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 6}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 7}),
+	x_obj_set(NULL, X_OBJ_FLAG_NONE, {.i = 8})
+};
+
 
 /*
  * # Object Functions
@@ -295,32 +309,49 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 }
 
 /**
- * Slot function for x_obj_alloc().
+ * Allocate a vector and initialize its elements.
+ *
+ * A vector of @p length elements has its length in its first data unit
+ * and its elements after it (see x-vector.h). The length is one of the
+ * static length atoms when there is one for it, and an atom of its own
+ * otherwise.
  *
  * @param p_base Base (execution context).
- * @param p_args Argument vector: (type, flags, units).
- * @return The new object, as x_obj_alloc() returns it.
+ * @param p_type The type object to assign, or NULL.
+ * @param flags  Initial object flags.
+ * @param length The number of elements.
+ * @param ...    The elements, @p length of them, each an `x_obj_t *`.
+ * @return The new vector, or NULL on allocation failure.
  */
-x_obj_t *x_slot_obj_alloc(x_obj_t *p_base, x_obj_t *p_args)
+x_obj_t *x_vector_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags,
+	x_int_t length, ...)
 {
-	return x_obj_alloc(p_base,
-		x_slot_argobj(p_args, 0),
-		(x_obj_flag_t)x_slot_argint(p_args, 1),
-		(size_t)x_slot_argint(p_args, 2));
-}
+	x_obj_t *p_obj;
+	x_int_t i;
+	va_list ap;
 
-/**
- * Slot function for x_obj_free().
- *
- * @param p_base Base (execution context).
- * @param p_args Argument vector: (object).
- * @return NULL.
- */
-x_obj_t *x_slot_obj_free(x_obj_t *p_base, x_obj_t *p_args)
-{
-	x_obj_free(p_base, x_slot_argobj(p_args, 0));
+	p_obj = x_obj_alloc(p_base, p_type, flags, (size_t)x_vector_units(length));
 
-	return NULL;
+	if (p_obj == NULL) {
+		return NULL;
+	}
+
+	/* Every unit holds an object or nil before the length is allocated. */
+	x_vectorlengthobj(p_obj) = NULL;
+
+	va_start(ap, length);
+
+	for (i = 0; i < length; i++) {
+		x_vectorobj(p_obj, i) = va_arg(ap, x_obj_t *);
+	}
+
+	va_end(ap);
+
+	x_vectorlengthobj(p_obj) = length < X_VECTOR_LENGTH_STATIC_LEN
+		? x_vector_length_obj(length)
+		: x_mksatom(p_base, X_OBJ_FLAG_NONE, length);
+
+	return p_obj;
 }
 
 /**
@@ -350,9 +381,10 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)) {
-		x_obj_t hook_args[x_slot_args_units(1)] = x_slot_args({ .p = p_obj });
+		x_obj_t hook_args[x_vector_storage(1)] =
+			x_vector_set(x_base_vector_type(p_base), 1, { p_obj });
 
-		return x_base_slot(p_base, X_SLOT_TYPE_NAME)(p_base, hook_args);
+		return x_base_call(p_base, X_SLOT_TYPE_NAME, hook_args);
 	}
 
 	return NULL;
@@ -435,9 +467,10 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_slot_isset(p_base, X_SLOT_UNITS)) {
-		x_obj_t hook_args[x_slot_args_units(1)] = x_slot_args({ .p = p_obj });
+		x_obj_t hook_args[x_vector_storage(1)] =
+			x_vector_set(x_base_vector_type(p_base), 1, { p_obj });
 
-		return x_base_slot(p_base, X_SLOT_UNITS)(p_base, hook_args);
+		return x_base_call(p_base, X_SLOT_UNITS, hook_args);
 	}
 
 	return NULL;
@@ -518,9 +551,10 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_slot_isset(p_base, X_SLOT_LENGTH)) {
-		x_obj_t hook_args[x_slot_args_units(1)] = x_slot_args({ .p = p_obj });
+		x_obj_t hook_args[x_vector_storage(1)] =
+			x_vector_set(x_base_vector_type(p_base), 1, { p_obj });
 
-		return x_base_slot(p_base, X_SLOT_LENGTH)(p_base, hook_args);
+		return x_base_call(p_base, X_SLOT_LENGTH, hook_args);
 	}
 
 	return NULL;
@@ -633,7 +667,7 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  * Output an error message to stderr.
  *
  * If the base's #X_SLOT_ERROR slot is set, calls the hook there with the
- * argument vector (message, object). Otherwise, extracts the object's
+ * argument vector (message, object), the message as an atom. Otherwise, extracts the object's
  * string text (if it is a static atom) and calls x_error().
  *
  * @param p_base  Base (execution context).
@@ -645,10 +679,13 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 	x_char_t *p_text = NULL;
 
 	if (x_base_slot_isset(p_base, X_SLOT_ERROR)) {
-		x_obj_t hook_args[x_slot_args_units(2)] =
-			x_slot_args({ .s = message }, { .p = p_obj });
+		x_satom_t message_atom =
+			x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .s = message });
+		x_obj_t hook_args[x_vector_storage(2)] =
+			x_vector_set(x_base_vector_type(p_base), 2,
+				{ (x_obj_t *)message_atom }, { p_obj });
 
-		x_base_slot(p_base, X_SLOT_ERROR)(p_base, hook_args);
+		x_base_call(p_base, X_SLOT_ERROR, hook_args);
 		return;
 	}
 

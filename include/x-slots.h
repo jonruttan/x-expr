@@ -13,27 +13,29 @@
  * its slot.
  *
  * @details
- * A slot holds a function pointer and nothing more. Every slot function
- * has the engine's one signature, #x_fn_t:
+ * The slot vector is a vector (see @ref x-vector.h) whose elements are
+ * function pointers. A slot holds a function pointer and nothing more.
+ * Every slot function has the engine's one signature, #x_fn_t:
  *
  * @code
  *   x_obj_t *fn(x_obj_t *p_base, x_obj_t *p_args);
  * @endcode
  *
- * and @p p_args is always an @e argument @e vector: an object whose data
- * units are the function's arguments, side by side. An argument that is an
- * integer travels as a plain word in its unit. The caller builds the
- * argument vector in stack storage (see x_slot_args()), so a call through
- * a slot allocates nothing.
+ * and @p p_args is always an @e argument @e vector: a vector whose
+ * elements are the function's arguments, each an object. An argument that
+ * is an integer or a string travels in an atom. The caller builds the
+ * argument vector in stack storage, so a call through a slot allocates
+ * nothing.
  *
  * @code
  *   base                      slot vector              argument vector
  *   +---------+               +---------+              +---------+
  *   | header  |               | header  |              | header  |
  *   +---------+               +---------+              +---------+
- *   | slots   | ------------> | slot 0  |              | arg 0   |
- *   | tree    |               | slot 1  |              | arg 1   |
- *   +---------+               | ...     |              | ...     |
+ *   | slots   | ------------> | length  |              | length  |
+ *   | tree    |               | slot 0  |              | arg 0   |
+ *   +---------+               | slot 1  |              | arg 1   |
+ *                             | ...     |              | ...     |
  *                             +---------+              +---------+
  * @endcode
  *
@@ -57,6 +59,7 @@
  */
 
 #include "x-obj.h"
+#include "x-vector.h"
 
 /**
  * @name Slot Positions
@@ -93,19 +96,19 @@ enum x_slot_enum
 	/** Free hook. Arguments: (object). Returns NULL. */
 	X_SLOT_HEAP_FREE,
 
-	/** x_obj_alloc(). Arguments: (type, flags, units). */
+	/** Allocate an object. Arguments: (type, flags, units). */
 	X_SLOT_OBJ_ALLOC,
 
-	/** x_obj_free(). Arguments: (object). Returns NULL. */
+	/** Free an object. Arguments: (object). Returns NULL. */
 	X_SLOT_OBJ_FREE,
 
-	/** x_heap_tree_mark(). Arguments: (object, flags). */
+	/** Mark a tree. Arguments: (object, flags). */
 	X_SLOT_HEAP_TREE_MARK,
 
-	/** x_heap_sweep(). Arguments: (object, flags). */
+	/** Sweep the heap. Arguments: (object, flags). */
 	X_SLOT_HEAP_SWEEP,
 
-	/** x_heap_root_chain_mark(). Arguments: (flags). */
+	/** Mark the root chain. Arguments: (flags). */
 	X_SLOT_HEAP_ROOT_CHAIN_MARK,
 
 	/** The number of slots x-expr owns, and the first position an
@@ -123,72 +126,10 @@ enum x_slot_enum
 /**
  * The function pointer in slot @p I of slot vector @p V (an lvalue).
  */
-#define x_slot(V,I)					x_fn(x_obj_data_i((V), (I)))
-
-/** @} */
-
-/**
- * @name Argument Vectors
- * @brief Build an argument vector in stack storage, and read one.
- * @{
- */
-
-/**
- * The number of units of storage an argument vector of @p N arguments
- * takes: the metadata, then the arguments.
- *
- * @code
- *   x_obj_t args[x_slot_args_units(2)] = x_slot_args({ .p = p_obj }, { .i = flags });
- * @endcode
- */
-#define x_slot_args_units(N)		(X_OBJ_META_LEN + (N))
-
-/**
- * Brace initializer for an argument vector: each argument is given as a
- * datum initializer, in order.
- */
-#define x_slot_args(...)			x_obj_set(NULL, X_OBJ_FLAG_NONE, __VA_ARGS__)
-
-/** Argument @p I of argument vector @p A, as a raw datum (an lvalue). */
-#define x_slot_arg(A,I)				x_obj_data_i((A), (I))
-
-/** Argument @p I of argument vector @p A, as an object. */
-#define x_slot_argobj(A,I)			x_obj(x_slot_arg((A), (I)))
-
-/** Argument @p I of argument vector @p A, as an integer. */
-#define x_slot_argint(A,I)			x_int(x_slot_arg((A), (I)))
-
-/** Argument @p I of argument vector @p A, as a string. */
-#define x_slot_argstr(A,I)			x_str(x_slot_arg((A), (I)))
-
-/** @} */
-
-/**
- * @name Slot Functions
- * @{
- */
+#define x_slot(V,I)					x_vectorfn((V), (I))
 
 /** Make a slot vector of @p length slots, every one empty. */
 x_obj_t *x_slots_make(x_obj_t *p_base, x_int_t length);
-
-/** Slot function for x_obj_alloc(). */
-x_obj_t *x_slot_obj_alloc(x_obj_t *p_base, x_obj_t *p_args);
-
-/** Slot function for x_obj_free(). */
-x_obj_t *x_slot_obj_free(x_obj_t *p_base, x_obj_t *p_args);
-
-#ifdef X_HEAP
-
-/** Slot function for x_heap_tree_mark(). */
-x_obj_t *x_slot_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args);
-
-/** Slot function for x_heap_sweep(). */
-x_obj_t *x_slot_heap_sweep(x_obj_t *p_base, x_obj_t *p_args);
-
-/** Slot function for x_heap_root_chain_mark(). */
-x_obj_t *x_slot_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args);
-
-#endif /* X_HEAP */
 
 /** @} */
 

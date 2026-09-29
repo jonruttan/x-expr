@@ -24,9 +24,11 @@
 /**
  * Make a slot vector of @p length slots, every one empty.
  *
- * The vector is an object with no type, so the collector does not look
- * inside it, and it is allocated with X_OBJ_FLAG_SHARED, so a sweep keeps
- * it for as long as the base lives.
+ * The slot vector is a vector: its first data unit holds its length, and
+ * its slots follow. It is made with no type; the embedding layer gives it
+ * one when it has a vector type to give. It is allocated with
+ * X_OBJ_FLAG_SHARED, as its length atom is, so a sweep keeps both for as
+ * long as the base lives.
  *
  * @param p_base Base the vector belongs to (allocation context).
  * @param length The number of slots.
@@ -37,11 +39,14 @@ x_obj_t *x_slots_make(x_obj_t *p_base, x_int_t length)
 	x_obj_t *p_slots;
 	x_int_t i;
 
-	p_slots = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_SHARED, (size_t)length);
+	p_slots = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_SHARED,
+		(size_t)x_vector_units(length));
 
 	if (p_slots == NULL) {
 		return NULL;
 	}
+
+	x_vectorlengthobj(p_slots) = atom(length);
 
 	for (i = 0; i < length; i++) {
 		x_slot(p_slots, i) = NULL;

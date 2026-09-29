@@ -45,10 +45,10 @@ static x_int_t _mark_fn_flags;
 
 static x_obj_t *_mark_fn_continue(x_obj_t *p_base, x_obj_t *p_args)
 {
-	_mark_fn_object = x_slot_argobj(p_args, 0);
-	_mark_fn_flags = x_slot_argint(p_args, 1);
+	_mark_fn_object = x_vectorobj(p_args, 0);
+	_mark_fn_flags = x_atomint(x_vectorobj(p_args, 1));
 
-	return x_slot_argobj(p_args, 0);
+	return x_vectorobj(p_args, 0);
 }
 
 static x_obj_t *_mark_fn_stop(x_obj_t *p_base, x_obj_t *p_args)
@@ -62,7 +62,7 @@ static x_obj_t *_free_fn_object;
 static x_obj_t *_free_fn(x_obj_t *p_base, x_obj_t *p_args)
 {
 	_free_fn_count++;
-	_free_fn_object = x_slot_argobj(p_args, 0);
+	_free_fn_object = x_vectorobj(p_args, 0);
 
 	return NULL;
 }
@@ -90,7 +90,6 @@ static x_obj_t *test_make_heap_base(x_fn_t mark_fn, x_fn_t free_fn)
 static char *test_heap_tree_mark(void)
 {
 	x_obj_t *p_base, *p_obj[3], *p_ret;
-	x_obj_t args[x_slot_args_units(2)] = x_slot_args({ .p = NULL }, { .i = 0 });
 
 	helper_alloc_reset();
 
@@ -168,24 +167,12 @@ static char *test_heap_tree_mark(void)
 		X_OBJ_FLAG_MARK == (x_obj_flags(p_obj[0]) & X_OBJ_FLAG_MARK));
 	_it_should("return NULL when mark_fn stops", p_ret == NULL);
 
-	/* The slot function */
-	p_obj[0] = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
-	x_slot_argobj(args, 0) = p_obj[0];
-	x_slot_argint(args, 1) = X_OBJ_FLAG_MARK;
-	p_ret = x_slot_heap_tree_mark(NULL, args);
-	_it_should("mark through the slot function",
-		X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0])
-		&& p_ret == p_obj[0]);
-
-	x_sys_free(p_obj[0]);
-
 	return NULL;
 }
 
 static char *test_heap_sweep(void)
 {
 	x_obj_t *p_base, *p_obj[4], *p_ret;
-	x_obj_t args[x_slot_args_units(2)] = x_slot_args({ .p = NULL }, { .i = 0 });
 	x_char_t *s;
 	int n;
 
@@ -484,17 +471,6 @@ static char *test_heap_sweep(void)
 	_it_should("hand the free hook the object", _free_fn_object == p_obj[0]);
 	_it_should("free the object via callback", 1 == helper_free_count() - n);
 	_it_should("return the base object after free callback", p_base == p_ret);
-
-	/* The slot function */
-	p_obj[0] = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_NONE, 0);
-	x_slot_argobj(args, 0) = x_obj_heap(p_base);
-	x_slot_argint(args, 1) = X_OBJ_FLAG_RO;
-
-	n = helper_free_count();
-	p_ret = x_slot_heap_sweep(p_base, args);
-	_it_should("sweep through the slot function",
-		1 == helper_free_count() - n
-		&& p_base == p_ret);
 
 	return NULL;
 }
