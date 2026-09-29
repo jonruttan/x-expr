@@ -83,9 +83,10 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * data units are left uninitialized.
  *
  * @param p_base Base (execution context), or NULL to allocate without a base.
- * @param p_type The type object to assign, or NULL.
- * @param flags  Initial object flags.
- * @param units  Number of data units to allocate.
+ * @param p_args Argument vector: (type, flags, units). The type is the
+ *               type object to assign, or NULL; the flags are the initial
+ *               object flags and the units the number of data units to
+ *               allocate, each in an atom.
  * @return The new object, or NULL on allocation failure when no full
  *         base is attached (scratch/fixture use: the caller owns the
  *         null-check).  With a full base attached the failure does not
@@ -99,8 +100,11 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  *       through the base error path and stop the process rather than
  *       allocate past it -- the runaway-memory guard.
  */
-x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
+x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_args)
 {
+	x_obj_t *p_type = x_vectorobj(p_args, 0);
+	x_obj_flag_t flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 1));
+	size_t units = (size_t)x_atomint(x_vectorobj(p_args, 2));
 	x_obj_t *p_obj;
 	/* Chasing base fields below requires a full, TYPED base -- the same
 	 * predicate the obj-meta-extra fetch has always used.  x_base_isset
@@ -224,7 +228,14 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
  */
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, va_list ap)
 {
-	x_obj_t *p_obj = x_obj_alloc(p_base, p_type, flags, units);
+	x_satom_t flags_atom =
+		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)flags }),
+		units_atom =
+		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)units });
+	x_obj_t alloc_args[x_vector_storage(3)] = x_vector_set(
+		x_base_vector_type(p_base), 3,
+		{ p_type }, { (x_obj_t *)flags_atom }, { (x_obj_t *)units_atom });
+	x_obj_t *p_obj = x_base_call_or(p_base, X_SLOT_OBJ_ALLOC, x_obj_alloc, alloc_args);
 	x_obj_t **p;
 
 	if (p_obj == NULL) {
@@ -273,10 +284,12 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
  * objects.
  *
  * @param p_base Base (execution context; used to size extra metadata units).
- * @param p_obj  The object to free.
+ * @param p_args Argument vector: (object), the object to free.
+ * @return NULL.
  */
-void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
+x_obj_t *x_obj_free(x_obj_t *p_base, x_obj_t *p_args)
 {
+	x_obj_t *p_obj = x_vectorobj(p_args, 0);
 	x_obj_t *p_alloc = p_obj;
 	/* Full, typed base -- the only base whose fields may be chased (see
 	 * x_obj_alloc: x_base_isset alone admits minimal test/embedder bases
@@ -306,6 +319,8 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 #endif /* X_HEAP */
 
 	x_sys_free(p_alloc);
+
+	return NULL;
 }
 
 /**
@@ -326,11 +341,18 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 x_obj_t *x_vector_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags,
 	x_int_t length, ...)
 {
+	x_satom_t flags_atom =
+		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)flags }),
+		units_atom =
+		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)x_vector_units(length) });
+	x_obj_t alloc_args[x_vector_storage(3)] = x_vector_set(
+		x_base_vector_type(p_base), 3,
+		{ p_type }, { (x_obj_t *)flags_atom }, { (x_obj_t *)units_atom });
 	x_obj_t *p_obj;
 	x_int_t i;
 	va_list ap;
 
-	p_obj = x_obj_alloc(p_base, p_type, flags, (size_t)x_vector_units(length));
+	p_obj = x_base_call_or(p_base, X_SLOT_OBJ_ALLOC, x_obj_alloc, alloc_args);
 
 	if (p_obj == NULL) {
 		return NULL;

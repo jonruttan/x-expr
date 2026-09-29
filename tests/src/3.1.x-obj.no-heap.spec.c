@@ -90,13 +90,13 @@ static char *test_obj_alloc(void)
 
 	helper_alloc_reset();
 
-	p_obj = x_obj_alloc(NULL, (x_obj_t *)x_type_atom_obj, flags, X_OBJ_UNITS_ATOM);
+	p_obj = x_obj_alloc(NULL, x_autovector(NULL, 3, { (x_obj_t *)x_type_atom_obj }, { x_autoatom(flags) }, { x_autoatom(X_OBJ_UNITS_ATOM) }));
 	_it_should("allocate an object with type and flags",
 		NULL != p_obj
 		&& (x_obj_t *)x_type_atom_obj == x_obj_type(p_obj)
 		&& flags == x_obj_flags(p_obj)
 	);
-	x_obj_free(NULL, p_obj);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_obj }));
 
 	return NULL;
 }
@@ -116,7 +116,7 @@ static char *test_obj_make(void)
 		&& d0 == x_firstint(p_obj)
 		&& d1 == x_restint(p_obj)
 	);
-	x_obj_free(NULL, p_obj);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_obj }));
 
 	return NULL;
 }
@@ -132,7 +132,7 @@ static char *test_obj_free(void)
 		NULL != p_obj
 	);
 
-	x_obj_free(NULL, p_obj);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_obj }));
 	_it_should("free the object",
 		1 == helper_free_count()
 	);

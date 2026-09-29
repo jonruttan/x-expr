@@ -70,7 +70,9 @@
  * The positions x-expr owns in the slot vector.
  *
  * The first six are the hooks an embedding layer supplies; x-expr fills
- * the rest with its own routines.
+ * the rest with its own routines, each of which takes the argument vector
+ * itself. An embedding layer replaces one by naming another function at
+ * its position in the table it hands x_base_make().
  */
 enum x_slot_enum
 {

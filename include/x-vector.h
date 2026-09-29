@@ -139,6 +139,30 @@ x_obj_t *x_vector_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags,
 #define x_vector_set(T,N,...) \
 	x_obj_set((T), X_OBJ_FLAG_NONE, { x_vector_length_obj(N) }, __VA_ARGS__)
 
+/**
+ * A vector of @p N elements in automatic storage, with type @p T, written
+ * as an expression: each element is given as a datum initializer, in
+ * order. The vector lasts as long as the block the expression is in.
+ *
+ * It is for a call written in the open, where an argument vector must be
+ * built without allocating:
+ *
+ * @code
+ *   x_obj_free(p_base, x_autovector(NULL, 1, { p_obj }));
+ * @endcode
+ */
+#define x_autovector(T,N,...) \
+	((x_obj_t[x_vector_storage(N)])x_vector_set((T), (N), __VA_ARGS__))
+
+/**
+ * An atom in automatic storage holding the integer @p V, written as an
+ * expression: how an integer argument travels in a vector built by
+ * x_autovector().
+ */
+#define x_autoatom(V) \
+	((x_obj_t *)(x_satom_t)x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, \
+		{ .i = (x_int_t)(V) }))
+
 /** @} */
 
 #endif /* X_VECTOR_H */

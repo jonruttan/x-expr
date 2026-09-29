@@ -26,37 +26,40 @@
  * continue tail-iteration, or NULL to stop. Already-marked objects (those
  * with @p flags already set) are skipped to avoid cycles.
  *
- * The hook's argument vector, (object, flags), is built once, in this
- * frame, and its first argument is set for each object the hook is called
- * on. The flags travel in an atom.
+ * The hook takes the arguments this routine does, (object, flags), so one
+ * argument vector serves the hook and the walk of a first branch. It is
+ * built once, in this frame, around the flags atom this routine was
+ * handed, and its first argument is set for each object it is passed for.
  *
  * @param p_base Base (execution context).
- * @param p_obj  Root object to start marking from.
- * @param flags  Flags to set on each marked object.
+ * @param p_args Argument vector: (object, flags). The object is the root
+ *               to start marking from; the flags, in an atom, are set on
+ *               each marked object.
  * @return The last object visited.
  */
-x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
+x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args)
 {
+	x_obj_t *p_obj = x_vectorobj(p_args, 0);
+	x_obj_flag_t flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 1));
 	x_fn_t p_mark_fn = x_base_slot_isset(p_base, X_SLOT_HEAP_MARK)
 		? x_base_slot(p_base, X_SLOT_HEAP_MARK)
 		: NULL;
-	x_satom_t flags_atom =
-		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = flags });
-	x_obj_t mark_args[x_vector_storage(2)] =
-		x_vector_set(NULL, 2, { NULL }, { (x_obj_t *)flags_atom });
+	x_obj_t mark_args[x_vector_storage(2)] = x_vector_set(
+		x_base_vector_type(p_base), 2,
+		{ NULL }, { x_vectorobj(p_args, 1) });
 
 	while (p_obj != NULL && (x_obj_flags(p_obj) & flags) != flags) {
 		x_obj_flags(p_obj) |= flags;
 
 		if (x_obj_type_isspair(p_obj)) {
-			x_heap_tree_mark(p_base, x_firstobj(p_obj), flags);
+			x_vectorobj(mark_args, 0) = x_firstobj(p_obj);
+			x_base_call_or(p_base, X_SLOT_HEAP_TREE_MARK, x_heap_tree_mark, mark_args);
 			p_obj = x_restobj(p_obj);
 
 			continue;
 		}
 
 		if (p_mark_fn != NULL) {
-			x_obj_type(mark_args) = x_base_vector_type(p_base);
 			x_vectorobj(mark_args, 0) = p_obj;
 			p_obj = p_mark_fn(p_base, mark_args);
 
@@ -81,20 +84,33 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  *   slot is called first for type-specific cleanup, then x_obj_free().
  *   The heap chain is relinked to skip the freed object.
  *
+ * The free hook and x_obj_free() take the same argument, (object), so one
+ * argument vector serves both. Both routines are read from their slots
+ * once, before the walk, since the walk may free the base.
+ *
  * @note If the top object on the heap is deleted, the heap structure
  *       will fragment.
  *
  * @param p_base Base (execution context).
- * @param p_obj  Start of the heap chain to sweep.
- * @param flags  Mark flags to check (objects with these flags are retained).
+ * @param p_args Argument vector: (object, flags). The object is the start
+ *               of the heap chain to sweep; the flags, in an atom, are the
+ *               mark flags to check (objects with these flags are
+ *               retained).
  * @return The base object.
  */
-x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_args)
 {
+	x_obj_t *p_obj = x_vectorobj(p_args, 0);
+	x_obj_flag_t flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 1));
 	x_fn_t p_free_fn = x_base_slot_isset(p_base, X_SLOT_HEAP_FREE)
 		? x_base_slot(p_base, X_SLOT_HEAP_FREE)
 		: NULL;
-	x_obj_t free_args[x_vector_storage(1)] = x_vector_set(NULL, 1, { NULL });
+	x_fn_t p_obj_free_fn = x_base_slot_isset(p_base, X_SLOT_OBJ_FREE)
+		? x_base_slot(p_base, X_SLOT_OBJ_FREE)
+		: x_obj_free;
+	x_obj_t free_args[x_vector_storage(1)] = x_vector_set(
+		x_base_vector_type(p_base), 1,
+		{ NULL });
 	x_obj_t *p_ret = p_base;
 	x_obj_t *p_node = p_obj, *p_next,
 		*p_prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
@@ -107,14 +123,14 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 			p_prev = p_node;
 			p_node = x_obj_heap(p_node);
 		} else {
+			x_vectorobj(free_args, 0) = p_node;
+
 			if (p_free_fn != NULL) {
-				x_obj_type(free_args) = x_base_vector_type(p_base);
-				x_vectorobj(free_args, 0) = p_node;
 				p_free_fn(p_base, free_args);
 			}
 
 			p_next = x_obj_heap(p_prev) = x_obj_heap(p_node);
-			x_obj_free(p_base, p_node);
+			p_obj_free_fn(p_base, free_args);
 
 			/* The teardown idiom -- x_heap_sweep(base, base, NONE) -- frees
 			 * the base itself partway through the walk.  From then on the
@@ -178,11 +194,16 @@ x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags)
  * visited a node through a field that stores it.
  *
  * @param p_base Base (execution context).
- * @param flags  Flags to set on each marked object.
+ * @param p_args Argument vector: (flags), the flags to set on each marked
+ *               object, in an atom.
  * @return NULL.
  */
-x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
+x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args)
 {
+	x_obj_flag_t flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 0));
+	x_obj_t mark_args[x_vector_storage(2)] = x_vector_set(
+		x_base_vector_type(p_base), 2,
+		{ NULL }, { x_vectorobj(p_args, 0) });
 	x_obj_t *p_node;
 
 	if ( ! x_base_isset(p_base)) {
@@ -192,7 +213,8 @@ x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
 	x_heap_chain_clear(x_heap_root_chain(p_base), flags);
 
 	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
-		x_heap_tree_mark(p_base, p_node, flags);
+		x_vectorobj(mark_args, 0) = p_node;
+		x_base_call_or(p_base, X_SLOT_HEAP_TREE_MARK, x_heap_tree_mark, mark_args);
 	}
 
 	return NULL;

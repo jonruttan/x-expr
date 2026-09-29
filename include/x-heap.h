@@ -55,10 +55,10 @@
  */
 
 /** Walk a pair tree, setting mark flags on each reachable object. */
-x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
+x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args);
 
 /** Sweep the heap, freeing unmarked objects. */
-x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_args);
 
 /** Clear @p flags on every object of a chain, freeing nothing. */
 x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags);
@@ -164,7 +164,7 @@ void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root);
 		: (void)0)
 
 /** Mark every object registered on the root chain (two passes). */
-x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags);
+x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args);
 
 /** @} */
 

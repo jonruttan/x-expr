@@ -96,7 +96,7 @@ static char *test_heap_tree_mark(void)
 	/* Atoms */
 	p_obj[0] = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
 
-	p_ret = x_heap_tree_mark(NULL, p_obj[0], X_OBJ_FLAG_MARK);
+	p_ret = x_heap_tree_mark(NULL, x_autovector(NULL, 2, { p_obj[0] }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("return the object", p_ret == p_obj[0]);
 	_it_should("mark the atom",
 		X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0]));
@@ -112,7 +112,7 @@ static char *test_heap_tree_mark(void)
 	p_obj[2] = x_mkspair(NULL, X_OBJ_FLAG_NONE, p_obj[0], p_obj[1]);
 	_it_should("set the pair object's flags to 0", x_obj_flags(p_obj[2]) == 0);
 
-	p_ret = x_heap_tree_mark(NULL, p_obj[2], X_OBJ_FLAG_MARK);
+	p_ret = x_heap_tree_mark(NULL, x_autovector(NULL, 2, { p_obj[2] }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("mark the pair's first object", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0]));
 	_it_should("mark the pair's rest object", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[1]));
 	_it_should("mark the pair object itself", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[2]));
@@ -134,7 +134,7 @@ static char *test_heap_tree_mark(void)
 	x_restobj(p_obj[0]) = (x_obj_t *)p_obj[2];
 	x_restobj(p_obj[1]) = (x_obj_t *)p_obj[2];
 
-	p_ret = x_heap_tree_mark(NULL, p_obj[2], X_OBJ_FLAG_MARK);
+	p_ret = x_heap_tree_mark(NULL, x_autovector(NULL, 2, { p_obj[2] }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("mark the root pair", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[2]));
 	_it_should("mark the recursive pair", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0]));
 	_it_should("mark the second pair", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[1]));
@@ -150,7 +150,7 @@ static char *test_heap_tree_mark(void)
 	p_obj[0] = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	_mark_fn_object = NULL;
 	_mark_fn_flags = 0;
-	p_ret = x_heap_tree_mark(p_base, p_obj[0], X_OBJ_FLAG_MARK);
+	p_ret = x_heap_tree_mark(p_base, x_autovector(NULL, 2, { p_obj[0] }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("mark the object via mark_fn continue path",
 		X_OBJ_FLAG_MARK == (x_obj_flags(p_obj[0]) & X_OBJ_FLAG_MARK));
 	_it_should("return the object after already-marked check",
@@ -162,7 +162,7 @@ static char *test_heap_tree_mark(void)
 	/* Mark hook: stop path */
 	x_base_slot(p_base, X_SLOT_HEAP_MARK) = _mark_fn_stop;
 	p_obj[0] = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
-	p_ret = x_heap_tree_mark(p_base, p_obj[0], X_OBJ_FLAG_MARK);
+	p_ret = x_heap_tree_mark(p_base, x_autovector(NULL, 2, { p_obj[0] }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("mark the object via mark_fn stop path",
 		X_OBJ_FLAG_MARK == (x_obj_flags(p_obj[0]) & X_OBJ_FLAG_MARK));
 	_it_should("return NULL when mark_fn stops", p_ret == NULL);
@@ -189,7 +189,7 @@ static char *test_heap_sweep(void)
 
 	/* Create an object */
 	n = helper_alloc_count();
-	p_obj[0] = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_RO|X_OBJ_FLAG_MARK, 0);
+	p_obj[0] = x_obj_alloc(p_base, x_autovector(NULL, 3, { NULL }, { x_autoatom(X_OBJ_FLAG_RO|X_OBJ_FLAG_MARK) }, { x_autoatom(0) }));
 	_it_should("allocate memory for the object", 1 == helper_alloc_count() - n);
 	_it_should("set the object's flags to GC,RO", (X_OBJ_FLAG_RO|X_OBJ_FLAG_MARK) == x_obj_flags(p_obj[0]));
 	_it_should("set the object's gc pointer to NULL", NULL == x_obj_heap(p_obj[0]));
@@ -197,14 +197,14 @@ static char *test_heap_sweep(void)
 
 	/* Sweep the RO flag from the object */
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_obj[0], X_OBJ_FLAG_RO);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_obj[0] }, { x_autoatom(X_OBJ_FLAG_RO) }));
 	_it_should("not have freed the object's memory", 0 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("cleared RO bit in the object's flags", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0]));
 
 	/* Garbage collect everything */
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("free all of the objects", 2 == helper_free_count() - n);
 	_it_should("returned the base object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_free_count() == helper_alloc_count());
@@ -222,27 +222,27 @@ static char *test_heap_sweep(void)
 
 	/* Create an object */
 	n = helper_alloc_count();
-	p_obj[0] = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_MARK, 0);
+	p_obj[0] = x_obj_alloc(p_base, x_autovector(NULL, 3, { NULL }, { x_autoatom(X_OBJ_FLAG_MARK) }, { x_autoatom(0) }));
 	_it_should("allocate memory for the object", 1 == helper_alloc_count() - n);
 	_it_should("set the object's flags to GC", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0]));
 	_it_should("set the object's gc pointer to NULL", NULL == x_obj_heap(p_obj[0]));
 	_it_should("set the base object's gc pointer to the object", p_obj[0] == x_obj_heap(p_base));
 
 	n = helper_alloc_count();
-	p_obj[1] = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_NONE, 0);
+	p_obj[1] = x_obj_alloc(p_base, x_autovector(NULL, 3, { NULL }, { x_autoatom(X_OBJ_FLAG_NONE) }, { x_autoatom(0) }));
 	_it_should("allocate memory for the orphaned object", 1 == helper_alloc_count() - n);
 	_it_should("set the orphaned object's flags to 0", 0 == x_obj_flags(p_obj[1]));
 	_it_should("set the orphaned object's gc pointer to the first object", p_obj[0] == x_obj_heap(p_obj[1]));
 	_it_should("set the base object's gc pointer to the orphaned object", p_obj[1] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { x_obj_heap(p_base) }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("have freed the orphaned object's memory", 1 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("set the base object's gc pointer to the first object", p_obj[0] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("have freed the object's memory", 2 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_free_count() == helper_alloc_count());
@@ -269,14 +269,14 @@ static char *test_heap_sweep(void)
 
 	/* Sweep the RO flag from the object */
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_obj[0], X_OBJ_FLAG_RO);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_obj[0] }, { x_autoatom(X_OBJ_FLAG_RO) }));
 	_it_should("not have freed the object's memory", 0 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("cleared RO bit in the object's flags", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[0]));
 
 	/* Garbage collect everything */
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("free the object's memory", 2 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_free_count() == helper_alloc_count());
@@ -309,13 +309,13 @@ static char *test_heap_sweep(void)
 	_it_should("set the base object's gc pointer to the object", p_obj[1] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { x_obj_heap(p_base) }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("have freed the orphaned object's memory", 1 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("set the base object's gc pointer to the first object", p_obj[0] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("have freed the object's memory", 2 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_alloc_count() == helper_free_count());
@@ -342,14 +342,14 @@ static char *test_heap_sweep(void)
 
 	/* Sweep the RO flag from the object */
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_obj[0], X_OBJ_FLAG_RO);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_obj[0] }, { x_autoatom(X_OBJ_FLAG_RO) }));
 	_it_should("not have freed the object's memory and the owned resource", 0 == helper_free_count() - n);
 	_it_should("return the base object",  p_base == p_ret);
 	_it_should("cleared RO bit in the object's flags", (X_OBJ_FLAG_OWN|X_OBJ_FLAG_MARK) == x_obj_flags(p_obj[0]));
 
 	/* Garbage collect everything */
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("free the object's memory and the owned resource", 3 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_free_count() == helper_alloc_count());
@@ -384,13 +384,13 @@ static char *test_heap_sweep(void)
 	_it_should("set the base object's gc pointer to the object", p_obj[1] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { x_obj_heap(p_base) }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("have freed the orphaned object's memory and the owned resource", 2 ==helper_free_count() - n);
 	_it_should("return the base object",  p_base == p_ret);
 	_it_should("set the base object's gc pointer to the first object", p_obj[0] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("have freed the object's memory and the owned resource", 3 == helper_free_count() - n);
 	_it_should("return the object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_alloc_count() == helper_free_count());
@@ -432,7 +432,7 @@ static char *test_heap_sweep(void)
 	_it_should("set the base's gc pointer to the object", p_obj[2] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_obj[2], X_OBJ_FLAG_RO);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_obj[2] }, { x_autoatom(X_OBJ_FLAG_RO) }));
 	_it_should("not have freed the object's memory", 0 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("cleared RO bit in the object's flags", X_OBJ_FLAG_MARK == x_obj_flags(p_obj[2]));
@@ -446,13 +446,13 @@ static char *test_heap_sweep(void)
 	_it_should("set the object's gc pointer to the orphaned object", p_obj[3] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { x_obj_heap(p_base) }, { x_autoatom(X_OBJ_FLAG_MARK) }));
 	_it_should("have freed the orphaned object's memory", 1 == helper_free_count() - n);
 	_it_should("return the base object", p_base == p_ret);
 	_it_should("set the object's gc pointer to the pair object", p_obj[2] == x_obj_heap(p_base));
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, p_base, X_OBJ_FLAG_NONE);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_NONE) }));
 	_it_should("have freed the object's memory", 5 == helper_free_count() - n);
 	_it_should("return the object", p_base == p_ret);
 	_it_should("have freed all allocated memory", helper_free_count() == helper_alloc_count());
@@ -462,11 +462,11 @@ static char *test_heap_sweep(void)
 	_free_fn_count = 0;
 
 	p_base = test_make_heap_base(NULL, _free_fn);
-	p_obj[0] = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_NONE, 0);
+	p_obj[0] = x_obj_alloc(p_base, x_autovector(NULL, 3, { NULL }, { x_autoatom(X_OBJ_FLAG_NONE) }, { x_autoatom(0) }));
 	_free_fn_object = NULL;
 
 	n = helper_free_count();
-	p_ret = x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_RO);
+	p_ret = x_heap_sweep(p_base, x_autovector(NULL, 2, { x_obj_heap(p_base) }, { x_autoatom(X_OBJ_FLAG_RO) }));
 	_it_should("call the free callback", 1 == _free_fn_count);
 	_it_should("hand the free hook the object", _free_fn_object == p_obj[0]);
 	_it_should("free the object via callback", 1 == helper_free_count() - n);

@@ -38,11 +38,11 @@ int main(int argc, char **argv)
 		(long)999);
 
 	/* Mark phase: only mark the root tree */
-	x_heap_tree_mark(p_base, p_root, X_OBJ_FLAG_1);
-	x_heap_tree_mark(p_base, p_base, X_OBJ_FLAG_1);
+	x_heap_tree_mark(p_base, x_autovector(NULL, 2, { p_root }, { x_autoatom(X_OBJ_FLAG_1) }));
+	x_heap_tree_mark(p_base, x_autovector(NULL, 2, { p_base }, { x_autoatom(X_OBJ_FLAG_1) }));
 
 	/* Sweep phase: free anything unmarked */
-	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_1);
+	x_heap_sweep(p_base, x_autovector(NULL, 2, { x_obj_heap(p_base) }, { x_autoatom(X_OBJ_FLAG_1) }));
 
 	printf("after GC:  root=(%ld . %ld), garbage collected\n",
 		x_atomint(x_firstobj(p_root)),

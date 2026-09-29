@@ -18,6 +18,7 @@
 #include "src/x.c"
 #include "src/x-obj.c"
 #include "src/x-base.c"
+#include "src/x-heap.c"
 
 
 /*
@@ -89,13 +90,13 @@ static char *test_base_isset(void)
 	_it_should("return false when base data is nil",
 		! x_base_isset(p_base)
 	);
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	p_base = test_make_base(NULL);
 	_it_should("return true when base is set",
 		x_base_isset(p_base)
 	);
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	return NULL;
 }
@@ -132,7 +133,7 @@ static char *test_base_make(void)
 		obj_meta_extra == x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base)))
 	);
 
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	return NULL;
 }
@@ -167,23 +168,32 @@ static char *test_base_slots(void)
 		&& NULL != x_base(p_base)
 	);
 
-	for (empty = 0, i = 0; i < X_SLOT_EXPR_LEN; i++) {
+	for (empty = 0, i = 0; i < X_SLOT_OBJ_ALLOC; i++) {
 		if (NULL == x_base_slot(p_base, i)) {
 			empty++;
 		}
 	}
 
-	_it_should("make every slot x-expr owns, each empty",
-		X_SLOT_EXPR_LEN == empty
+	_it_should("make the hook slots, each empty",
+		X_SLOT_OBJ_ALLOC == empty
+	);
+
+	_it_should("fill the other slots x-expr owns with its own routines",
+		x_obj_alloc == x_base_slot(p_base, X_SLOT_OBJ_ALLOC)
+		&& x_obj_free == x_base_slot(p_base, X_SLOT_OBJ_FREE)
+		&& x_heap_tree_mark == x_base_slot(p_base, X_SLOT_HEAP_TREE_MARK)
+		&& x_heap_sweep == x_base_slot(p_base, X_SLOT_HEAP_SWEEP)
+		&& x_heap_root_chain_mark
+			== x_base_slot(p_base, X_SLOT_HEAP_ROOT_CHAIN_MARK)
 	);
 
 	_it_should("say an empty slot is not set",
 		! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
 	);
 
-	x_obj_free(NULL, x_vectorlengthobj(x_base_slots(p_base)));
-	x_obj_free(NULL, x_base_slots(p_base));
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_autovector(NULL, 1, { x_base_slots(p_base) }));
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	p_base = NULL;
 	_it_should("say no slot is set on a NULL base",
@@ -195,7 +205,7 @@ static char *test_base_slots(void)
 		! x_base_isset(p_base)
 		&& ! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
 	);
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	/* Slots given, past the ones x-expr owns. */
 	for (i = 0; i < X_SLOT_EXPR_LEN + 2; i++) {
@@ -223,6 +233,22 @@ static char *test_base_slots(void)
 		&& NULL == x_base_slot(p_base, X_SLOT_EXPR_LEN)
 	);
 
+	_it_should("keep x-expr's routine in a slot given as NULL",
+		x_obj_alloc == x_base_slot(p_base, X_SLOT_OBJ_ALLOC)
+	);
+
+	/* A routine x-expr owns is replaced from the parameters. */
+	x_obj_free(NULL, x_autovector(NULL, 1, { x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_autovector(NULL, 1, { x_base_slots(p_base) }));
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+
+	slots[X_SLOT_HEAP_SWEEP] = _slot_fn_b;
+	p_base = x_base_make(NULL, base);
+
+	_it_should("fill a slot x-expr owns from the parameters",
+		_slot_fn_b == x_base_slot(p_base, X_SLOT_HEAP_SWEEP)
+	);
+
 	_it_should("call the function in a slot with an argument vector",
 		(x_obj_t *)args == x_base_slot(p_base, X_SLOT_UNITS)(p_base, args)
 	);
@@ -247,9 +273,9 @@ static char *test_base_slots(void)
 		! x_base_slot_isset(p_base, X_SLOT_UNITS)
 	);
 
-	x_obj_free(NULL, x_vectorlengthobj(x_base_slots(p_base)));
-	x_obj_free(NULL, x_base_slots(p_base));
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_autovector(NULL, 1, { x_base_slots(p_base) }));
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	return NULL;
 }
@@ -429,7 +455,7 @@ static char *test_base_write_buf(void)
 	x_base_write(p_base, p_args);
 	_it_should("write to fd when buf is nil", 'X' == out[0]);
 
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
 
 	return NULL;
 }

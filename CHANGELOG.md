@@ -12,8 +12,12 @@ This project adheres to [Semantic Versioning](http://semver.org/).
     per slot, the routines the engine calls through. A slot function has the
     signature `x_fn_t`, and its arguments arrive as an argument vector: a
     vector of objects, built in stack storage.
-  - `x_base_call`, a call through a slot, and `x_base_vector_type`, the type
-    a vector made for a base carries.
+  - `x_base_call`, a call through a slot, `x_base_call_or`, which calls the
+    routine named when the base has no slot vector or the slot is empty, and
+    `x_base_vector_type`, the type a vector made for a base carries.
+  - `x_autovector` and `x_autoatom`, a vector and an integer atom in
+    automatic storage written as expressions, for a call written in the
+    open.
 
 ### Changed
   - The base object has two data units: the slot vector, then the tree.
@@ -26,6 +30,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   - The error, mark and free hooks have the signature `x_fn_t`; the types
     `x_heap_mark_fn_t` and `x_heap_free_fn_t` are removed. An integer or a
     string among a hook's arguments travels in an atom.
+  - `x_obj_alloc`, `x_obj_free`, `x_heap_tree_mark`, `x_heap_sweep` and
+    `x_heap_root_chain_mark` have the signature `x_fn_t` and take an
+    argument vector. `x_base_make` puts each in its slot, a table entry of
+    the caller's replaces it, and x-expr's own calls go through the slots.
+    `x_obj_free` returns NULL.
 
 ## [0.1.0] - 2026-03-06
 ### Added

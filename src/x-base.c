@@ -14,6 +14,10 @@
 
 #include "x-base.h"
 
+#ifdef X_HEAP
+#include "x-heap.h"
+#endif /* X_HEAP */
+
 /** @internal Shorthand for NULL used in the base tree construction. */
 #define nil			NULL
 /** @internal Shorthand for creating a shared pair in the base tree. */
@@ -36,11 +40,17 @@
  */
 x_obj_t *x_slots_make(x_obj_t *p_base, x_int_t length)
 {
+	x_satom_t flags_atom =
+		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = X_OBJ_FLAG_SHARED }),
+		units_atom =
+		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = x_vector_units(length) });
+	x_obj_t alloc_args[x_vector_storage(3)] = x_vector_set(
+		x_base_vector_type(p_base), 3,
+		{ NULL }, { (x_obj_t *)flags_atom }, { (x_obj_t *)units_atom });
 	x_obj_t *p_slots;
 	x_int_t i;
 
-	p_slots = x_obj_alloc(p_base, NULL, X_OBJ_FLAG_SHARED,
-		(size_t)x_vector_units(length));
+	p_slots = x_base_call_or(p_base, X_SLOT_OBJ_ALLOC, x_obj_alloc, alloc_args);
 
 	if (p_slots == NULL) {
 		return NULL;
@@ -85,9 +95,21 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 	length = base.slots > X_SLOT_EXPR_LEN ? base.slots : X_SLOT_EXPR_LEN;
 	x_base_slots(p_base) = x_slots_make(p_base, length);
 
+	/* x-expr's own routines, then the caller's: a position the caller's
+	 * table leaves empty keeps what x-expr put there. */
+	x_base_slot(p_base, X_SLOT_OBJ_ALLOC) = x_obj_alloc;
+	x_base_slot(p_base, X_SLOT_OBJ_FREE) = x_obj_free;
+#ifdef X_HEAP
+	x_base_slot(p_base, X_SLOT_HEAP_TREE_MARK) = x_heap_tree_mark;
+	x_base_slot(p_base, X_SLOT_HEAP_SWEEP) = x_heap_sweep;
+	x_base_slot(p_base, X_SLOT_HEAP_ROOT_CHAIN_MARK) = x_heap_root_chain_mark;
+#endif /* X_HEAP */
+
 	if (base.p_slots != NULL) {
 		for (i = 0; i < base.slots; i++) {
-			x_base_slot(p_base, i) = base.p_slots[i];
+			if (base.p_slots[i] != NULL) {
+				x_base_slot(p_base, i) = base.p_slots[i];
+			}
 		}
 	}
 
