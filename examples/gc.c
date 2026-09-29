@@ -18,8 +18,8 @@ int main(int argc, char **argv)
 	x_obj_t *p_base, *p_root, *p_garbage;
 	struct x_base_t base = {
 		STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO,
-		NULL, NULL, NULL, NULL,
-		0, NULL, NULL, &argc
+		0,
+		0, NULL
 	};
 
 	p_base = x_base_make(NULL, base);

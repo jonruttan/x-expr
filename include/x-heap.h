@@ -47,38 +47,6 @@
 #else /* X_HEAP */
 
 /**
- * @name Function Pointer Types
- * @{
- */
-
-/**
- * Mark hook for non-pair objects.
- *
- * Called by x_heap_tree_mark() when a non-pair object is encountered.
- * The hook should mark any objects reachable from p_obj (e.g. by calling
- * x_heap_tree_mark() on them). Return a non-NULL object pointer to
- * continue tail-iteration (the returned object will be marked next),
- * or NULL to stop traversal at this branch.
- *
- * Arguments: (p_base, p_obj, flags) -- the object to mark and flags to set.
- */
-typedef x_obj_t *(*x_heap_mark_fn_t)(x_obj_t *, x_obj_t *, x_obj_flag_t);
-
-/**
- * Free hook for type-specific cleanup.
- *
- * Called by x_heap_sweep() just before x_obj_free() on each object
- * being collected. Use this to release type-specific resources (e.g.
- * external handles, extra allocations) that x_obj_free() would not
- * know about.
- *
- * Arguments: (p_base, p_obj) -- the object about to be freed.
- */
-typedef void (*x_heap_free_fn_t)(x_obj_t *, x_obj_t *);
-
-/** @} */
-
-/**
  * @name Heap Management Functions
  *
  * @warning These functions assume single-threaded execution. The heap

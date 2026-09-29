@@ -295,12 +295,41 @@ void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj)
 }
 
 /**
+ * Slot function for x_obj_alloc().
+ *
+ * @param p_base Base (execution context).
+ * @param p_args Argument vector: (type, flags, units).
+ * @return The new object, as x_obj_alloc() returns it.
+ */
+x_obj_t *x_slot_obj_alloc(x_obj_t *p_base, x_obj_t *p_args)
+{
+	return x_obj_alloc(p_base,
+		x_slot_argobj(p_args, 0),
+		(x_obj_flag_t)x_slot_argint(p_args, 1),
+		(size_t)x_slot_argint(p_args, 2));
+}
+
+/**
+ * Slot function for x_obj_free().
+ *
+ * @param p_base Base (execution context).
+ * @param p_args Argument vector: (object).
+ * @return NULL.
+ */
+x_obj_t *x_slot_obj_free(x_obj_t *p_base, x_obj_t *p_args)
+{
+	x_obj_free(p_base, x_slot_argobj(p_args, 0));
+
+	return NULL;
+}
+
+/**
  * Primitive: resolve an object's type object.
  *
  * Follows the #x_fn_t convention: @p p_args is a pair whose first element is
  * the object to inspect. Built-in atoms and pairs, and any object with a nil
  * type slot, return their type slot directly; for other types the base's
- * type-name hook (x_base_field_hook_type_name()) is consulted.
+ * type-name hook (the #X_SLOT_TYPE_NAME slot) is consulted.
  *
  * @param p_base Base (execution context).
  * @param p_args Pair list whose first element is the subject object.
@@ -320,9 +349,10 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 		return x_obj_type(p_obj);
 	}
 
-	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_type_name(p_base)))) {
-		return x_atomfn(x_firstobj(x_base_field_hook_type_name(p_base)))(p_base, p_args);
+	if (x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)) {
+		x_obj_t hook_args[x_slot_args_units(1)] = x_slot_args({ .p = p_obj });
+
+		return x_base_slot(p_base, X_SLOT_TYPE_NAME)(p_base, hook_args);
 	}
 
 	return NULL;
@@ -382,7 +412,7 @@ x_obj_t *x_pair_prim_units(x_obj_t *p_base, x_obj_t *p_args)
  *
  * Returns x_pair_prim_units() for pairs and x_atom_prim_units() for atoms or
  * nil-typed objects; for other types the base's units hook
- * (x_base_field_hook_units()) is consulted.
+ * (the #X_SLOT_UNITS slot) is consulted.
  *
  * @param p_base Base (execution context).
  * @param p_args Pair list whose first element is the subject object.
@@ -404,9 +434,10 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 		return x_atom_prim_units(p_base, p_args);
 	}
 
-	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_units(p_base)))) {
-		return x_atomfn(x_firstobj(x_base_field_hook_units(p_base)))(p_base, p_args);
+	if (x_base_slot_isset(p_base, X_SLOT_UNITS)) {
+		x_obj_t hook_args[x_slot_args_units(1)] = x_slot_args({ .p = p_obj });
+
+		return x_base_slot(p_base, X_SLOT_UNITS)(p_base, hook_args);
 	}
 
 	return NULL;
@@ -464,7 +495,7 @@ x_obj_t *x_pair_prim_length(x_obj_t *p_base, x_obj_t *p_args)
  *
  * Returns x_pair_prim_length() for pairs and x_atom_prim_length() for atoms
  * or nil-typed objects; for other types the base's length hook
- * (x_base_field_hook_length()) is consulted.
+ * (the #X_SLOT_LENGTH slot) is consulted.
  *
  * @param p_base Base (execution context).
  * @param p_args Pair list whose first element is the subject object.
@@ -486,9 +517,10 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 		return x_atom_prim_length(p_base, p_args);
 	}
 
-	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_length(p_base)))) {
-		return x_atomfn(x_firstobj(x_base_field_hook_length(p_base)))(p_base, p_args);
+	if (x_base_slot_isset(p_base, X_SLOT_LENGTH)) {
+		x_obj_t hook_args[x_slot_args_units(1)] = x_slot_args({ .p = p_obj });
+
+		return x_base_slot(p_base, X_SLOT_LENGTH)(p_base, hook_args);
 	}
 
 	return NULL;
@@ -600,11 +632,9 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
 /**
  * Output an error message to stderr.
  *
- * If the error hook is set in the base, delegates to it via a cast
- * to `void (*)(x_obj_t *, x_char_t *, x_obj_t *)` -- this differs from
- * x_fn_t because error handlers take raw arguments (not a pair list).
- * Otherwise, extracts the object's string text (if it is a static
- * atom) and calls x_error().
+ * If the base's #X_SLOT_ERROR slot is set, calls the hook there with the
+ * argument vector (message, object). Otherwise, extracts the object's
+ * string text (if it is a static atom) and calls x_error().
  *
  * @param p_base  Base (execution context).
  * @param message Error message string.
@@ -614,10 +644,11 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 {
 	x_char_t *p_text = NULL;
 
-	if (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_hook_error(p_base)))) {
-		((void (*)(x_obj_t *, x_char_t *, x_obj_t *))
-			x_firstptr(x_firstobj(x_base_field_hook_error(p_base))))(p_base, message, p_obj);
+	if (x_base_slot_isset(p_base, X_SLOT_ERROR)) {
+		x_obj_t hook_args[x_slot_args_units(2)] =
+			x_slot_args({ .s = message }, { .p = p_obj });
+
+		x_base_slot(p_base, X_SLOT_ERROR)(p_base, hook_args);
 		return;
 	}
 

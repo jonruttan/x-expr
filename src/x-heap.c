@@ -21,10 +21,13 @@
  *
  * Traversal strategy: for each pair, recursively mark the first branch
  * (depth-first), then tail-iterate the rest branch (avoids stack overflow
- * on long lists). For non-pair objects, calls the mark hook
- * (x_heap_mark_fn_t) from the base if set -- the hook can return a next
- * object to continue tail-iteration, or NULL to stop. Already-marked
- * objects (those with @p flags already set) are skipped to avoid cycles.
+ * on long lists). For non-pair objects, calls the mark hook in the base's
+ * #X_SLOT_HEAP_MARK slot if set -- the hook can return a next object to
+ * continue tail-iteration, or NULL to stop. Already-marked objects (those
+ * with @p flags already set) are skipped to avoid cycles.
+ *
+ * The hook's argument vector is built once, in this frame, and its first
+ * argument is set for each object the hook is called on.
  *
  * @param p_base Base (execution context).
  * @param p_obj  Root object to start marking from.
@@ -33,10 +36,11 @@
  */
 x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
-	x_heap_mark_fn_t p_mark_fn = (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_heap_mark(p_base))))
-		? (x_heap_mark_fn_t)x_firstptr(x_firstobj(x_base_field_heap_mark(p_base)))
+	x_fn_t p_mark_fn = x_base_slot_isset(p_base, X_SLOT_HEAP_MARK)
+		? x_base_slot(p_base, X_SLOT_HEAP_MARK)
 		: NULL;
+	x_obj_t mark_args[x_slot_args_units(2)] =
+		x_slot_args({ .p = NULL }, { .i = flags });
 
 	while (p_obj != NULL && (x_obj_flags(p_obj) & flags) != flags) {
 		x_obj_flags(p_obj) |= flags;
@@ -49,7 +53,8 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 		}
 
 		if (p_mark_fn != NULL) {
-			p_obj = p_mark_fn(p_base, p_obj, flags);
+			x_slot_argobj(mark_args, 0) = p_obj;
+			p_obj = p_mark_fn(p_base, mark_args);
 
 			if (p_obj != NULL) {
 				continue;
@@ -68,9 +73,9 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  * Walks the heap chain starting from @p p_obj. For each object:
  * - **Retained** if it has the mark @p flags set, or X_OBJ_FLAG_SHARED.
  *   The mark flags are then cleared for the next GC cycle.
- * - **Freed** otherwise: the free hook (x_heap_free_fn_t) is called
- *   first for type-specific cleanup, then x_obj_free(). The heap chain
- *   is relinked to skip the freed object.
+ * - **Freed** otherwise: the free hook in the base's #X_SLOT_HEAP_FREE
+ *   slot is called first for type-specific cleanup, then x_obj_free().
+ *   The heap chain is relinked to skip the freed object.
  *
  * @note If the top object on the heap is deleted, the heap structure
  *       will fragment.
@@ -82,10 +87,10 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
  */
 x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
-	x_heap_free_fn_t p_free_fn = (x_base_isset(p_base)
-		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_heap_free(p_base))))
-		? (x_heap_free_fn_t)x_firstptr(x_firstobj(x_base_field_heap_free(p_base)))
+	x_fn_t p_free_fn = x_base_slot_isset(p_base, X_SLOT_HEAP_FREE)
+		? x_base_slot(p_base, X_SLOT_HEAP_FREE)
 		: NULL;
+	x_obj_t free_args[x_slot_args_units(1)] = x_slot_args({ .p = NULL });
 	x_obj_t *p_ret = p_base;
 	x_obj_t *p_node = p_obj, *p_next,
 		*p_prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
@@ -99,7 +104,8 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 			p_node = x_obj_heap(p_node);
 		} else {
 			if (p_free_fn != NULL) {
-				p_free_fn(p_base, p_node);
+				x_slot_argobj(free_args, 0) = p_node;
+				p_free_fn(p_base, free_args);
 			}
 
 			p_next = x_obj_heap(p_prev) = x_obj_heap(p_node);
@@ -185,6 +191,54 @@ x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
 	}
 
 	return NULL;
+}
+
+/*
+ * # Slot Functions
+ *
+ * Each takes its routine's arguments as an argument vector (see
+ * x-slots.h) and calls the routine.
+ */
+
+/**
+ * Slot function for x_heap_tree_mark().
+ *
+ * @param p_base Base (execution context).
+ * @param p_args Argument vector: (object, flags).
+ * @return The last object visited.
+ */
+x_obj_t *x_slot_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args)
+{
+	return x_heap_tree_mark(p_base,
+		x_slot_argobj(p_args, 0),
+		(x_obj_flag_t)x_slot_argint(p_args, 1));
+}
+
+/**
+ * Slot function for x_heap_sweep().
+ *
+ * @param p_base Base (execution context).
+ * @param p_args Argument vector: (object, flags).
+ * @return The base object.
+ */
+x_obj_t *x_slot_heap_sweep(x_obj_t *p_base, x_obj_t *p_args)
+{
+	return x_heap_sweep(p_base,
+		x_slot_argobj(p_args, 0),
+		(x_obj_flag_t)x_slot_argint(p_args, 1));
+}
+
+/**
+ * Slot function for x_heap_root_chain_mark().
+ *
+ * @param p_base Base (execution context).
+ * @param p_args Argument vector: (flags).
+ * @return NULL.
+ */
+x_obj_t *x_slot_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args)
+{
+	return x_heap_root_chain_mark(p_base,
+		(x_obj_flag_t)x_slot_argint(p_args, 0));
 }
 
 /*

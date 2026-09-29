@@ -5,9 +5,11 @@
  * @file x-base.h
  * @brief Base environment object -- the root context for evaluation.
  *
- * The base object is a nested pair tree that holds I/O descriptors,
- * profiling counters, extensible hook functions, and heap/GC state.
- * Field accessor macros navigate this tree without hard-coding offsets.
+ * The base object has two data units. The first holds the slot vector:
+ * the routines the engine calls through, each at a fixed position (see
+ * @ref x-slots.h). The second holds a nested pair tree with the I/O
+ * descriptors, profiling counters, and heap/GC state. Field accessor
+ * macros navigate the tree without hard-coding offsets.
  *
  * @details
  * Every leaf field is stored as a pair -- its @e field @e cell:
@@ -38,11 +40,11 @@
  *           . (filein fileout fileerr write-buf buffer))
  *         . io-state)
  *       . ((; meta
- *           (; profile . hooks
+ *           (; profile
  *             (allocs)
- *             . (type-name units length error))
+ *             . ())
  *           . ((; heap
- *               (obj-meta-extra mark free
+ *               (obj-meta-extra
  *                mark-hooks free-hooks mark-roots root-chain)
  *               . ())
  *             . ()))
@@ -60,6 +62,7 @@
  */
 
 #include "x-obj.h"
+#include "x-slots.h"
 
 /**
  * @name Base Object Root
@@ -68,11 +71,41 @@
 
 /* TODO: Add name and version fields. */
 
-/** Get the root data of the base object @p X. */
-#define x_base(X)							x_firstobj(X)
+/** Get the slot vector of the base object @p X: its first data unit. */
+#define x_base_slots(X)						x_firstobj(X)
 
-/** Test whether the base object @p B is initialized and has data. */
-#define x_base_isset(B)						((B) != NULL && x_base((B)) != NULL)
+/** Get the root of the base object @p X's tree: its second data unit. */
+#define x_base(X)							x_restobj(X)
+
+/**
+ * Test whether the base object @p B is initialized and has data: it has
+ * a slot vector and a tree.
+ *
+ * The slot vector is tested first. An object of one unit may stand as an
+ * allocation context with nothing in it, and testing its first unit finds
+ * it unset without reading a second unit it does not have.
+ */
+#define x_base_isset(B) \
+	((B) != NULL \
+		&& x_base_slots((B)) != NULL \
+		&& x_base((B)) != NULL)
+
+/** @} */
+
+/**
+ * @name Base Slots
+ * @{
+ */
+
+/** The function pointer in slot @p I of base @p B (an lvalue). */
+#define x_base_slot(B,I)					x_slot(x_base_slots((B)), (I))
+
+/**
+ * Test whether slot @p I of base @p B holds a function: the base is
+ * set, it has a slot vector, and the slot is not empty.
+ */
+#define x_base_slot_isset(B,I) \
+	(x_base_isset((B)) && x_base_slot((B), (I)) != NULL)
 
 /** @} */
 
@@ -111,11 +144,11 @@
 
 /**
  * @defgroup base_meta Base Meta Field Accessors
- * @brief Navigate the metadata section (profile + hooks) of the base tree.
+ * @brief Navigate the metadata section (profile) of the base tree.
  * @{
  */
 
-/** Get the meta fields list (profile+hooks, heap, alloc; the tail past alloc
+/** Get the meta fields list (profile, heap, alloc; the tail past alloc
  *  is the embedding layer's extension point). */
 #define x_base_field_meta_fields(X)			x_restobj(x_restobj(x_base(X)))
 
@@ -124,48 +157,6 @@
 
 /** Get the allocation counter field. Value: integer atom, incremented by x_obj_alloc(). */
 #define x_base_field_profile_allocs(X)		x_firstobj(x_base_field_profile(X))
-
-/**
- * Get the hooks list (type-name, units, length, error).
- *
- * Hooks are only dispatched for objects whose type pointer is NOT one
- * of the built-in static types (x_type_atom_obj, x_type_pair_obj).
- * Dispatch priority: check static type (pointer identity, O(1)),
- * then call the hook if set, then fall back to NULL.
- */
-#define x_base_field_hooks(X)				x_restobj(x_firstobj(x_base_field_meta_fields(X)))
-
-/**
- * Get the type_name hook field. Value: atom with x_fn_t function pointer.
- * Signature: `x_obj_t *(*)(x_obj_t *p_base, x_obj_t *p_args)` --
- * p_args is a pair list whose first element is the object to name.
- * Must return a type name atom (string data), or NULL.
- */
-#define x_base_field_hook_type_name(X)		x_firstobj(x_base_field_hooks(X))
-
-/**
- * Get the units hook field. Value: atom with x_fn_t function pointer.
- * Same calling convention as type_name. Must return an integer atom
- * with the number of data units, or NULL.
- */
-#define x_base_field_hook_units(X)			x_firstobj(x_restobj(x_base_field_hooks(X)))
-
-/**
- * Get the length hook field. Value: atom with x_fn_t function pointer.
- * Same calling convention as type_name. Must return an integer atom
- * with the logical length, or NULL.
- */
-#define x_base_field_hook_length(X)			x_firstobj(x_restobj(x_restobj(x_base_field_hooks(X))))
-
-/**
- * Get the error hook field. Value: atom with void pointer to function.
- *
- * @note Unlike the other hooks, the error hook does NOT follow the
- * x_fn_t signature. Its actual signature is:
- * `void (*)(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)`.
- * It is dispatched via a cast from x_firstptr(), not x_atomfn().
- */
-#define x_base_field_hook_error(X)			x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_hooks(X)))))
 
 /** @} */
 
@@ -185,12 +176,6 @@
  */
 #define x_base_field_obj_meta_extra(X)		x_firstobj(x_base_field_heap_fields(X))
 
-/** Get the heap mark hook field. Value: atom with x_heap_mark_fn_t pointer. */
-#define x_base_field_heap_mark(X)			x_firstobj(x_restobj(x_base_field_heap_fields(X)))
-
-/** Get the heap free hook field. Value: atom with x_heap_free_fn_t pointer. */
-#define x_base_field_heap_free(X)			x_firstobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))
-
 /**
  * Get the mark-hooks list field. Value: a list of callables, each
  * invoked once per garbage collection mark phase (fan-out subscribers).
@@ -199,21 +184,21 @@
  * hooks (it has no callable-dispatch); the consuming layer walks the
  * list and dispatches per its own conventions.
  */
-#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X)))))
+#define x_base_field_heap_mark_hooks(X)		x_firstobj(x_restobj(x_base_field_heap_fields(X)))
 
 /**
  * Get the free-hooks list field. Value: a list of callables, each
  * invoked once per sweep phase before objects are reclaimed.
  * Extended at runtime via x_heap_free_hook_add().
  */
-#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))))
+#define x_base_field_heap_free_hooks(X)		x_firstobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))
 
 /**
  * Get the mark-roots list field. Value: a list of objects to mark on
  * every collection (so they survive GC even when not reachable from the
  * base tree or the root chain). Extended at runtime via x_heap_mark_root_add().
  */
-#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X)))))))
+#define x_base_field_heap_mark_roots(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X)))))
 
 /**
  * Get the root-chain head field. Value: the most recently registered
@@ -224,7 +209,7 @@
  * (x_heap_root_chain_mark()) but never swept: x_heap_sweep() walks only
  * the allocation chain. See x_heap_root_push() / x_heap_root_pop().
  */
-#define x_base_field_heap_root_chain(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))))))
+#define x_base_field_heap_root_chain(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))))
 
 /** @} */
 
@@ -269,8 +254,8 @@
 /**
  * Initialization parameters for creating a base object.
  *
- * Passed to x_base_make() to specify I/O descriptors, hook functions,
- * and heap configuration for a new base environment.
+ * Passed to x_base_make() to specify I/O descriptors, the slot vector's
+ * contents, and heap configuration for a new base environment.
  */
 struct x_base_t
 {
@@ -278,14 +263,20 @@ struct x_base_t
 	x_int_t fileout;			/**< Output file descriptor (e.g. STDOUT_FILENO). */
 	x_int_t fileerr;			/**< Error file descriptor (e.g. STDERR_FILENO). */
 
-	x_obj_t *p_hook_type_name;	/**< Type name hook (x_fn_t atom), or NULL. */
-	x_obj_t *p_hook_units;		/**< Units hook (x_fn_t atom), or NULL. */
-	x_obj_t *p_hook_length;		/**< Length hook (x_fn_t atom), or NULL. */
-	x_obj_t *p_hook_error;		/**< Error hook (void * atom, different signature), or NULL. */
-
 	x_int_t obj_meta_extra;		/**< Extra metadata units per object (0 for none). */
-	x_obj_t *p_heap_mark;		/**< Mark hook (x_heap_mark_fn_t atom), or NULL. */
-	x_obj_t *p_heap_free;		/**< Free hook (x_heap_free_fn_t atom), or NULL. */
+
+	/**
+	 * The number of functions at @p p_slots. The slot vector is made this
+	 * long, and never shorter than #X_SLOT_EXPR_LEN.
+	 */
+	x_int_t slots;
+
+	/**
+	 * The functions the slot vector starts with, in position order, or
+	 * NULL to leave every slot empty. A NULL among them leaves that slot
+	 * empty.
+	 */
+	const x_fn_t *p_slots;
 };
 
 /**
