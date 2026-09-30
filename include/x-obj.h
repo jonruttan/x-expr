@@ -498,14 +498,14 @@ extern x_satom_t x_false_obj;
 /** Test whether @p p_obj is nil (a NULL object pointer). */
 int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj);
 
-/** Allocate an uninitialized object. Arguments: (type, flags, units). */
-x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_args);
+/** Allocate an uninitialized object with @p units data units. */
+x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units);
 /** Allocate an object and initialize its data units from a va_list. */
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, va_list ap);
 /** Allocate an object and initialize its data units from varargs. */
 x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, ...);
 /** Free an object, releasing any owned datum and extra metadata units. */
-x_obj_t *x_obj_free(x_obj_t *p_base, x_obj_t *p_args);
+void x_obj_free(x_obj_t *p_base, x_obj_t *p_obj);
 
 /** Primitive: resolve an object's type object (#x_fn_t convention). */
 x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args);

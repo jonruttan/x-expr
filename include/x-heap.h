@@ -47,6 +47,38 @@
 #else /* X_HEAP */
 
 /**
+ * @name Function Pointer Types
+ * @{
+ */
+
+/**
+ * Mark hook for non-pair objects.
+ *
+ * Called by x_heap_tree_mark() when a non-pair object is encountered.
+ * The hook should mark any objects reachable from p_obj (e.g. by calling
+ * x_heap_tree_mark() on them). Return a non-NULL object pointer to
+ * continue tail-iteration (the returned object will be marked next),
+ * or NULL to stop traversal at this branch.
+ *
+ * Arguments: (p_base, p_obj, flags) -- the object to mark and flags to set.
+ */
+typedef x_obj_t *(*x_heap_mark_fn_t)(x_obj_t *, x_obj_t *, x_obj_flag_t);
+
+/**
+ * Free hook for type-specific cleanup.
+ *
+ * Called by x_heap_sweep() just before x_obj_free() on each object
+ * being collected. Use this to release type-specific resources (e.g.
+ * external handles, extra allocations) that x_obj_free() would not
+ * know about.
+ *
+ * Arguments: (p_base, p_obj) -- the object about to be freed.
+ */
+typedef void (*x_heap_free_fn_t)(x_obj_t *, x_obj_t *);
+
+/** @} */
+
+/**
  * @name Heap Management Functions
  *
  * @warning These functions assume single-threaded execution. The heap
@@ -55,10 +87,10 @@
  */
 
 /** Walk a pair tree, setting mark flags on each reachable object. */
-x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
 
 /** Sweep the heap, freeing unmarked objects. */
-x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags);
 
 /** Clear @p flags on every object of a chain, freeing nothing. */
 x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags);
@@ -164,7 +196,7 @@ void x_heap_mark_root_add(x_obj_t *p_base, x_obj_t *p_root);
 		: (void)0)
 
 /** Mark every object registered on the root chain (two passes). */
-x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args);
+x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags);
 
 /** @} */
 

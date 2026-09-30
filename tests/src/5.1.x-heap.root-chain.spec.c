@@ -44,8 +44,9 @@ static x_obj_t *test_make_heap_base(void)
 {
 	struct x_base_t base = {
 		0, 0, 0,
+		NULL, NULL, NULL, NULL,
 		0,
-		0, NULL
+		NULL, NULL
 	};
 	return x_base_make(NULL, base);
 }
@@ -110,10 +111,6 @@ static char *test_root_chain_mark_survives_sweep(void)
 	x_obj_t *p_base, *p_a, *p_b, **p_slot;
 	x_spair_t root = x_obj_set((x_obj_t *)x_type_pair_obj,
 		X_OBJ_FLAG_NONE, { NULL }, { NULL });
-	/* The argument runs of the two routines: (flags), and (object, flags)
-	 * with the object set before each sweep. */
-	x_obj_t chain_args[1] = { { .i = X_OBJ_FLAG_MARK } };
-	x_obj_t sweep_args[2] = { { .p = NULL }, { .i = X_OBJ_FLAG_MARK } };
 	int n;
 
 	helper_alloc_reset();
@@ -129,9 +126,8 @@ static char *test_root_chain_mark_survives_sweep(void)
 	x_heap_root_push(p_slot, root);
 
 	n = helper_free_count();
-	x_heap_root_chain_mark(p_base, chain_args);
-	sweep_args[0].p = x_obj_heap(p_base);
-	x_heap_sweep(p_base, sweep_args);
+	x_heap_root_chain_mark(p_base, X_OBJ_FLAG_MARK);
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
 	_it_should("retain both registered referents across a sweep",
 		0 == helper_free_count() - n);
 	_it_should("keep the referents' values intact",
@@ -143,18 +139,16 @@ static char *test_root_chain_mark_survives_sweep(void)
 	 * the node is skipped as already-marked and its referents are
 	 * freed while live. */
 	n = helper_free_count();
-	x_heap_root_chain_mark(p_base, chain_args);
-	sweep_args[0].p = x_obj_heap(p_base);
-	x_heap_sweep(p_base, sweep_args);
+	x_heap_root_chain_mark(p_base, X_OBJ_FLAG_MARK);
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
 	_it_should("retain the referents across a second cycle",
 		0 == helper_free_count() - n);
 
 	/* Popped: the referents are unreachable and must be reclaimed. */
 	x_heap_root_pop(p_slot);
 	n = helper_free_count();
-	x_heap_root_chain_mark(p_base, chain_args);
-	sweep_args[0].p = x_obj_heap(p_base);
-	x_heap_sweep(p_base, sweep_args);
+	x_heap_root_chain_mark(p_base, X_OBJ_FLAG_MARK);
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
 	_it_should("reclaim both referents once unregistered",
 		2 == helper_free_count() - n);
 
@@ -170,16 +164,12 @@ static char *test_root_chain_mark_walks_all_nodes(void)
 		X_OBJ_FLAG_NONE, { NULL }, { NULL });
 	x_spair_t root_b = x_obj_set((x_obj_t *)x_type_pair_obj,
 		X_OBJ_FLAG_NONE, { NULL }, { NULL });
-	/* The argument runs of the two routines: (flags), and (object, flags)
-	 * with the object set before each sweep. */
-	x_obj_t chain_args[1] = { { .i = X_OBJ_FLAG_MARK } };
-	x_obj_t sweep_args[2] = { { .p = NULL }, { .i = X_OBJ_FLAG_MARK } };
 	int n;
 
 	helper_alloc_reset();
 
 	_it_should("no-op without a base",
-		NULL == x_heap_root_chain_mark(NULL, chain_args));
+		NULL == x_heap_root_chain_mark(NULL, X_OBJ_FLAG_MARK));
 
 	p_base = test_make_heap_base();
 	p_slot = x_heap_root_slot(p_base);
@@ -196,21 +186,18 @@ static char *test_root_chain_mark_walks_all_nodes(void)
 	 * as a chain node (pre-clear pass) and as another node's payload
 	 * (tree-mark traversal into an already-registered node). */
 	n = helper_free_count();
-	x_heap_root_chain_mark(p_base, chain_args);
-	sweep_args[0].p = x_obj_heap(p_base);
-	x_heap_sweep(p_base, sweep_args);
-	x_heap_root_chain_mark(p_base, chain_args);
-	sweep_args[0].p = x_obj_heap(p_base);
-	x_heap_sweep(p_base, sweep_args);
+	x_heap_root_chain_mark(p_base, X_OBJ_FLAG_MARK);
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
+	x_heap_root_chain_mark(p_base, X_OBJ_FLAG_MARK);
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
 	_it_should("retain referents of every chain node across two cycles",
 		0 == helper_free_count() - n);
 
 	x_heap_root_pop(p_slot);
 	x_heap_root_pop(p_slot);
 	n = helper_free_count();
-	x_heap_root_chain_mark(p_base, chain_args);
-	sweep_args[0].p = x_obj_heap(p_base);
-	x_heap_sweep(p_base, sweep_args);
+	x_heap_root_chain_mark(p_base, X_OBJ_FLAG_MARK);
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_MARK);
 	_it_should("reclaim every referent once the chain unwinds",
 		2 == helper_free_count() - n);
 

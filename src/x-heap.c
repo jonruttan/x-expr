@@ -21,45 +21,35 @@
  *
  * Traversal strategy: for each pair, recursively mark the first branch
  * (depth-first), then tail-iterate the rest branch (avoids stack overflow
- * on long lists). For non-pair objects, calls the mark hook in the base's
- * #X_SLOT_HEAP_MARK slot if set -- the hook can return a next object to
- * continue tail-iteration, or NULL to stop. Already-marked objects (those
- * with @p flags already set) are skipped to avoid cycles.
- *
- * The hook takes the arguments this routine does, (object, flags), so one
- * argument run serves the hook and the walk of a first branch. It is
- * written once, in this frame, and its first word is set for each object
- * it is passed for.
+ * on long lists). For non-pair objects, calls the mark hook
+ * (x_heap_mark_fn_t) from the base if set -- the hook can return a next
+ * object to continue tail-iteration, or NULL to stop. Already-marked
+ * objects (those with @p flags already set) are skipped to avoid cycles.
  *
  * @param p_base Base (execution context).
- * @param p_args Argument run: (object, flags). The object is the root to
- *               start marking from; the flags are set on each marked
- *               object.
+ * @param p_obj  Root object to start marking from.
+ * @param flags  Flags to set on each marked object.
  * @return The last object visited.
  */
-x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args)
+x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
-	x_obj_t *p_obj = x_obj(p_args[0]);
-	x_obj_flag_t flags = (x_obj_flag_t)p_args[1].i;
-	x_fn_t p_mark_fn = x_base_slot_isset(p_base, X_SLOT_HEAP_MARK)
-		? x_base_slot(p_base, X_SLOT_HEAP_MARK)
+	x_heap_mark_fn_t p_mark_fn = (x_base_isset(p_base)
+		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_heap_mark(p_base))))
+		? (x_heap_mark_fn_t)x_firstptr(x_firstobj(x_base_field_heap_mark(p_base)))
 		: NULL;
-	x_obj_t mark_args[2] = { { .p = NULL }, { .i = flags } };
 
 	while (p_obj != NULL && (x_obj_flags(p_obj) & flags) != flags) {
 		x_obj_flags(p_obj) |= flags;
 
 		if (x_obj_type_isspair(p_obj)) {
-			mark_args[0].p = x_firstobj(p_obj);
-			x_base_call_or(p_base, X_SLOT_HEAP_TREE_MARK, x_heap_tree_mark, mark_args);
+			x_heap_tree_mark(p_base, x_firstobj(p_obj), flags);
 			p_obj = x_restobj(p_obj);
 
 			continue;
 		}
 
 		if (p_mark_fn != NULL) {
-			mark_args[0].p = p_obj;
-			p_obj = p_mark_fn(p_base, mark_args);
+			p_obj = p_mark_fn(p_base, p_obj, flags);
 
 			if (p_obj != NULL) {
 				continue;
@@ -78,34 +68,24 @@ x_obj_t *x_heap_tree_mark(x_obj_t *p_base, x_obj_t *p_args)
  * Walks the heap chain starting from @p p_obj. For each object:
  * - **Retained** if it has the mark @p flags set, or X_OBJ_FLAG_SHARED.
  *   The mark flags are then cleared for the next GC cycle.
- * - **Freed** otherwise: the free hook in the base's #X_SLOT_HEAP_FREE
- *   slot is called first for type-specific cleanup, then x_obj_free().
- *   The heap chain is relinked to skip the freed object.
- *
- * The free hook and x_obj_free() take the same argument, (object), so one
- * argument run serves both. Both routines are read from their slots once,
- * before the walk, since the walk may free the base.
+ * - **Freed** otherwise: the free hook (x_heap_free_fn_t) is called
+ *   first for type-specific cleanup, then x_obj_free(). The heap chain
+ *   is relinked to skip the freed object.
  *
  * @note If the top object on the heap is deleted, the heap structure
  *       will fragment.
  *
  * @param p_base Base (execution context).
- * @param p_args Argument run: (object, flags). The object is the start of
- *               the heap chain to sweep; the flags are the mark flags to
- *               check (objects with these flags are retained).
+ * @param p_obj  Start of the heap chain to sweep.
+ * @param flags  Mark flags to check (objects with these flags are retained).
  * @return The base object.
  */
-x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_args)
+x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_obj, x_obj_flag_t flags)
 {
-	x_obj_t *p_obj = x_obj(p_args[0]);
-	x_obj_flag_t flags = (x_obj_flag_t)p_args[1].i;
-	x_fn_t p_free_fn = x_base_slot_isset(p_base, X_SLOT_HEAP_FREE)
-		? x_base_slot(p_base, X_SLOT_HEAP_FREE)
+	x_heap_free_fn_t p_free_fn = (x_base_isset(p_base)
+		&& ! x_obj_isnil(p_base, x_firstobj(x_base_field_heap_free(p_base))))
+		? (x_heap_free_fn_t)x_firstptr(x_firstobj(x_base_field_heap_free(p_base)))
 		: NULL;
-	x_fn_t p_obj_free_fn = x_base_slot_isset(p_base, X_SLOT_OBJ_FREE)
-		? x_base_slot(p_base, X_SLOT_OBJ_FREE)
-		: x_obj_free;
-	x_obj_t free_args[1] = { { .p = NULL } };
 	x_obj_t *p_ret = p_base;
 	x_obj_t *p_node = p_obj, *p_next,
 		*p_prev = x_obj_heap(p_base) == p_obj ? p_base : p_obj;
@@ -118,14 +98,12 @@ x_obj_t *x_heap_sweep(x_obj_t *p_base, x_obj_t *p_args)
 			p_prev = p_node;
 			p_node = x_obj_heap(p_node);
 		} else {
-			free_args[0].p = p_node;
-
 			if (p_free_fn != NULL) {
-				p_free_fn(p_base, free_args);
+				p_free_fn(p_base, p_node);
 			}
 
 			p_next = x_obj_heap(p_prev) = x_obj_heap(p_node);
-			p_obj_free_fn(p_base, free_args);
+			x_obj_free(p_base, p_node);
 
 			/* The teardown idiom -- x_heap_sweep(base, base, NONE) -- frees
 			 * the base itself partway through the walk.  From then on the
@@ -189,27 +167,21 @@ x_obj_t *x_heap_chain_clear(x_obj_t *p_node, x_obj_flag_t flags)
  * visited a node through a field that stores it.
  *
  * @param p_base Base (execution context).
- * @param p_args Argument run: (flags), the flags to set on each marked
- *               object.
+ * @param flags  Flags to set on each marked object.
  * @return NULL.
  */
-x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_t *p_args)
+x_obj_t *x_heap_root_chain_mark(x_obj_t *p_base, x_obj_flag_t flags)
 {
-	x_obj_flag_t flags;
 	x_obj_t *p_node;
 
 	if ( ! x_base_isset(p_base)) {
 		return NULL;
 	}
 
-	flags = (x_obj_flag_t)p_args[0].i;
 	x_heap_chain_clear(x_heap_root_chain(p_base), flags);
 
 	for (p_node = x_heap_root_chain(p_base); p_node != NULL; p_node = x_obj_heap(p_node)) {
-		/* The tree mark's arguments. */
-		x_obj_t mark_args[2] = { { .p = p_node }, { .i = flags } };
-
-		x_base_call_or(p_base, X_SLOT_HEAP_TREE_MARK, x_heap_tree_mark, mark_args);
+		x_heap_tree_mark(p_base, p_node, flags);
 	}
 
 	return NULL;

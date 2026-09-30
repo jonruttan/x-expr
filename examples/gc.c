@@ -18,8 +18,8 @@ int main(int argc, char **argv)
 	x_obj_t *p_base, *p_root, *p_garbage;
 	struct x_base_t base = {
 		STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO,
-		0,
-		0, NULL
+		NULL, NULL, NULL, NULL,
+		0, NULL, NULL, &argc
 	};
 
 	p_base = x_base_make(NULL, base);
@@ -38,11 +38,11 @@ int main(int argc, char **argv)
 		(long)999);
 
 	/* Mark phase: only mark the root tree */
-	x_heap_tree_mark(p_base, x_argrun({ .p = p_root }, { .i = X_OBJ_FLAG_1 }));
-	x_heap_tree_mark(p_base, x_argrun({ .p = p_base }, { .i = X_OBJ_FLAG_1 }));
+	x_heap_tree_mark(p_base, p_root, X_OBJ_FLAG_1);
+	x_heap_tree_mark(p_base, p_base, X_OBJ_FLAG_1);
 
 	/* Sweep phase: free anything unmarked */
-	x_heap_sweep(p_base, x_argrun({ .p = x_obj_heap(p_base) }, { .i = X_OBJ_FLAG_1 }));
+	x_heap_sweep(p_base, x_obj_heap(p_base), X_OBJ_FLAG_1);
 
 	printf("after GC:  root=(%ld . %ld), garbage collected\n",
 		x_atomint(x_firstobj(p_root)),
