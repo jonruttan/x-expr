@@ -87,52 +87,52 @@
  * itself. An embedding layer replaces one by naming another function at
  * its position in the table it hands x_base_make().
  *
- * Each slot's comment gives its arguments and the kind of word each
+ * Each slot's comment gives its arguments and the type of the word each
  * travels in: an object, an integer or a string.
  */
 enum x_slot_enum
 {
-	/** Type-name hook. Arguments: (object). Kinds: (object).
+	/** Type-name hook. Arguments: (object). Types: (object).
 	 *  Returns the type object. */
 	X_SLOT_TYPE_NAME = 0,
 
-	/** Units hook. Arguments: (object). Kinds: (object).
+	/** Units hook. Arguments: (object). Types: (object).
 	 *  Returns an integer atom. */
 	X_SLOT_UNITS,
 
-	/** Length hook. Arguments: (object). Kinds: (object).
+	/** Length hook. Arguments: (object). Types: (object).
 	 *  Returns an integer atom. */
 	X_SLOT_LENGTH,
 
-	/** Error hook. Arguments: (message, object). Kinds: (string, object).
+	/** Error hook. Arguments: (message, object). Types: (string, object).
 	 *  Returns NULL. */
 	X_SLOT_ERROR,
 
 	/**
 	 * Mark hook, for an object that is not a pair.
-	 * Arguments: (object, flags). Kinds: (object, integer).
+	 * Arguments: (object, flags). Types: (object, integer).
 	 * Returns the object to mark next, or NULL to stop at this branch.
 	 */
 	X_SLOT_HEAP_MARK,
 
-	/** Free hook. Arguments: (object). Kinds: (object). Returns NULL. */
+	/** Free hook. Arguments: (object). Types: (object). Returns NULL. */
 	X_SLOT_HEAP_FREE,
 
 	/** Allocate an object. Arguments: (type, flags, units).
-	 *  Kinds: (object, integer, integer). */
+	 *  Types: (object, integer, integer). */
 	X_SLOT_OBJ_ALLOC,
 
-	/** Free an object. Arguments: (object). Kinds: (object).
+	/** Free an object. Arguments: (object). Types: (object).
 	 *  Returns NULL. */
 	X_SLOT_OBJ_FREE,
 
-	/** Mark a tree. Arguments: (object, flags). Kinds: (object, integer). */
+	/** Mark a tree. Arguments: (object, flags). Types: (object, integer). */
 	X_SLOT_HEAP_TREE_MARK,
 
-	/** Sweep the heap. Arguments: (object, flags). Kinds: (object, integer). */
+	/** Sweep the heap. Arguments: (object, flags). Types: (object, integer). */
 	X_SLOT_HEAP_SWEEP,
 
-	/** Mark the root chain. Arguments: (flags). Kinds: (integer). */
+	/** Mark the root chain. Arguments: (flags). Types: (integer). */
 	X_SLOT_HEAP_ROOT_CHAIN_MARK,
 
 	/** The number of slots x-expr owns, and the first position an
