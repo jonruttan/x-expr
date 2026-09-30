@@ -51,9 +51,9 @@ static char *test_cons(void)
 		&& p_b == x_cdr(p)
 	);
 
-	x_obj_free(NULL, p);
-	x_obj_free(NULL, p_b);
-	x_obj_free(NULL, p_a);
+	x_obj_free(NULL, x_argrun({ .p = p }));
+	x_obj_free(NULL, x_argrun({ .p = p_b }));
+	x_obj_free(NULL, x_argrun({ .p = p_a }));
 
 	return NULL;
 }

@@ -18,6 +18,7 @@
 #include "src/x.c"
 #include "src/x-obj.c"
 #include "src/x-base.c"
+#include "src/x-heap.c"
 
 
 /*
@@ -43,11 +44,20 @@ static struct x_base_t test_base_defaults(void)
 {
 	struct x_base_t base = {
 		0, 0, 0,
-		NULL, NULL, NULL, NULL,
 		0,
-		NULL, NULL
+		0, NULL
 	};
 	return base;
+}
+
+static x_obj_t *_slot_fn_a(x_obj_t *p_base, x_obj_t *p_args)
+{
+	return p_args;
+}
+
+static x_obj_t *_slot_fn_b(x_obj_t *p_base, x_obj_t *p_args)
+{
+	return NULL;
 }
 
 static x_obj_t *test_make_base(x_obj_t *p_parent)
@@ -80,13 +90,13 @@ static char *test_base_isset(void)
 	_it_should("return false when base data is nil",
 		! x_base_isset(p_base)
 	);
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	p_base = test_make_base(NULL);
 	_it_should("return true when base is set",
 		x_base_isset(p_base)
 	);
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	return NULL;
 }
@@ -94,7 +104,7 @@ static char *test_base_isset(void)
 static char *test_base_make(void)
 {
 	struct x_base_t base = test_base_defaults();
-	x_obj_t *p_base, *p_hook;
+	x_obj_t *p_base;
 	x_int_t filein = rand(), fileout = rand(), fileerr = rand(),
 		obj_meta_extra = rand();
 
@@ -123,40 +133,217 @@ static char *test_base_make(void)
 		obj_meta_extra == x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base)))
 	);
 
-	_it_should("set hooks to nil",
-		NULL == x_firstobj(x_base_field_hook_type_name(p_base))
-		&& NULL == x_firstobj(x_base_field_hook_units(p_base))
-		&& NULL == x_firstobj(x_base_field_hook_length(p_base))
-		&& NULL == x_firstobj(x_base_field_hook_error(p_base))
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
+
+	return NULL;
+}
+
+static char *test_base_slots(void)
+{
+	struct x_base_t base = test_base_defaults();
+	x_obj_t *p_base;
+	x_obj_t args[2] = { { .i = 7 }, { .i = 9 } };
+	x_fn_t slots[X_SLOT_EXPR_LEN + 2];
+	x_int_t i, empty;
+
+	helper_alloc_reset();
+
+	/* No slots asked for. */
+	p_base = x_base_make(NULL, base);
+
+	_it_should("hold the slot vector in the base's first unit",
+		x_base_slots(p_base) == x_firstobj(p_base)
+		&& NULL != x_base_slots(p_base)
 	);
 
-	/* verify hooks with non-nil values */
-	p_hook = x_mksatom(p_base, X_OBJ_FLAG_NONE, 42);
-	base.p_hook_type_name = p_hook;
-	base.p_hook_units = p_hook;
-	base.p_hook_length = p_hook;
-	base.p_hook_error = p_hook;
-	x_obj_free(NULL, p_base);
+	_it_should("make the slot vector a vector, with its length in its first unit",
+		X_SLOT_EXPR_LEN == x_vectorlength(x_base_slots(p_base))
+	);
+
+	_it_should("hold the tree in the base's second unit",
+		x_base(p_base) == x_restobj(p_base)
+		&& NULL != x_base(p_base)
+	);
+
+	for (empty = 0, i = 0; i < X_SLOT_OBJ_ALLOC; i++) {
+		if (NULL == x_base_slot(p_base, i)) {
+			empty++;
+		}
+	}
+
+	_it_should("make the hook slots, each empty",
+		X_SLOT_OBJ_ALLOC == empty
+	);
+
+	_it_should("fill the other slots x-expr owns with its own routines",
+		x_obj_alloc == x_base_slot(p_base, X_SLOT_OBJ_ALLOC)
+		&& x_obj_free == x_base_slot(p_base, X_SLOT_OBJ_FREE)
+		&& x_heap_tree_mark == x_base_slot(p_base, X_SLOT_HEAP_TREE_MARK)
+		&& x_heap_sweep == x_base_slot(p_base, X_SLOT_HEAP_SWEEP)
+		&& x_heap_root_chain_mark
+			== x_base_slot(p_base, X_SLOT_HEAP_ROOT_CHAIN_MARK)
+	);
+
+	_it_should("say an empty slot is not set",
+		! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
+	);
+
+	x_obj_free(NULL, x_argrun({ .p = x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_argrun({ .p = x_base_slots(p_base) }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
+
+	p_base = NULL;
+	_it_should("say no slot is set on a NULL base",
+		! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
+	);
+
+	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	_it_should("say no slot is set on a base of one unit with nothing in it",
+		! x_base_isset(p_base)
+		&& ! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
+	);
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
+
+	/* Slots given, past the ones x-expr owns. */
+	for (i = 0; i < X_SLOT_EXPR_LEN + 2; i++) {
+		slots[i] = NULL;
+	}
+
+	slots[X_SLOT_UNITS] = _slot_fn_a;
+	slots[X_SLOT_EXPR_LEN + 1] = _slot_fn_b;
+	base.slots = X_SLOT_EXPR_LEN + 2;
+	base.p_slots = slots;
 
 	p_base = x_base_make(NULL, base);
 
-	_it_should("set hook_type_name",
-		p_hook == x_firstobj(x_base_field_hook_type_name(p_base))
+	_it_should("fill a slot from the parameters",
+		_slot_fn_a == x_base_slot(p_base, X_SLOT_UNITS)
+		&& x_base_slot_isset(p_base, X_SLOT_UNITS)
 	);
 
-	_it_should("set hook_units",
-		p_hook == x_firstobj(x_base_field_hook_units(p_base))
+	_it_should("fill a slot past the ones x-expr owns",
+		_slot_fn_b == x_base_slot(p_base, X_SLOT_EXPR_LEN + 1)
 	);
 
-	_it_should("set hook_length",
-		p_hook == x_firstobj(x_base_field_hook_length(p_base))
+	_it_should("leave a slot given as NULL empty",
+		NULL == x_base_slot(p_base, X_SLOT_TYPE_NAME)
+		&& NULL == x_base_slot(p_base, X_SLOT_EXPR_LEN)
 	);
 
-	_it_should("set hook_error",
-		p_hook == x_firstobj(x_base_field_hook_error(p_base))
+	_it_should("keep x-expr's routine in a slot given as NULL",
+		x_obj_alloc == x_base_slot(p_base, X_SLOT_OBJ_ALLOC)
 	);
 
-	x_obj_free(NULL, p_base);
+	/* A routine x-expr owns is replaced from the parameters. */
+	x_obj_free(NULL, x_argrun({ .p = x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_argrun({ .p = x_base_slots(p_base) }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
+
+	slots[X_SLOT_HEAP_SWEEP] = _slot_fn_b;
+	p_base = x_base_make(NULL, base);
+
+	_it_should("fill a slot x-expr owns from the parameters",
+		_slot_fn_b == x_base_slot(p_base, X_SLOT_HEAP_SWEEP)
+	);
+
+	_it_should("call the function in a slot with an argument run",
+		(x_obj_t *)args == x_base_slot(p_base, X_SLOT_UNITS)(p_base, args)
+	);
+
+	_it_should("read the arguments from the run by position",
+		7 == args[0].i
+		&& 9 == args[1].i
+	);
+
+	/* A slot is replaced by storing another function in it. */
+	x_base_slot(p_base, X_SLOT_UNITS) = _slot_fn_b;
+
+	_it_should("replace a slot's function",
+		_slot_fn_b == x_base_slot(p_base, X_SLOT_UNITS)
+		&& NULL == x_base_slot(p_base, X_SLOT_UNITS)(p_base, args)
+	);
+
+	x_base_slot(p_base, X_SLOT_UNITS) = NULL;
+
+	_it_should("empty a slot",
+		! x_base_slot_isset(p_base, X_SLOT_UNITS)
+	);
+
+	x_obj_free(NULL, x_argrun({ .p = x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_argrun({ .p = x_base_slots(p_base) }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
+
+	return NULL;
+}
+
+static x_obj_t *_hook_object;
+static x_char_t *_hook_message;
+static x_satom_t _hook_answer = x_obj_set(NULL, X_OBJ_FLAG_NONE, { .i = 3 });
+
+static x_obj_t *_hook_fn(x_obj_t *p_base, x_obj_t *p_args)
+{
+	_hook_object = x_obj(p_args[0]);
+
+	return (x_obj_t *)_hook_answer;
+}
+
+static x_obj_t *_hook_error_fn(x_obj_t *p_base, x_obj_t *p_args)
+{
+	_hook_message = p_args[0].s;
+	_hook_object = x_obj(p_args[1]);
+
+	return NULL;
+}
+
+static char *test_base_slot_hooks(void)
+{
+	x_obj_t *p_base, *p_obj, *p_ret;
+	x_satom_t type = x_obj_set(NULL, X_OBJ_FLAG_NONE, { .s = (x_char_t *)"OTHER" });
+	x_spair_t args = x_obj_set(NULL, X_OBJ_FLAG_NONE, { NULL }, { NULL });
+	x_char_t *message = (x_char_t *)"message";
+
+	helper_alloc_reset();
+
+	p_base = test_make_base(NULL);
+	p_obj = x_obj_make(p_base, (x_obj_t *)type, X_OBJ_FLAG_NONE,
+		X_OBJ_LENGTH_ATOM, NULL);
+	/* The primitives take a pair; each hands its hook an argument run. */
+	x_firstobj((x_obj_t *)args) = p_obj;
+
+	_it_should("answer NULL for an object of another type while the hooks are empty",
+		NULL == x_obj_prim_type_name(p_base, (x_obj_t *)args)
+		&& NULL == x_obj_prim_units(p_base, (x_obj_t *)args)
+		&& NULL == x_obj_prim_length(p_base, (x_obj_t *)args)
+	);
+
+	x_base_slot(p_base, X_SLOT_TYPE_NAME) = _hook_fn;
+	_hook_object = NULL;
+	p_ret = x_obj_prim_type_name(p_base, (x_obj_t *)args);
+	_it_should("call the type-name hook with the object",
+		(x_obj_t *)_hook_answer == p_ret && p_obj == _hook_object
+	);
+
+	x_base_slot(p_base, X_SLOT_UNITS) = _hook_fn;
+	_hook_object = NULL;
+	p_ret = x_obj_prim_units(p_base, (x_obj_t *)args);
+	_it_should("call the units hook with the object",
+		(x_obj_t *)_hook_answer == p_ret && p_obj == _hook_object
+	);
+
+	x_base_slot(p_base, X_SLOT_LENGTH) = _hook_fn;
+	_hook_object = NULL;
+	p_ret = x_obj_prim_length(p_base, (x_obj_t *)args);
+	_it_should("call the length hook with the object",
+		(x_obj_t *)_hook_answer == p_ret && p_obj == _hook_object
+	);
+
+	x_base_slot(p_base, X_SLOT_ERROR) = _hook_error_fn;
+	_hook_object = NULL;
+	_hook_message = NULL;
+	x_obj_error(p_base, message, p_obj);
+	_it_should("call the error hook with the message and the object",
+		message == _hook_message && p_obj == _hook_object
+	);
 
 	return NULL;
 }
@@ -264,7 +451,7 @@ static char *test_base_write_buf(void)
 	x_base_write(p_base, p_args);
 	_it_should("write to fd when buf is nil", 'X' == out[0]);
 
-	x_obj_free(NULL, p_base);
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	return NULL;
 }
@@ -273,6 +460,8 @@ static char *run_tests()
 {
 	_run_test(test_base_isset);
 	_run_test(test_base_make);
+	_run_test(test_base_slots);
+	_run_test(test_base_slot_hooks);
 	_run_test(test_base_read);
 	_run_test(test_base_write);
 	_run_test(test_base_write_buf);
