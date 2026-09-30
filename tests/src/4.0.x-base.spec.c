@@ -90,13 +90,13 @@ static char *test_base_isset(void)
 	_it_should("return false when base data is nil",
 		! x_base_isset(p_base)
 	);
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	p_base = test_make_base(NULL);
 	_it_should("return true when base is set",
 		x_base_isset(p_base)
 	);
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	return NULL;
 }
@@ -133,7 +133,7 @@ static char *test_base_make(void)
 		obj_meta_extra == x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base)))
 	);
 
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	return NULL;
 }
@@ -142,10 +142,7 @@ static char *test_base_slots(void)
 {
 	struct x_base_t base = test_base_defaults();
 	x_obj_t *p_base;
-	x_satom_t seven = x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = 7 }),
-		nine = x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = 9 });
-	x_obj_t args[x_vector_storage(2)] =
-		x_vector_set(NULL, 2, { (x_obj_t *)seven }, { (x_obj_t *)nine });
+	x_obj_t args[2] = { { .i = 7 }, { .i = 9 } };
 	x_fn_t slots[X_SLOT_EXPR_LEN + 2];
 	x_int_t i, empty;
 
@@ -191,9 +188,9 @@ static char *test_base_slots(void)
 		! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
 	);
 
-	x_obj_free(NULL, x_autovector(NULL, 1, { x_vectorlengthobj(x_base_slots(p_base)) }));
-	x_obj_free(NULL, x_autovector(NULL, 1, { x_base_slots(p_base) }));
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_argrun({ .p = x_base_slots(p_base) }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	p_base = NULL;
 	_it_should("say no slot is set on a NULL base",
@@ -205,7 +202,7 @@ static char *test_base_slots(void)
 		! x_base_isset(p_base)
 		&& ! x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)
 	);
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	/* Slots given, past the ones x-expr owns. */
 	for (i = 0; i < X_SLOT_EXPR_LEN + 2; i++) {
@@ -238,9 +235,9 @@ static char *test_base_slots(void)
 	);
 
 	/* A routine x-expr owns is replaced from the parameters. */
-	x_obj_free(NULL, x_autovector(NULL, 1, { x_vectorlengthobj(x_base_slots(p_base)) }));
-	x_obj_free(NULL, x_autovector(NULL, 1, { x_base_slots(p_base) }));
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_argrun({ .p = x_base_slots(p_base) }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	slots[X_SLOT_HEAP_SWEEP] = _slot_fn_b;
 	p_base = x_base_make(NULL, base);
@@ -249,14 +246,13 @@ static char *test_base_slots(void)
 		_slot_fn_b == x_base_slot(p_base, X_SLOT_HEAP_SWEEP)
 	);
 
-	_it_should("call the function in a slot with an argument vector",
+	_it_should("call the function in a slot with an argument run",
 		(x_obj_t *)args == x_base_slot(p_base, X_SLOT_UNITS)(p_base, args)
 	);
 
-	_it_should("read the arguments from the vector by position",
-		2 == x_vectorlength(args)
-		&& 7 == x_atomint(x_vectorobj(args, 0))
-		&& 9 == x_atomint(x_vectorobj(args, 1))
+	_it_should("read the arguments from the run by position",
+		7 == args[0].i
+		&& 9 == args[1].i
 	);
 
 	/* A slot is replaced by storing another function in it. */
@@ -273,9 +269,9 @@ static char *test_base_slots(void)
 		! x_base_slot_isset(p_base, X_SLOT_UNITS)
 	);
 
-	x_obj_free(NULL, x_autovector(NULL, 1, { x_vectorlengthobj(x_base_slots(p_base)) }));
-	x_obj_free(NULL, x_autovector(NULL, 1, { x_base_slots(p_base) }));
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = x_vectorlengthobj(x_base_slots(p_base)) }));
+	x_obj_free(NULL, x_argrun({ .p = x_base_slots(p_base) }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	return NULL;
 }
@@ -286,15 +282,15 @@ static x_satom_t _hook_answer = x_obj_set(NULL, X_OBJ_FLAG_NONE, { .i = 3 });
 
 static x_obj_t *_hook_fn(x_obj_t *p_base, x_obj_t *p_args)
 {
-	_hook_object = x_vectorobj(p_args, 0);
+	_hook_object = x_obj(p_args[0]);
 
 	return (x_obj_t *)_hook_answer;
 }
 
 static x_obj_t *_hook_error_fn(x_obj_t *p_base, x_obj_t *p_args)
 {
-	_hook_message = x_atomstr(x_vectorobj(p_args, 0));
-	_hook_object = x_vectorobj(p_args, 1);
+	_hook_message = p_args[0].s;
+	_hook_object = x_obj(p_args[1]);
 
 	return NULL;
 }
@@ -311,7 +307,7 @@ static char *test_base_slot_hooks(void)
 	p_base = test_make_base(NULL);
 	p_obj = x_obj_make(p_base, (x_obj_t *)type, X_OBJ_FLAG_NONE,
 		X_OBJ_LENGTH_ATOM, NULL);
-	/* The primitives take a pair; each hands its hook an argument vector. */
+	/* The primitives take a pair; each hands its hook an argument run. */
 	x_firstobj((x_obj_t *)args) = p_obj;
 
 	_it_should("answer NULL for an object of another type while the hooks are empty",
@@ -455,7 +451,7 @@ static char *test_base_write_buf(void)
 	x_base_write(p_base, p_args);
 	_it_should("write to fd when buf is nil", 'X' == out[0]);
 
-	x_obj_free(NULL, x_autovector(NULL, 1, { p_base }));
+	x_obj_free(NULL, x_argrun({ .p = p_base }));
 
 	return NULL;
 }

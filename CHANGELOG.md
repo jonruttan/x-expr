@@ -6,18 +6,16 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
   - The vector layout (`x-vector.h`): an object whose first data unit holds
     its length and whose other data units are its elements, with accessors,
-    static length atoms for the lengths 0 to 8, an initializer for a vector
-    in static or stack storage, and the constructor `x_vector_make`.
+    static length atoms for the lengths 0 to 8, and the constructor
+    `x_vector_make`.
   - The base's slot vector (`x-slots.h`): a vector of function pointers, one
-    per slot, the routines the engine calls through. A slot function has the
-    signature `x_fn_t`, and its arguments arrive as an argument vector: a
-    vector of objects, built in stack storage.
-  - `x_base_call`, a call through a slot, `x_base_call_or`, which calls the
-    routine named when the base has no slot vector or the slot is empty, and
-    `x_base_vector_type`, the type a vector made for a base carries.
-  - `x_autovector` and `x_autoatom`, a vector and an integer atom in
-    automatic storage written as expressions, for a call written in the
-    open.
+    per slot, the routines the engine calls through. A routine in a slot
+    has the signature `x_fn_t`, and its arguments arrive as an argument run:
+    a run of datum words, one per argument, written in stack storage, with
+    no header and no length. An integer or a string travels as a word.
+  - `x_base_call`, a call through a slot; `x_base_call_or`, which calls the
+    routine named when there is no base or the base has no slot vector; and
+    `x_argrun`, an argument run written as an expression.
 
 ### Changed
   - The base object has two data units: the slot vector, then the tree.
@@ -28,12 +26,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
   - `struct x_base_t` takes a table of slot functions in place of six hook
     atoms.
   - The error, mark and free hooks have the signature `x_fn_t`; the types
-    `x_heap_mark_fn_t` and `x_heap_free_fn_t` are removed. An integer or a
-    string among a hook's arguments travels in an atom.
+    `x_heap_mark_fn_t` and `x_heap_free_fn_t` are removed.
   - `x_obj_alloc`, `x_obj_free`, `x_heap_tree_mark`, `x_heap_sweep` and
     `x_heap_root_chain_mark` have the signature `x_fn_t` and take an
-    argument vector. `x_base_make` puts each in its slot, a table entry of
-    the caller's replaces it, and x-expr's own calls go through the slots.
+    argument run. `x_base_make` puts each in its slot, a table entry of the
+    caller's replaces it, and x-expr's own calls go through the slots.
     `x_obj_free` returns NULL.
 
 ## [0.1.0] - 2026-03-06

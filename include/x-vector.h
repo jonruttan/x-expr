@@ -24,11 +24,11 @@
  * @endcode
  *
  * x-expr supplies the layout and nothing more: the accessors below, the
- * static length atoms, and the initializer for a vector in static or stack
- * storage. It has no vector type. The type an object of this layout
- * carries is the embedding layer's, and so is what its elements are: the
- * argument vectors the engine passes hold objects, and a base's slot
- * vector holds function pointers (see @ref x-slots.h).
+ * static length atoms, and a constructor. It has no vector type. The type
+ * an object of this layout carries is the embedding layer's, and so is
+ * what its elements are: a base's slot vector holds function pointers
+ * (see @ref x-slots.h). The elements are a run of words, which is what a
+ * routine in a slot takes as its arguments.
  *
  * @author Jon Ruttan (jonruttan@gmail.com)
  * @copyright 2026 Jon Ruttan
@@ -53,16 +53,6 @@
 /** Number of data units in a vector of @p N elements. */
 #define x_vector_units(N)			(X_VECTOR_UNITS_LENGTH + (N))
 
-/**
- * Number of units of storage a vector of @p N elements takes in static or
- * stack storage: the metadata, the length, then the elements.
- *
- * @code
- *   x_obj_t args[x_vector_storage(2)] = x_vector_set(p_type, 2, { p_env }, { p_sym });
- * @endcode
- */
-#define x_vector_storage(N)			(X_OBJ_META_LEN + x_vector_units(N))
-
 /** @} */
 
 /**
@@ -72,8 +62,7 @@
 
 /**
  * The number of static length atoms: lengths 0 to
- * #X_VECTOR_LENGTH_STATIC_LEN - 1 have one. Eight elements is more than
- * any routine of the engine takes as arguments.
+ * #X_VECTOR_LENGTH_STATIC_LEN - 1 have one.
  */
 #define X_VECTOR_LENGTH_STATIC_LEN	9
 
@@ -123,45 +112,6 @@ extern x_satom_t x_vector_length_objs[X_VECTOR_LENGTH_STATIC_LEN];
 /** Allocate a vector of type @p p_type holding the @p length objects that follow. */
 x_obj_t *x_vector_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags,
 	x_int_t length, ...);
-
-/** @} */
-
-/**
- * @name Vector Initializer
- * @{
- */
-
-/**
- * Brace initializer for a vector of @p N elements in static or stack
- * storage, with type @p T: each element is given as a datum initializer,
- * in order. @p N is at most #X_VECTOR_LENGTH_STATIC_LEN - 1.
- */
-#define x_vector_set(T,N,...) \
-	x_obj_set((T), X_OBJ_FLAG_NONE, { x_vector_length_obj(N) }, __VA_ARGS__)
-
-/**
- * A vector of @p N elements in automatic storage, with type @p T, written
- * as an expression: each element is given as a datum initializer, in
- * order. The vector lasts as long as the block the expression is in.
- *
- * It is for a call written in the open, where an argument vector must be
- * built without allocating:
- *
- * @code
- *   x_obj_free(p_base, x_autovector(NULL, 1, { p_obj }));
- * @endcode
- */
-#define x_autovector(T,N,...) \
-	((x_obj_t[x_vector_storage(N)])x_vector_set((T), (N), __VA_ARGS__))
-
-/**
- * An atom in automatic storage holding the integer @p V, written as an
- * expression: how an integer argument travels in a vector built by
- * x_autovector().
- */
-#define x_autoatom(V) \
-	((x_obj_t *)(x_satom_t)x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, \
-		{ .i = (x_int_t)(V) }))
 
 /** @} */
 

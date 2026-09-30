@@ -107,29 +107,20 @@
 #define x_base_slots_isset(B)				((B) != NULL && x_base_slots((B)) != NULL)
 
 /**
- * The type a vector made for base @p B carries: the type of its slot
- * vector, which the embedding layer sets when it has a vector type to
- * give, or nil when the base has no slot vector. One load, from a vector
- * a call through a slot loads in any case.
- */
-#define x_base_vector_type(B) \
-	(x_base_slots_isset((B)) ? x_obj_type(x_base_slots((B))) : NULL)
-
-/**
- * Call the function in slot @p I of base @p B with argument vector @p A.
- * The base must have a slot vector and the slot must hold a function.
+ * Call the function in slot @p I of base @p B with argument run @p A (see
+ * x-slots.h). The base must have a slot vector and the slot must hold a
+ * function: one load for the vector, one for the slot, and the call.
  */
 #define x_base_call(B,I,A)					(x_base_slot((B), (I))((B), (A)))
 
 /**
- * Call the function in slot @p I of base @p B with argument vector @p A,
- * or the routine @p FN when the base has no slot vector or the slot is
- * empty: an empty slot means the engine's own routine.
+ * Call the function in slot @p I of base @p B with argument run @p A, or
+ * the routine @p FN when there is no base or the base has no slot vector.
+ * For x-expr's own calls, which may run before a base exists or with an
+ * object of one unit standing as one; a made base always has its slots.
  */
 #define x_base_call_or(B,I,FN,A) \
-	((x_base_slots_isset((B)) && x_base_slot((B), (I)) != NULL \
-		? x_base_slot((B), (I)) \
-		: (FN))((B), (A)))
+	((x_base_slots_isset((B)) ? x_base_slot((B), (I)) : (FN))((B), (A)))
 
 /**
  * Test whether slot @p I of base @p B holds a function: the base is

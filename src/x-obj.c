@@ -83,10 +83,10 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * data units are left uninitialized.
  *
  * @param p_base Base (execution context), or NULL to allocate without a base.
- * @param p_args Argument vector: (type, flags, units). The type is the
- *               type object to assign, or NULL; the flags are the initial
- *               object flags and the units the number of data units to
- *               allocate, each in an atom.
+ * @param p_args Argument run: (type, flags, units). The type is the type
+ *               object to assign, or NULL; the flags are the initial
+ *               object flags; the units are the number of data units to
+ *               allocate.
  * @return The new object, or NULL on allocation failure when no full
  *         base is attached (scratch/fixture use: the caller owns the
  *         null-check).  With a full base attached the failure does not
@@ -102,9 +102,9 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  */
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_args)
 {
-	x_obj_t *p_type = x_vectorobj(p_args, 0);
-	x_obj_flag_t flags = (x_obj_flag_t)x_atomint(x_vectorobj(p_args, 1));
-	size_t units = (size_t)x_atomint(x_vectorobj(p_args, 2));
+	x_obj_t *p_type = x_obj(p_args[0]);
+	x_obj_flag_t flags = (x_obj_flag_t)p_args[1].i;
+	size_t units = (size_t)p_args[2].i;
 	x_obj_t *p_obj;
 	/* Chasing base fields below requires a full, TYPED base -- the same
 	 * predicate the obj-meta-extra fetch has always used.  x_base_isset
@@ -228,13 +228,9 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_args)
  */
 x_obj_t *x_obj_make_va(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units, va_list ap)
 {
-	x_satom_t flags_atom =
-		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)flags }),
-		units_atom =
-		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)units });
-	x_obj_t alloc_args[x_vector_storage(3)] = x_vector_set(
-		x_base_vector_type(p_base), 3,
-		{ p_type }, { (x_obj_t *)flags_atom }, { (x_obj_t *)units_atom });
+	x_obj_t alloc_args[3] = {
+		{ .p = p_type }, { .i = (x_int_t)flags }, { .i = (x_int_t)units }
+	};
 	x_obj_t *p_obj = x_base_call_or(p_base, X_SLOT_OBJ_ALLOC, x_obj_alloc, alloc_args);
 	x_obj_t **p;
 
@@ -284,12 +280,12 @@ x_obj_t *x_obj_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t
  * objects.
  *
  * @param p_base Base (execution context; used to size extra metadata units).
- * @param p_args Argument vector: (object), the object to free.
+ * @param p_args Argument run: (object), the object to free.
  * @return NULL.
  */
 x_obj_t *x_obj_free(x_obj_t *p_base, x_obj_t *p_args)
 {
-	x_obj_t *p_obj = x_vectorobj(p_args, 0);
+	x_obj_t *p_obj = x_obj(p_args[0]);
 	x_obj_t *p_alloc = p_obj;
 	/* Full, typed base -- the only base whose fields may be chased (see
 	 * x_obj_alloc: x_base_isset alone admits minimal test/embedder bases
@@ -341,13 +337,9 @@ x_obj_t *x_obj_free(x_obj_t *p_base, x_obj_t *p_args)
 x_obj_t *x_vector_make(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags,
 	x_int_t length, ...)
 {
-	x_satom_t flags_atom =
-		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)flags }),
-		units_atom =
-		x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .i = (x_int_t)x_vector_units(length) });
-	x_obj_t alloc_args[x_vector_storage(3)] = x_vector_set(
-		x_base_vector_type(p_base), 3,
-		{ p_type }, { (x_obj_t *)flags_atom }, { (x_obj_t *)units_atom });
+	x_obj_t alloc_args[3] = {
+		{ .p = p_type }, { .i = (x_int_t)flags }, { .i = x_vector_units(length) }
+	};
 	x_obj_t *p_obj;
 	x_int_t i;
 	va_list ap;
@@ -403,10 +395,7 @@ x_obj_t *x_obj_prim_type_name(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_slot_isset(p_base, X_SLOT_TYPE_NAME)) {
-		x_obj_t hook_args[x_vector_storage(1)] =
-			x_vector_set(x_base_vector_type(p_base), 1, { p_obj });
-
-		return x_base_call(p_base, X_SLOT_TYPE_NAME, hook_args);
+		return x_base_call(p_base, X_SLOT_TYPE_NAME, x_argrun({ .p = p_obj }));
 	}
 
 	return NULL;
@@ -489,10 +478,7 @@ x_obj_t *x_obj_prim_units(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_slot_isset(p_base, X_SLOT_UNITS)) {
-		x_obj_t hook_args[x_vector_storage(1)] =
-			x_vector_set(x_base_vector_type(p_base), 1, { p_obj });
-
-		return x_base_call(p_base, X_SLOT_UNITS, hook_args);
+		return x_base_call(p_base, X_SLOT_UNITS, x_argrun({ .p = p_obj }));
 	}
 
 	return NULL;
@@ -573,10 +559,7 @@ x_obj_t *x_obj_prim_length(x_obj_t *p_base, x_obj_t *p_args)
 	}
 
 	if (x_base_slot_isset(p_base, X_SLOT_LENGTH)) {
-		x_obj_t hook_args[x_vector_storage(1)] =
-			x_vector_set(x_base_vector_type(p_base), 1, { p_obj });
-
-		return x_base_call(p_base, X_SLOT_LENGTH, hook_args);
+		return x_base_call(p_base, X_SLOT_LENGTH, x_argrun({ .p = p_obj }));
 	}
 
 	return NULL;
@@ -689,8 +672,8 @@ x_obj_t *x_obj_pop(x_obj_t *p_base, x_obj_t *p_args)
  * Output an error message to stderr.
  *
  * If the base's #X_SLOT_ERROR slot is set, calls the hook there with the
- * argument vector (message, object), the message as an atom. Otherwise, extracts the object's
- * string text (if it is a static atom) and calls x_error().
+ * argument run (message, object). Otherwise, extracts the object's string
+ * text (if it is a static atom) and calls x_error().
  *
  * @param p_base  Base (execution context).
  * @param message Error message string.
@@ -701,13 +684,8 @@ void x_obj_error(x_obj_t *p_base, x_char_t *message, x_obj_t *p_obj)
 	x_char_t *p_text = NULL;
 
 	if (x_base_slot_isset(p_base, X_SLOT_ERROR)) {
-		x_satom_t message_atom =
-			x_obj_set(x_type_atom_obj, X_OBJ_FLAG_NONE, { .s = message });
-		x_obj_t hook_args[x_vector_storage(2)] =
-			x_vector_set(x_base_vector_type(p_base), 2,
-				{ (x_obj_t *)message_atom }, { p_obj });
-
-		x_base_call(p_base, X_SLOT_ERROR, hook_args);
+		x_base_call(p_base, X_SLOT_ERROR,
+			x_argrun({ .s = message }, { .p = p_obj }));
 		return;
 	}
 
