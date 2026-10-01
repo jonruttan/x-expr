@@ -1228,7 +1228,8 @@ static char *test_obj_prim_units(void)
 	);
 
 	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
-	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_base, p_base);
+	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
+	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_units(p_base, p_args);
 	_it_should("return atom units when first arg is a simple atom",
 		p_ret == x_type_units_atom_obj
@@ -1354,7 +1355,8 @@ static char *test_obj_prim_length(void)
 	);
 
 	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
-	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_base, p_base);
+	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
+	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_length(p_base, p_args);
 	_it_should("return atom length when first arg is a simple atom",
 		p_ret == x_type_length_atom_obj
