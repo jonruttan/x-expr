@@ -2,6 +2,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Changed
+  - The base object has two data units. The first is the embedding layer's,
+    made nil and never read here; the second holds the root of the tree,
+    which `x_base()` reads. An object standing as a base must have both
+    units.
+
 ## [0.1.0] - 2026-03-06
 ### Added
   - Light type system baked into object layout (atom/pair type checking).

@@ -68,10 +68,18 @@
 
 /* TODO: Add name and version fields. */
 
-/** Get the root data of the base object @p X. */
-#define x_base(X)							x_firstobj(X)
+/*
+ * A base object has two data units. The first is the embedding layer's:
+ * x-expr makes it nil and never reads it, so a layer above can keep there
+ * whatever it must reach from the base in one load. The second holds the
+ * root of the base's tree. An object standing as a base must have both
+ * units: an object of one unit has no second unit to read.
+ */
 
-/** Test whether the base object @p B is initialized and has data. */
+/** Get the root of the base object @p X's tree: its second data unit. */
+#define x_base(X)							x_restobj(X)
+
+/** Test whether the base object @p B is initialized and has a tree. */
 #define x_base_isset(B)						((B) != NULL && x_base((B)) != NULL)
 
 /** @} */

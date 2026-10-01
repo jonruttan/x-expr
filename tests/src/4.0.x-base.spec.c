@@ -76,7 +76,7 @@ static char *test_base_isset(void)
 		! x_base_isset(p_base)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("return false when base data is nil",
 		! x_base_isset(p_base)
 	);

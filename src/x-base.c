@@ -24,7 +24,9 @@
 /**
  * Create a new base environment object.
  *
- * Allocates and assembles the nested pair tree that holds all environment
+ * The base has two data units: the first is the embedding layer's, left
+ * nil here; the second holds the tree. Allocates and assembles the nested
+ * pair tree that holds all environment
  * state. Every node is allocated with X_OBJ_FLAG_SHARED (via the local
  * pair/atom macros) so the base tree is immune to garbage collection.
  * Each leaf value is wrapped as `pair(atom(value), nil)` to form a
@@ -40,8 +42,8 @@
 x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 {
 	p_base = x_obj_make(p_base, NULL, X_OBJ_FLAG_NONE,
-		X_OBJ_LENGTH_ATOM, NULL);
-	x_atomobj(p_base) = pair(
+		X_OBJ_LENGTH_PAIR, NULL, NULL);
+	x_base(p_base) = pair(
 		/* env+ctrl (x project extends) */
 		nil,
 		pair(

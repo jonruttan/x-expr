@@ -166,7 +166,7 @@ static char *test_heap_sweep(void)
 
 	/* Create the base object */
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base object's gc pointer to NULL", NULL == x_obj_heap(p_base));
@@ -199,7 +199,7 @@ static char *test_heap_sweep(void)
 	/* Create the base object */
 	helper_alloc_reset();
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base base object's gc pointer to NULL", NULL == x_obj_heap(p_base));
@@ -238,7 +238,7 @@ static char *test_heap_sweep(void)
 
 	/* Create the base object */
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base object's gc pointer to NULL", NULL == x_obj_heap(p_base));
@@ -271,7 +271,7 @@ static char *test_heap_sweep(void)
 
 	/* Create the base object */
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base object's gc pointer to NULL", NULL == x_obj_heap(p_base));
@@ -310,7 +310,7 @@ static char *test_heap_sweep(void)
 
 	/* Create the base object */
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base object's gc pointer to NULL", NULL == x_obj_heap(p_base));
@@ -344,7 +344,7 @@ static char *test_heap_sweep(void)
 
 	/* Create the base object */
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base object's gc pointer to NULL", NULL == x_obj_heap(p_base));
@@ -385,7 +385,7 @@ static char *test_heap_sweep(void)
 
 	/* Create the Base object */
 	n = helper_alloc_count();
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("allocate memory for the base object", 1 == helper_alloc_count() - n);
 	_it_should("set the base object's flags to 0", 0 == x_obj_flags(p_base));
 	_it_should("set the base object's gc pointer to NULL", NULL == x_obj_heap(p_base));

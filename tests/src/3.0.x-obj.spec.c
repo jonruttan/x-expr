@@ -344,7 +344,7 @@ static char *test_mksatom(void)
 	);
 	x_obj_free(NULL, p_obj);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, flags, value);
 	_it_should("make an atom with the supplied base, flags and value",
 		x_obj_type_issatom(p_obj)
@@ -374,7 +374,7 @@ static char *test_mksatomown(void)
 	);
 	x_obj_free(NULL, p_obj);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatomown(p_base, flags, value);
 	_it_should("make an atom with the supplied base, flags and value",
 		x_obj_type_issatom(p_obj)
@@ -405,7 +405,7 @@ static char *test_mkspair(void)
 	);
 	x_obj_free(NULL, p_obj);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, flags, values[0], values[1]);
 	_it_should("make a pair with the supplied base, flags and values",
 		x_obj_type_isspair(p_obj)
@@ -904,7 +904,7 @@ static char *test_obj_is_nil(void)
 	);
 	x_obj_free(NULL, p_obj);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	_it_should("return false when base is an object and value is base",
 		0 == x_obj_isnil(p_base, p_base)
 	);
@@ -1083,7 +1083,7 @@ static char *test_obj_prim_type_name(void)
 		x_obj_isnil(NULL, p_ret)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_ret = x_obj_prim_type_name(p_base, p_base);
 	_it_should("return the base when args is nil",
 		x_obj_isnil(p_base, p_ret)
@@ -1097,13 +1097,15 @@ static char *test_obj_prim_type_name(void)
 		x_obj_isnil(NULL, p_ret)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
-	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_base, p_base);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
+	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
+	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_type_name(p_base, p_args);
 	_it_should("return atom type name when first arg is a simple atom",
 		(x_obj_t *)x_type_atom_obj == p_ret
 	);
 	x_obj_free(NULL, p_args);
+	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
 
@@ -1126,7 +1128,7 @@ static char *test_obj_prim_type_name(void)
 	x_obj_free(NULL, p_args);
 
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_type_name(p_base, p_args);
@@ -1136,7 +1138,7 @@ static char *test_obj_prim_type_name(void)
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_type_name(p_base, p_args);
@@ -1172,7 +1174,7 @@ static char *test_obj_type_name(void)
 	x_obj_free(NULL, p_obj);
 
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	s = x_obj_type_name(p_base, p_obj);
 	_it_should("return atom's type name when base is empty",
@@ -1181,7 +1183,7 @@ static char *test_obj_type_name(void)
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	s = x_obj_type_name(p_base, p_obj);
 	_it_should("return pair's type name when base is empty",
@@ -1211,7 +1213,7 @@ static char *test_obj_prim_units(void)
 		x_obj_isnil(NULL, p_ret)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_ret = x_obj_prim_units(p_base, p_base);
 	_it_should("return nil when args is nil",
 		x_obj_isnil(p_base, p_ret)
@@ -1225,7 +1227,7 @@ static char *test_obj_prim_units(void)
 		x_obj_isnil(NULL, p_ret)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_base, p_base);
 	p_ret = x_obj_prim_units(p_base, p_args);
 	_it_should("return atom units when first arg is a simple atom",
@@ -1254,7 +1256,7 @@ static char *test_obj_prim_units(void)
 	x_obj_free(NULL, p_args);
 
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_units(p_base, p_args);
@@ -1264,7 +1266,7 @@ static char *test_obj_prim_units(void)
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_units(p_base, p_args);
@@ -1298,7 +1300,7 @@ static char *test_obj_units(void)
 	x_obj_free(NULL, p_obj);
 
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	i = x_obj_units(p_base, p_obj);
 	_it_should("return atom's size in units when base is empty",
@@ -1307,7 +1309,7 @@ static char *test_obj_units(void)
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	i = x_obj_units(p_base, p_obj);
 	_it_should("return pair's size in units when base is empty",
@@ -1337,7 +1339,7 @@ static char *test_obj_prim_length(void)
 		x_obj_isnil(NULL, p_ret)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_ret = x_obj_prim_length(p_base, p_base);
 	_it_should("return nil when args is nil",
 		x_obj_isnil(p_base, p_ret)
@@ -1351,7 +1353,7 @@ static char *test_obj_prim_length(void)
 		x_obj_isnil(NULL, p_ret)
 	);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_base, p_base);
 	p_ret = x_obj_prim_length(p_base, p_args);
 	_it_should("return atom length when first arg is a simple atom",
@@ -1380,7 +1382,7 @@ static char *test_obj_prim_length(void)
 	x_obj_free(NULL, p_args);
 
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_length(p_base, p_args);
@@ -1390,7 +1392,7 @@ static char *test_obj_prim_length(void)
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	p_args = x_mkspair(p_base, X_OBJ_FLAG_NONE, p_obj, p_base);
 	p_ret = x_obj_prim_length(p_base, p_args);
@@ -1426,7 +1428,7 @@ static char *test_obj_length(void)
 	x_obj_free(NULL, p_obj);
 
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 0);
 	i = x_obj_length(p_base, p_obj);
 	_it_should("return atom's length when base is empty and type is an integer",
@@ -1435,7 +1437,7 @@ static char *test_obj_length(void)
 	x_obj_free(NULL, p_obj);
 	x_obj_free(NULL, p_base);
 
-	p_base = x_mksatom(NULL, X_OBJ_FLAG_NONE, 0);
+	p_base = x_mkspair(NULL, X_OBJ_FLAG_NONE, NULL, NULL);
 	p_obj = x_mkspair(p_base, X_OBJ_FLAG_NONE, 0, 0);
 	i = x_obj_length(p_base, p_obj);
 	_it_should("return pair's length when base is empty and type is an integer",
