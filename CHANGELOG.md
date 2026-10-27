@@ -2,6 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [Unreleased]
+### Changed
+  - `x_error` closes the quote around its context text: `*** ERROR: Unbound SYMBOL 'x'`, not `'x`.
+
 ## [0.1.0] - 2026-03-06
 ### Added
   - Light type system baked into object layout (atom/pair type checking).

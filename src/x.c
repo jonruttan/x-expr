@@ -18,7 +18,7 @@
  * Output an error message to a file descriptor.
  *
  * Writes `"*** ERROR: "` followed by @p message. If @p p_text is
- * non-NULL, appends `" '"` and the context text.
+ * non-NULL, appends the context text in single quotes.
  *
  * @param fd      File descriptor to write the error to.
  * @param message A C string error message to output.
@@ -32,6 +32,7 @@ void x_error(int fd, x_char_t *message, x_char_t *p_text)
 	if (p_text) {
 		x_sys_write(fd, X_STR_LITERAL(" '"));
 		x_sys_write(fd, p_text, x_lib_strlen(p_text));
+		x_sys_write(fd, X_STR_LITERAL("'"));
 	}
 }
 
