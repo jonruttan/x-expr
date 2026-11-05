@@ -173,11 +173,9 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 #ifdef X_HEAP
 	if (extra > 0) {
 #ifdef X_OBJ_META_INIT
-		size_t unit;
+		size_t unit = extra;
 
-		for (unit = 0; unit < extra; unit++) {
-			p_obj[unit].i = X_OBJ_META_INIT;
-		}
+		for (; unit--; p_obj[unit].i = X_OBJ_META_INIT);
 #endif /* X_OBJ_META_INIT */
 		p_obj += extra;
 		flags |= X_OBJ_FLAG_META;
