@@ -63,11 +63,11 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * When the base configures extra metadata units (see
  * x_base_field_obj_meta_extra()), that many leading units are also reserved,
  * each set to #X_OBJ_META_INIT when the build defines it and otherwise left
- * uninitialized; the returned pointer is advanced past them and #X_OBJ_FLAG_META is set so
- * x_obj_free() can recover the original allocation. When X_HEAP is enabled
- * the object is linked onto the base's heap chain (and, under X_PROFILE, the
- * allocation counter is incremented). The type and flags slots are set; the
- * data units are left uninitialized.
+ * uninitialized; the returned pointer is advanced past them and
+ * #X_OBJ_FLAG_META is set so x_obj_free() can recover the original
+ * allocation. When X_HEAP is enabled the object is linked onto the base's
+ * heap chain (and, under X_PROFILE, the allocation counter is incremented).
+ * The type and flags slots are set; the data units are left uninitialized.
  *
  * @param p_base Base (execution context), or NULL to allocate without a base.
  * @param p_type The type object to assign, or NULL.
@@ -89,6 +89,11 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
 	x_obj_t *p_obj;
+#ifdef X_HEAP
+#ifdef X_OBJ_META_INIT
+	size_t unit;
+#endif /* X_OBJ_META_INIT */
+#endif /* X_HEAP */
 	/* Chasing base fields below requires a full, TYPED base -- the same
 	 * predicate the obj-meta-extra fetch has always used.  x_base_isset
 	 * alone is too weak: minimal/partial bases (x-expr test fixtures,
@@ -173,9 +178,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 #ifdef X_HEAP
 	if (extra > 0) {
 #ifdef X_OBJ_META_INIT
-		size_t unit = extra;
-
-		for (; unit--; p_obj[unit].i = X_OBJ_META_INIT);
+		for (unit = extra; unit--; p_obj[unit].i = X_OBJ_META_INIT);
 #endif /* X_OBJ_META_INIT */
 		p_obj += extra;
 		flags |= X_OBJ_FLAG_META;

@@ -61,6 +61,21 @@ static x_obj_t *test_make_base(x_obj_t *p_parent)
 	return x_base_make(p_parent, base);
 }
 
+#ifdef X_OBJ_META_INIT
+/* A malloc that hands back AddressSanitizer's fill, so a unit x_obj_alloc
+ * does not set reads 0xbe rather than a fresh page's zero. */
+static void *test_dirty_malloc(size_t size)
+{
+	void *p = helper_malloc(size);
+
+	if (p != NULL) {
+		memset(p, 0xbe, size);
+	}
+
+	return p;
+}
+#endif /* X_OBJ_META_INIT */
+
 
 /*
  * ## Test Runners
@@ -270,19 +285,6 @@ static char *test_base_write_buf(void)
 }
 
 #ifdef X_OBJ_META_INIT
-/* A malloc that hands back AddressSanitizer's fill, so a unit x_obj_alloc
- * does not set reads 0xbe rather than a fresh page's zero. */
-static void *test_dirty_malloc(size_t size)
-{
-	void *p = helper_malloc(size);
-
-	if (p != NULL) {
-		memset(p, 0xbe, size);
-	}
-
-	return p;
-}
-
 static char *test_base_meta_init(void)
 {
 	x_obj_t *p_base, *p_obj;

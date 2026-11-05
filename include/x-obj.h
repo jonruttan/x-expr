@@ -41,7 +41,7 @@
  * x_base_field_obj_meta_extra()), x_obj_alloc() prepends them before the
  * standard header and advances the object pointer past them, so the layout
  * above still holds; the extras sit at negative offsets reached via
- * x_obj_meta_i() and the object is flagged #X_OBJ_FLAG_META.  What the extras
+ * x_obj_meta_i() and the object is flagged #X_OBJ_FLAG_META. What the extras
  * hold is the embedder's: x_obj_alloc() leaves them uninitialized unless the
  * build defines X_OBJ_META_INIT, the value it then sets in each one's @c .i.
  *
