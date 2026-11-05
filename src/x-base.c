@@ -77,7 +77,8 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 					 * + mark-hooks, free-hooks, mark-roots (extensible
 					 *   lists, grown at runtime via x_heap_*_add)
 					 * + root-chain (head of the precise stack-root chain,
-					 *   pushed/popped by frames via x_heap_root_push/pop). */
+					 *   pushed/popped by frames via x_heap_root_push/pop)
+					 * + obj-meta-init (the value each extra unit starts at). */
 					pair(pair(atom(base.obj_meta_extra), nil),
 					pair(pair(base.p_heap_mark, nil),
 					pair(pair(base.p_heap_free, nil),
@@ -85,7 +86,8 @@ x_obj_t *x_base_make(x_obj_t *p_base, struct x_base_t base)
 					pair(pair(nil, nil),
 					pair(pair(nil, nil),
 					pair(pair(nil, nil),
-					nil))))))),
+					pair(pair(atom(base.obj_meta_init), nil),
+					nil)))))))),
 				/* alloc fields: count, limit, error -- objects currently
 				 * allocated (x_obj_alloc increments, x_obj_free decrements),
 				 * the ceiling x_obj_alloc enforces (0 = unlimited), and the

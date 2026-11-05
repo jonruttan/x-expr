@@ -62,8 +62,8 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  * Allocates space for @p units data units plus the standard metadata header.
  * When the base configures extra metadata units (see
  * x_base_field_obj_meta_extra()), that many leading units are also reserved,
- * each set to #X_OBJ_META_INIT when the build defines it and otherwise left
- * uninitialized; the returned pointer is advanced past them and
+ * each set to the base's obj-meta-init value (see
+ * x_base_field_obj_meta_init()); the returned pointer is advanced past them and
  * #X_OBJ_FLAG_META is set so x_obj_free() can recover the original
  * allocation. When X_HEAP is enabled the object is linked onto the base's
  * heap chain (and, under X_PROFILE, the allocation counter is incremented).
@@ -99,6 +99,10 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 		&& x_base_isset(p_base));
 	size_t extra = base_full
 		? (size_t)x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) : 0;
+#ifdef X_HEAP
+	x_int_t init = extra > 0
+		? x_atomint(x_firstobj(x_base_field_obj_meta_init(p_base))) : 0;
+#endif /* X_HEAP */
 	/* Allocation ceiling (0 = disarmed, < 0 = already tripped) and the
 	 * embedder-supplied trip message (nil = stop without reporting; x-expr
 	 * holds no message text of its own). */
@@ -172,11 +176,7 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 
 #ifdef X_HEAP
 	if (extra > 0) {
-#ifdef X_OBJ_META_INIT
-		for (; extra--; p_obj++->i = X_OBJ_META_INIT);
-#else /* X_OBJ_META_INIT */
-		p_obj += extra;
-#endif /* X_OBJ_META_INIT */
+		for (; extra--; p_obj++->i = init);
 		flags |= X_OBJ_FLAG_META;
 	}
 

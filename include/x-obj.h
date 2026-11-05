@@ -42,8 +42,8 @@
  * standard header and advances the object pointer past them, so the layout
  * above still holds; the extras sit at negative offsets reached via
  * x_obj_meta_i() and the object is flagged #X_OBJ_FLAG_META. What the extras
- * hold is the embedder's: x_obj_alloc() leaves them uninitialized unless the
- * build defines X_OBJ_META_INIT, the value it then sets in each one's @c .i.
+ * hold is the embedder's: x_obj_alloc() sets each one's @c .i to the base's
+ * obj-meta-init value (see x_base_field_obj_meta_init()).
  *
  * **Type system.** An object carries type information two ways:
  * -# The @e type metadata slot (x_obj_type()) points at a type object whose

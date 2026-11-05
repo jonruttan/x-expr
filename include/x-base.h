@@ -226,6 +226,13 @@
  */
 #define x_base_field_heap_root_chain(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X))))))))
 
+/**
+ * Get the extra metadata units' initial value field. Value: integer atom.
+ * x_obj_alloc() sets each extra unit's @c .i to it before advancing the
+ * object pointer past them.
+ */
+#define x_base_field_obj_meta_init(X)		x_firstobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_restobj(x_base_field_heap_fields(X)))))))))
+
 /** @} */
 
 /**
@@ -284,6 +291,7 @@ struct x_base_t
 	x_obj_t *p_hook_error;		/**< Error hook (void * atom, different signature), or NULL. */
 
 	x_int_t obj_meta_extra;		/**< Extra metadata units per object (0 for none). */
+	x_int_t obj_meta_init;		/**< Value each extra metadata unit starts at. */
 	x_obj_t *p_heap_mark;		/**< Mark hook (x_heap_mark_fn_t atom), or NULL. */
 	x_obj_t *p_heap_free;		/**< Free hook (x_heap_free_fn_t atom), or NULL. */
 };

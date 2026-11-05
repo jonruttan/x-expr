@@ -45,7 +45,7 @@ static x_obj_t *test_make_heap_base(void)
 	struct x_base_t base = {
 		0, 0, 0,
 		NULL, NULL, NULL, NULL,
-		0,
+		0, 0,
 		NULL, NULL
 	};
 	return x_base_make(NULL, base);
