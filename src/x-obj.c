@@ -61,8 +61,9 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
  *
  * Allocates space for @p units data units plus the standard metadata header.
  * When the base configures extra metadata units (see
- * x_base_field_obj_meta_extra()), that many leading units are also reserved;
- * the returned pointer is advanced past them and #X_OBJ_FLAG_META is set so
+ * x_base_field_obj_meta_extra()), that many leading units are also reserved,
+ * each set to #X_OBJ_META_INIT when the build defines it and otherwise left
+ * uninitialized; the returned pointer is advanced past them and #X_OBJ_FLAG_META is set so
  * x_obj_free() can recover the original allocation. When X_HEAP is enabled
  * the object is linked onto the base's heap chain (and, under X_PROFILE, the
  * allocation counter is incremented). The type and flags slots are set; the
@@ -171,6 +172,13 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 
 #ifdef X_HEAP
 	if (extra > 0) {
+#ifdef X_OBJ_META_INIT
+		size_t unit;
+
+		for (unit = 0; unit < extra; unit++) {
+			p_obj[unit].i = X_OBJ_META_INIT;
+		}
+#endif /* X_OBJ_META_INIT */
 		p_obj += extra;
 		flags |= X_OBJ_FLAG_META;
 	}
