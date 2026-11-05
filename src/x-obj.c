@@ -89,11 +89,6 @@ int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units)
 {
 	x_obj_t *p_obj;
-#ifdef X_HEAP
-#ifdef X_OBJ_META_INIT
-	size_t unit;
-#endif /* X_OBJ_META_INIT */
-#endif /* X_HEAP */
 	/* Chasing base fields below requires a full, TYPED base -- the same
 	 * predicate the obj-meta-extra fetch has always used.  x_base_isset
 	 * alone is too weak: minimal/partial bases (x-expr test fixtures,
@@ -178,9 +173,10 @@ x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_
 #ifdef X_HEAP
 	if (extra > 0) {
 #ifdef X_OBJ_META_INIT
-		for (unit = extra; unit--; p_obj[unit].i = X_OBJ_META_INIT);
-#endif /* X_OBJ_META_INIT */
+		for (; extra--; p_obj++->i = X_OBJ_META_INIT);
+#else /* X_OBJ_META_INIT */
 		p_obj += extra;
+#endif /* X_OBJ_META_INIT */
 		flags |= X_OBJ_FLAG_META;
 	}
 
