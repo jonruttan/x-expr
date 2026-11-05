@@ -61,6 +61,21 @@ static x_obj_t *test_make_base(x_obj_t *p_parent)
 	return x_base_make(p_parent, base);
 }
 
+#ifdef X_OBJ_META_INIT
+/* A malloc that hands back AddressSanitizer's fill, so a unit x_obj_alloc
+ * does not set reads 0xbe rather than a fresh page's zero. */
+static void *test_dirty_malloc(size_t size)
+{
+	void *p = helper_malloc(size);
+
+	if (p != NULL) {
+		memset(p, 0xbe, size);
+	}
+
+	return p;
+}
+#endif /* X_OBJ_META_INIT */
+
 
 /*
  * ## Test Runners
@@ -269,6 +284,41 @@ static char *test_base_write_buf(void)
 	return NULL;
 }
 
+#ifdef X_OBJ_META_INIT
+static char *test_base_meta_init(void)
+{
+	x_obj_t *p_base, *p_obj;
+
+	helper_alloc_reset();
+
+	/* A TYPED base is a full one, the only kind whose extras x_obj_alloc
+	 * reserves; x_base_make leaves the type to the embedder. */
+	p_base = test_make_base(NULL);
+	x_obj_type(p_base) = (x_obj_t *)x_type_atom_obj;
+	x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) = 2;
+
+	helper_sys_funcs.malloc = test_dirty_malloc;
+	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 7);
+	helper_sys_funcs.malloc = helper_malloc;
+
+	_it_should("flag an object with extra metadata units",
+		0 != (x_obj_flags(p_obj) & X_OBJ_FLAG_META)
+	);
+
+	_it_should("set each extra metadata unit to X_OBJ_META_INIT",
+		X_OBJ_META_INIT == x_obj_meta_i(p_obj, 0).i
+		&& X_OBJ_META_INIT == x_obj_meta_i(p_obj, 1).i
+	);
+
+	x_obj_free(p_base, p_obj);
+	x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) = 0;
+	x_obj_type(p_base) = NULL;
+	x_obj_free(NULL, p_base);
+
+	return NULL;
+}
+#endif /* X_OBJ_META_INIT */
+
 static char *run_tests()
 {
 	_run_test(test_base_isset);
@@ -276,6 +326,9 @@ static char *run_tests()
 	_run_test(test_base_read);
 	_run_test(test_base_write);
 	_run_test(test_base_write_buf);
+#ifdef X_OBJ_META_INIT
+	_run_test(test_base_meta_init);
+#endif /* X_OBJ_META_INIT */
 
 	return NULL;
 }
