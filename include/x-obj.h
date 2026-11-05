@@ -42,8 +42,8 @@
  * standard header and advances the object pointer past them, so the layout
  * above still holds; the extras sit at negative offsets reached via
  * x_obj_meta_i() and the object is flagged #X_OBJ_FLAG_META. What the extras
- * hold is the embedder's: x_obj_alloc() leaves them uninitialized unless the
- * build defines X_OBJ_META_INIT, the value it then sets in each one's @c .i.
+ * hold is the embedder's: x_obj_alloc() sets each one's @c .i to
+ * #X_OBJ_META_INIT, 0 unless the build defines another value.
  *
  * **Type system.** An object carries type information two ways:
  * -# The @e type metadata slot (x_obj_type()) points at a type object whose
@@ -260,6 +260,11 @@ enum {
 /** Total number of standard metadata units preceding an object's data. */
 #define X_OBJ_UNITS_META			X_OBJ_META_LEN
 #endif /* X_OBJ_UNITS_META */
+
+#ifndef X_OBJ_META_INIT
+/** Value x_obj_alloc() sets in each extra metadata unit's @c .i. */
+#define X_OBJ_META_INIT				0
+#endif /* X_OBJ_META_INIT */
 
 /** Number of data units in an atom. */
 #define X_OBJ_UNITS_ATOM			1
