@@ -269,6 +269,52 @@ static char *test_base_write_buf(void)
 	return NULL;
 }
 
+/* A malloc that hands back the fill AddressSanitizer does, so a slot the
+ * allocator does not set reads as 0xbe rather than a fresh page's zero. */
+static void *test_dirty_malloc(size_t size)
+{
+	void *p = helper_malloc(size);
+
+	if (p != NULL) {
+		memset(p, 0xbe, size);
+	}
+
+	return p;
+}
+
+static char *test_base_meta_extra_zeroed(void)
+{
+	x_obj_t *p_base, *p_obj;
+
+	helper_alloc_reset();
+
+	p_base = test_make_base(NULL);
+	/* A TYPED base is a full one, the only kind whose extras x_obj_alloc
+	 * reserves; x_base_make leaves the type to the embedder. */
+	x_obj_type(p_base) = (x_obj_t *)x_type_atom_obj;
+	x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) = 2;
+
+	helper_sys_funcs.malloc = test_dirty_malloc;
+	p_obj = x_mksatom(p_base, X_OBJ_FLAG_NONE, 7);
+	helper_sys_funcs.malloc = helper_malloc;
+
+	_it_should("flag an object with extra metadata units",
+		0 != (x_obj_flags(p_obj) & X_OBJ_FLAG_META)
+	);
+
+	_it_should("start each extra metadata unit at zero",
+		0 == x_obj_meta_i(p_obj, 0).i
+		&& 0 == x_obj_meta_i(p_obj, 1).i
+	);
+
+	x_obj_free(p_base, p_obj);
+	x_atomint(x_firstobj(x_base_field_obj_meta_extra(p_base))) = 0;
+	x_obj_type(p_base) = NULL;
+	x_obj_free(NULL, p_base);
+
+	return NULL;
+}
+
 static char *run_tests()
 {
 	_run_test(test_base_isset);
@@ -276,6 +322,7 @@ static char *run_tests()
 	_run_test(test_base_read);
 	_run_test(test_base_write);
 	_run_test(test_base_write_buf);
+	_run_test(test_base_meta_extra_zeroed);
 
 	return NULL;
 }
