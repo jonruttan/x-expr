@@ -42,21 +42,6 @@ x_satom_t x_type_atom_obj = x_obj_set(NULL, X_OBJ_FLAG_NONE, {.s = (x_char_t *)X
  * # Object Functions
  */
 /**
- * Test whether an object is nil.
- *
- * nil is represented by a NULL object pointer. @p p_base is accepted for
- * calling-convention uniformity but is not used.
- *
- * @param p_base Base (execution context; unused).
- * @param p_obj  The object to test.
- * @return Non-zero if @p p_obj is nil (NULL), zero otherwise.
- */
-int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj)
-{
-	return p_obj == NULL;
-}
-
-/**
  * Allocate an uninitialized object.
  *
  * Allocates space for @p units data units plus the standard metadata header.
