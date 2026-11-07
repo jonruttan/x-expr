@@ -357,6 +357,8 @@ extern x_satom_t x_false_obj;
  * @{
  */
 
+/** True if object @p X is nil (a NULL object pointer); @p B is evaluated, not used. */
+#define x_obj_isnil(B,X)			((void)(B), (X) == NULL)
 /** True if object @p X has a nil (NULL) type slot. */
 #define x_obj_type_isnil(B,X)		x_obj_isnil((B), x_obj_type(X))
 /** True if the type name of object @p X equals the C string @p T. */
@@ -495,9 +497,6 @@ extern x_satom_t x_false_obj;
  * execution. External synchronization is required for multi-threaded use.
  * @{
  */
-
-/** Test whether @p p_obj is nil (a NULL object pointer). */
-int x_obj_isnil(x_obj_t *p_base, x_obj_t *p_obj);
 
 /** Allocate an uninitialized object with @p units data units. */
 x_obj_t *x_obj_alloc(x_obj_t *p_base, x_obj_t *p_type, x_obj_flag_t flags, size_t units);
