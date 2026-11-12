@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	struct x_base_t base = {
 		STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO,
 		NULL, NULL, NULL, NULL,
-		0, NULL, NULL, &argc
+		0, NULL, NULL
 	};
 
 	p_base = x_base_make(NULL, base);

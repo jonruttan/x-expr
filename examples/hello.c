@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	struct x_base_t base = {
 		STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO,	/* file descriptors */
 		NULL, NULL, NULL, NULL,				/* hooks (none) */
-		0, NULL, NULL, &argc				/* heap config + stack base */
+		0, NULL, NULL				/* heap config */
 	};
 
 	/* Create the base environment */

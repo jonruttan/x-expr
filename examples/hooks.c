@@ -34,7 +34,7 @@ int main(int argc, char **argv)
 	struct x_base_t base = {
 		STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO,
 		NULL, NULL, NULL, NULL,
-		0, NULL, NULL, &argc
+		0, NULL, NULL
 	};
 
 	/* Create the hook atom and wire it in */
