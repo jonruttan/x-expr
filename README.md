@@ -2,7 +2,7 @@
 
 <p align="center"><img src="docs/bitwise-banner.svg" alt="x-expr, with Bitwise the owl" width="100%"></p>
 
-A minimal C library providing a foundation object system with atoms, pairs, garbage collection, and a light type system. Designed for building interpreters and expression evaluators.
+A minimal C library providing a foundation object system with atoms, pairs, garbage collection, and a light type system. It is the object, type and heap layer under [x-engine-c](https://github.com/jonruttan/x-engine-c), the C engine of [x-lang](https://github.com/jonruttan/x-lang), which carries it as the submodule `ext/x-expr` and reaches the C library only through this library's `x_sys_*` and `x_lib_*` functions.
 
 ## Features
 
@@ -78,6 +78,7 @@ Pass flags to the compiler: `make CFLAGS+="-DX_HEAP -DDEBUG"`
 | [x.h](include/x.h) | Core types (`x_int_t`, `x_char_t`), architecture detection, error handling |
 | [x-sys.h](include/x-sys.h) | System-level wrappers (malloc, free, read, write, exit) |
 | [x-lib.h](include/x-lib.h) | Portable string, memory, and math utilities |
+| [x-stdlib.h](include/x-stdlib.h) | Stand-ins for standard C library functions, or wrappers over the real ones under `X_USE_STDLIB` |
 | [x-obj.h](include/x-obj.h) | Object system: atoms, pairs, flags, type checking, allocation |
 | [x-base.h](include/x-base.h) | Base environment: I/O, hooks, heap config, field accessors |
 | [x-heap.h](include/x-heap.h) | Mark-sweep garbage collection (requires `X_HEAP`) |
@@ -85,7 +86,7 @@ Pass flags to the compiler: `make CFLAGS+="-DX_HEAP -DDEBUG"`
 
 ## Base Tree Layout
 
-The base environment is a nested pair tree whose field positions are accessed via macros in `x-base.h`. The tree layout documented there is stable API -- field positions will not change within a major version.
+The base environment is a nested pair tree whose field positions are accessed via macros in `x-base.h`. The library is at 0.1.0 and the layout is not yet frozen: it has changed since that version was named. Read a field through its macro, not by position.
 
 ## Thread Safety
 
@@ -96,7 +97,7 @@ x-expr assumes single-threaded execution. The heap chain, garbage collector, and
 Add x-expr to your project:
 
 ```bash
-git submodule add git@github.com:jonruttan/x-expr.git ext/x-expr
+git submodule add https://github.com/jonruttan/x-expr.git ext/x-expr
 ```
 
 In your Makefile, add the include path and sources:
@@ -125,8 +126,8 @@ Generate the API reference with `make doc`. Output is written to `docs/ref/html/
 
 See [docs/contributing.md](docs/contributing.md) for development setup, code style, and pull request guidelines.
 
-## License
+## Licence
 
-MIT No Attribution (MIT-0) -- see [LICENSE](LICENSE).
+MIT No Attribution (MIT-0). See [LICENSE](LICENSE).
 
 <p align="center"><img src="docs/bitwise-mark.svg" alt="Bitwise" width="96"></p>

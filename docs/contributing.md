@@ -3,7 +3,7 @@
 ## Development Setup
 
 ```bash
-git clone --recursive git@github.com:jonruttan/x-expr.git
+git clone --recursive https://github.com/jonruttan/x-expr.git
 cd x-expr
 make        # Build the library
 make test   # Run the test suite
