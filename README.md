@@ -86,7 +86,7 @@ Pass flags to the compiler: `make CFLAGS+="-DX_HEAP -DDEBUG"`
 
 ## Base Tree Layout
 
-The base environment is a nested pair tree whose field positions are accessed via macros in `x-base.h`. The library is at 0.1.0 and the layout is not yet frozen: it has changed since that version was named. Read a field through its macro, not by position.
+The base environment is a nested pair tree whose field positions are accessed via macros in `x-base.h`. The library is before 1.0 and the layout is not frozen: it changed between 0.1.0 and 0.2.0. Read a field through its macro, not by position.
 
 ## Thread Safety
 
