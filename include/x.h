@@ -44,7 +44,7 @@
  * Version numbering conforms to the [Semantic Versioning](http://semver.org/)
  * specification.
  */
-#define X_VERSION "0.1.0"
+#define X_VERSION "0.2.0"
 
 /**
  * The C compiler's target machine identifier.
